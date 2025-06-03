@@ -1,29 +1,8 @@
 {
   "require": {
-    "php": ">=7.2",
+    "php": ">=8.1",
     "mpdf/mpdf": "^8.2.0",
     "psr/log": "3.0",
     "twig/twig": "^3.20"
   },
-  "autoload": {
-    "classmap": [
-      "./classes/",
-      "../../../../../../../Modules/Course/classes/class.ilObjCourseGUI.php",
-      "../../../../../../../Modules/Group/classes/class.ilGroupParticipants.php",
-      "../../../../../../../Services/ActiveRecord/class.ActiveRecord.php",
-      "../../../../../../../Services/Form/classes/class.ilDateDurationInputGUI.php",
-      "../../../../../../../Services/Form/classes/class.ilPropertyFormGUI.php",
-      "../../../../../../../Services/Object/classes/class.ilObjectListGUIFactory.php",
-      "../../../../../../../Services/Table/classes/class.ilTable2GUI.php",
-      "../../../../../../../Services/Component/classes/class.ilPluginConfigGUI.php",
-      "../../../../../../../Services/UIComponent/AdvancedSelectionList/classes/class.ilAdvancedSelectionListGUI.php",
-      "../../../../../../../Services/UIComponent/classes/class.ilUIHookPluginGUI.php",
-      "../../../../../../../Services/UIComponent/classes/class.ilUserInterfaceHookPlugin.php"
-    ]
-  },
-  "config": {
-    "optimize-autoloader": true,
-    "sort-packages": true,
-    "classmap-authoritative": true
-  }
 }
