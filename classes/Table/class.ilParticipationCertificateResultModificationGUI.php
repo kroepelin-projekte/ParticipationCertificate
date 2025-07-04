@@ -117,7 +117,7 @@ class ilParticipationCertificateResultModificationGUI
         global $DIC;
 
         $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
-        if ($cert_access->hasCurrentUserWriteAccess()) {
+        if ($cert_access->hasCurrentUserAdminAccess()) {
             $renderer = $this->dic->ui()->renderer();
             $this->tpl->loadStandardTemplate();
             $this->initHeader();

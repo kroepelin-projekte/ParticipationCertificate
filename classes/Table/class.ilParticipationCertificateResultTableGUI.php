@@ -488,24 +488,10 @@ class ilParticipationCertificateResultTableGUI implements I\DataRetrieval
             );
 
         $actions = [
-            'print_with_ementorining' => $f->table()->action()->single(
-                $this->pl->txt('list_print_with'),
-                $url_builder->withParameter($this->action_parameter_token, 'print_with_ementorining'),
-                $this->row_id_token
-            ),
+            
             'print_without_ementorining' => $f->table()->action()->single(
                 $this->pl->txt('list_print_without'),
                 $url_builder->withParameter($this->action_parameter_token, 'print_without_ementorining'),
-                $this->row_id_token
-            ),
-            'show_all_results' => $f->table()->action()->single(
-                $this->pl->txt('list_overview'),
-                $url_builder->withParameter($this->action_parameter_token, 'show_all_results'),
-                $this->row_id_token
-            ),
-            'print_selected_with_ementorining' => $f->table()->action()->multi(
-                $this->pl->txt('list_print_with'),
-                $url_builder->withParameter($this->action_parameter_token, 'print_selected_with_ementorining'),
                 $this->row_id_token
             ),
             'print_selected_without_ementorining' => $f->table()->action()->multi(
@@ -513,19 +499,43 @@ class ilParticipationCertificateResultTableGUI implements I\DataRetrieval
                 $url_builder->withParameter($this->action_parameter_token, 'print_selected_without_ementorining'),
                 $this->row_id_token
             ),
-            'show_selected_all_results' => $f->table()->action()->multi(
-                $this->pl->txt('list_overview'),
-                $url_builder->withParameter($this->action_parameter_token, 'show_selected_all_results'),
-                $this->row_id_token
-            ),
+           
         ];
+        
+        if ($this->ementoring) {
+            $actions['print_with_ementorining'] = $f->table()->action()->single(
+                $this->pl->txt('list_print_with'),
+                $url_builder->withParameter($this->action_parameter_token, 'print_with_ementorining'),
+                $this->row_id_token
+            );
+            $actions['print_selected_with_ementorining'] = $f->table()->action()->multi(
+                $this->pl->txt('list_print_with'),
+                $url_builder->withParameter($this->action_parameter_token, 'print_selected_with_ementorining'),
+                $this->row_id_token
+            );
+        }
+        
         $cert_access = new ilParticipationCertificateAccess($this->refId);
-        if ($cert_access->hasCurrentUserWriteAccess()) {
+        if ($cert_access->hasCurrentUserAdminAccess()) {
            $actions['adjust_results'] = $f->table()->action()->single(
                $this->pl->txt('list_results'),
                $url_builder->withParameter($this->action_parameter_token, 'adjust_results'),
                $this->row_id_token
            );
+        }
+
+        // if mentees shoud see results, change the check to Read instead of Special
+        if ($cert_access->hasCurrentUserSpecialAccess()) {
+           $actions['show_all_results'] = $f->table()->action()->single(
+                $this->pl->txt('list_overview'),
+                $url_builder->withParameter($this->action_parameter_token, 'show_all_results'),
+                $this->row_id_token
+           );
+           $actions['show_selected_all_results'] = $f->table()->action()->multi(
+                $this->pl->txt('list_overview'),
+                $url_builder->withParameter($this->action_parameter_token, 'show_selected_all_results'),
+                $this->row_id_token
+            );
         }
 
         return $actions;
