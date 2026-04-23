@@ -321,13 +321,22 @@ class ilParticipationCertificateTwigParser
             $countSessions = 0;
             $countAttendedSessions = 0;
             if ($containerRefId !== null) {
-                $newIassStates = ilIassStatesMulti::getData($this->usr_ids, $courseObj['group_id']);
-                $individualAssessmentsUser = $newIassStates[$userId];
+                $newIassStates = ilIassStatesMulti::getData($this->usr_ids, (int) $courseObj['group_id']);
+
+                $individualAssessmentsUser = [];
+                if (!empty($newIassStates)) {
+                    $individualAssessmentsUser = $newIassStates[$userId];
+                }
+
                 $countIndividualAssessments = count(array_keys((array) $individualAssessmentsUser));
                 $countCompletedIndividualAssessments = $this->getCompletedIndividualAssessments((array) $individualAssessmentsUser);
 
-                $sessions = ParticipationCertificateHelper::getSessions($courseObj['group_id']);
-                $countSessions = count(array_keys($sessions));
+                $sessions = ParticipationCertificateHelper::getSessions((int) $courseObj['group_id']);
+
+                $countSessions = 0;
+                if (!empty($sessions)) {
+                    $countSessions = count(array_keys($sessions));
+                }
 
                 foreach ($sessions as $session) {
                     $eventParticipants = new ilEventParticipants($session['obj_id']);
@@ -335,7 +344,6 @@ class ilParticipationCertificateTwigParser
                         $countAttendedSessions++;
                     }
                 }
-
             }
 
             $certConfigs = new ilParticipationCertificateConfigs();

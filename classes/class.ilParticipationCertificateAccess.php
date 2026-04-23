@@ -50,9 +50,9 @@ class ilParticipationCertificateAccess {
 	/**
 	 * @throws Exception
 	 */
-	public function hasCurrentUserPrintAccess(?bool $isCourseMember = false): bool
+	public function hasCurrentUserPrintAccess(?bool $printByCourseMember = false): bool
 	{
-        if (!$isCourseMember && $this->hasCurrentUserWriteAccess()) {
+        if (!$printByCourseMember && $this->hasCurrentUserWriteAccess()) {
             return true;
         }
 
