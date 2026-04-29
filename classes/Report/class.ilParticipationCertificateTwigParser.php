@@ -6,6 +6,7 @@ use setasign\Fpdi\PdfParser\Type\PdfTypeException;
 use setasign\Fpdi\PdfParser\PdfParserException;
 use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use Mpdf\MpdfException;
+use JetBrains\PhpStorm\NoReturn;
 
 /**
  * Class ilParticipationCertificateTwigParser
@@ -109,7 +110,9 @@ class ilParticipationCertificateTwigParser
      * @param bool|null   $suggestedCourses
      * @param bool|null   $additionalOffer
      * @param bool|null   $initialTest
-     * @param bool|null   $homework
+     * @param bool|null   $homeworkInclude
+     * @param bool|null   $individualAssesmentsIncluded
+     * @param bool|null   $sessionsIncluded
      * @param string|null $firstname
      * @param string|null $lastname
      * @return void
@@ -131,7 +134,9 @@ class ilParticipationCertificateTwigParser
         ?bool $suggestedCourses = true,
         ?bool $additionalOffer = true,
         ?bool $initialTest = true,
-        ?bool $homework = true,
+        ?bool $homeworkInclude = true,
+        ?bool $individualAssesmentsIncluded = true,
+        ?bool $sessionsIncluded = true,
         ?string $firstname = null,
         ?string $lastname = null
     ): void {
@@ -245,7 +250,6 @@ class ilParticipationCertificateTwigParser
                 }
             }
 
-
             $arr_render = $this->fetchDataCertificate(
                 $usr_id,
                 $refId,
@@ -267,7 +271,9 @@ class ilParticipationCertificateTwigParser
                 $suggestedCourses,
                 $additionalOffer,
                 $initialTest,
-                $homework,
+                $homeworkInclude,
+                $individualAssesmentsIncluded,
+                $sessionsIncluded,
                 $firstname,
                 $lastname,
                 $countIndividualAssessments,
@@ -290,7 +296,9 @@ class ilParticipationCertificateTwigParser
      * @param string    $lastname
      * @param int       $userId
      * @param bool      $printIsAsynchronous
-     * @param bool|null $homework
+     * @param bool|null $homeworkInclude
+     * @param bool|null $individualAssesmentsIncluded
+     * @param bool|null $sessionsIncluded
      * @return void
      * @throws CrossReferenceException
      * @throws LoaderError
@@ -307,7 +315,9 @@ class ilParticipationCertificateTwigParser
         string $lastname,
         int $userId,
         bool $printIsAsynchronous = false,
-        ?bool $homework = true
+        ?bool $homeworkInclude = true,
+        ?bool $individualAssesmentsIncluded = true,
+        ?bool $sessionsIncluded = true
     ): void {
         global $DIC;
 
@@ -447,7 +457,9 @@ class ilParticipationCertificateTwigParser
                 $courseObj['suggested_courses'] ?? false,
                 $courseObj['additional_offer'] ?? false,
                 $courseObj['entry_test'] ?? false,
-                $homework,
+                $homeworkInclude,
+                $individualAssesmentsIncluded,
+                $sessionsIncluded,
                 $firstname,
                 $lastname,
                 $countIndividualAssessments,
@@ -514,27 +526,29 @@ class ilParticipationCertificateTwigParser
     }
 
     /**
-     * @param             $userId
-     * @param             $refId
-     * @param             $eMentoring
-     * @param             $configTexts
-     * @param             $userData
-     * @param             $loMasterCourse
-     * @param             $initialTestStates
-     * @param             $learnSuggestionResults
-     * @param             $excerciseStates
-     * @param             $newIassStates
-     * @param             $xaliStates
-     * @param             $logoIsSavedInResourceStorage
-     * @param             $signatureIsSavedInResourceStorage
-     * @param             $selfPrint
-     * @param             $certConfigValue
-     * @param             $logoPath
-     * @param             $page1IssuerSignature
-     * @param             $suggestedCourses
-     * @param             $additionalOffer
-     * @param             $initialTest
-     * @param bool        $homework
+     * @param int         $userId
+     * @param int         $refId
+     * @param bool        $eMentoring
+     * @param array       $configTexts
+     * @param array       $userData
+     * @param array       $loMasterCourse
+     * @param array       $initialTestStates
+     * @param array       $learnSuggestionResults
+     * @param array       $excerciseStates
+     * @param array       $newIassStates
+     * @param array       $xaliStates
+     * @param bool        $logoIsSavedInResourceStorage
+     * @param bool        $signatureIsSavedInResourceStorage
+     * @param bool        $selfPrint
+     * @param string      $certConfigValue
+     * @param string      $logoPath
+     * @param string      $page1IssuerSignature
+     * @param bool        $suggestedCourses
+     * @param bool        $additionalOffer
+     * @param bool        $initialTest
+     * @param bool        $homeworkIncluded
+     * @param bool|null   $individualAssesmentsIncluded
+     * @param bool|null   $sessionsIncluded
      * @param string|null $firstname
      * @param string|null $lastname
      * @param int|null    $countIndividualAssessments
@@ -546,6 +560,7 @@ class ilParticipationCertificateTwigParser
      * @throws SyntaxError
      * @throws ilDateTimeException
      */
+    #[NoReturn]
     private function fetchDataCertificate(
         int $userId,
         int $refId,
@@ -567,7 +582,9 @@ class ilParticipationCertificateTwigParser
         bool $suggestedCourses,
         bool $additionalOffer,
         bool $initialTest,
-        ?bool $homework = true,
+        ?bool $homeworkIncluded = true,
+        ?bool $individualAssesmentsIncluded = true,
+        ?bool $sessionsIncluded = true,
         ?string $firstname = null,
         ?string $lastname = null,
         ?int $countIndividualAssessments = null,
@@ -724,7 +741,9 @@ class ilParticipationCertificateTwigParser
                 'label' => $this->pl->txt('sessions'),
                 'value' => $countAttendedSessions . '/' . $countSessions
             ],
-            'homework' => $homework,
+            'homework_included' => $homeworkIncluded,
+            'individual_assesments_included' => $individualAssesmentsIncluded,
+            'sessions_included' => $sessionsIncluded,
             'suggested_courses' => $suggestedCourses,
             'additional_offer' => $additionalOffer,
             'initial_test' => $initialTest

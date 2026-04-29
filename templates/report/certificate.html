@@ -51,7 +51,7 @@
        {% endif %}
      </td>
    </tr>
-  {% if homework %}
+  {% if homework_included %}
    <tr>
      <td class="td1">{{text_values.page1_box2_row2}}</td>
      <td class="td2">Abgabe von {{excercise_percentage}}% der Hausaufgaben</td>
@@ -62,7 +62,7 @@
 
 {% endif %}
 
-{% if additional_offer %}
+{% if individual_assesments_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.individual_assessments}}</b></p>
     <table class="table" id="table5">
@@ -72,7 +72,9 @@
         </tr>
     </table>
 </div>
+{% endif %}
 
+{% if sessions_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.sessions}}</b></p>
     <table class="table" id="table7">
@@ -82,6 +84,11 @@
         </tr>
     </table>
 </div>
+{% endif %}
+
+
+{% if additional_offer %}
+
 {% endif %}
 
 <div class="date"> <p>{{text_values.page1_location_date}}</p>  </div>
@@ -153,16 +160,19 @@
 </div>
 <br/>{{text_values.page1_disclaimer}}<br/>
 {% endif %}
-{% if additional_offer %}
+{% if individual_assesments_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.individual_assessments}}</b></p>
-    <table class="table" id="table6">
+    <table class="table" id="table5">
         <tr>
             <td class="td1">{{individual_assessments.label}}</td>
             <td class="td2">{{individual_assessments.value}}</td>
         </tr>
     </table>
 </div>
+{% endif %}
+
+{% if sessions_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.sessions}}</b></p>
     <table class="table" id="table8">
@@ -172,6 +182,9 @@
         </tr>
     </table>
 </div>
+{% endif %}
+{% if additional_offer %}
+
 {% endif %}
   {% if show_footer %}
   <div class="footer"><i>{{text_values.footer_config}}</i></div>
