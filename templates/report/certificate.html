@@ -32,6 +32,12 @@
       <td class="td2">{{learn_sugg_reached_percentage}}</td>
     </tr>
     {% endif %}
+    {% if additional_offer %}
+      <tr>
+          <td class="td1">not_suggested_courses_text</td>
+          <td class="td2">{{not_suggested_courses_text}}</td>
+      </tr>
+    {% endif %}
   </table>
   </div>
 
@@ -84,11 +90,6 @@
         </tr>
     </table>
 </div>
-{% endif %}
-
-
-{% if additional_offer %}
-
 {% endif %}
 
 <div class="date"> <p>{{text_values.page1_location_date}}</p>  </div>

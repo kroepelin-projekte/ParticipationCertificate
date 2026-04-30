@@ -115,6 +115,7 @@ class ilParticipationCertificateTwigParser
      * @param bool|null   $sessionsIncluded
      * @param string|null $firstname
      * @param string|null $lastname
+     * @param string|null $notSugesstedCourses
      * @return void
      * @throws CrossReferenceException
      * @throws LoaderError
@@ -138,7 +139,8 @@ class ilParticipationCertificateTwigParser
         ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true,
         ?string $firstname = null,
-        ?string $lastname = null
+        ?string $lastname = null,
+        ?string $notSuggestedCoursesText = null
     ): void {
         $certConfigs = new ilParticipationCertificateConfigs();
         $objConfig = $certConfigs->getObjConfigSetIfNoneCreateDefaultAndCreateNewObjConfigValues($this->group_ref_id);
@@ -279,7 +281,8 @@ class ilParticipationCertificateTwigParser
                 $countIndividualAssessments,
                 $countCompletedIndividualAssessments,
                 $countSessions,
-                $countAttendedSessions
+                $countAttendedSessions,
+                $notSuggestedCoursesText
             );
 
             $partPdf->generatePDF(
@@ -555,6 +558,7 @@ class ilParticipationCertificateTwigParser
      * @param int|null    $countCompletedIndividualAssessments
      * @param int|null    $countSessions
      * @param int|null    $countAttendedSessions
+     * @param string|null $notSuggestedCoursesText
      * @return array
      * @throws LoaderError
      * @throws SyntaxError
@@ -590,7 +594,8 @@ class ilParticipationCertificateTwigParser
         ?int $countIndividualAssessments = null,
         ?int $countCompletedIndividualAssessments = null,
         ?int $countSessions = null,
-        ?int $countAttendedSessions = null
+        ?int $countAttendedSessions = null,
+        ?string $notSuggestedCoursesText = null
     ): array {
         $date = new ilDate(time(), IL_CAL_UNIX);
         $percentage = 0;
@@ -746,7 +751,8 @@ class ilParticipationCertificateTwigParser
             'sessions_included' => $sessionsIncluded,
             'suggested_courses' => $suggestedCourses,
             'additional_offer' => $additionalOffer,
-            'initial_test' => $initialTest
+            'initial_test' => $initialTest,
+            'not_suggested_courses_text' => $notSuggestedCoursesText
         ];
 
         return $data;
