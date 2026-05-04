@@ -34,8 +34,8 @@
     {% endif %}
     {% if additional_offer %}
       <tr>
-          <td class="td1">not_suggested_courses_text</td>
-          <td class="td2">{{not_suggested_courses_text}}</td>
+          <td class="td1">{{not_suggested_courses.label}}</td>
+          <td class="td2">{{not_suggested_courses.value}}</td>
       </tr>
     {% endif %}
   </table>
@@ -137,6 +137,12 @@
   <tr>
     <td class="td1">{{text_values.page2_box1_row2}}</td>
     <td class="td2">{{learn_sugg_reached_percentage}} der empfohlenen Module wurden bearbeitet </td>
+  </tr>
+  {% endif %}
+  {% if additional_offer %}
+  <tr>
+      <td class="td1">{{not_suggested_courses.label}}</td>
+      <td class="td2">{{not_suggested_courses.value}}</td>
   </tr>
   {% endif %}
   </table>

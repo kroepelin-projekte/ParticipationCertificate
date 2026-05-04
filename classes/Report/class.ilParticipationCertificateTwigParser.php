@@ -140,7 +140,7 @@ class ilParticipationCertificateTwigParser
         ?bool $sessionsIncluded = true,
         ?string $firstname = null,
         ?string $lastname = null,
-        ?string $notSuggestedCoursesText = null
+        ?string $notSuggestedCourses = null
     ): void {
         $certConfigs = new ilParticipationCertificateConfigs();
         $objConfig = $certConfigs->getObjConfigSetIfNoneCreateDefaultAndCreateNewObjConfigValues($this->group_ref_id);
@@ -282,7 +282,7 @@ class ilParticipationCertificateTwigParser
                 $countCompletedIndividualAssessments,
                 $countSessions,
                 $countAttendedSessions,
-                $notSuggestedCoursesText
+                $notSuggestedCourses
             );
 
             $partPdf->generatePDF(
@@ -439,6 +439,8 @@ class ilParticipationCertificateTwigParser
                 }
             }
 
+            $notSuggestedCourses = $courseObj['not_suggested_courses'] ?? null;
+
             $arr_render = $this->fetchDataCertificate(
                 $this->usr_id[0],
                 $courseObj['ref_id'],
@@ -468,7 +470,8 @@ class ilParticipationCertificateTwigParser
                 $countIndividualAssessments,
                 $countCompletedIndividualAssessments,
                 $countSessions,
-                $countAttendedSessions
+                $countAttendedSessions,
+                $notSuggestedCourses
             );
             $part_pdf->generatePDF(
                 $this->twig_template->render($arr_render),
@@ -558,7 +561,7 @@ class ilParticipationCertificateTwigParser
      * @param int|null    $countCompletedIndividualAssessments
      * @param int|null    $countSessions
      * @param int|null    $countAttendedSessions
-     * @param string|null $notSuggestedCoursesText
+     * @param string|null $notSuggestedCourses
      * @return array
      * @throws LoaderError
      * @throws SyntaxError
@@ -595,7 +598,7 @@ class ilParticipationCertificateTwigParser
         ?int $countCompletedIndividualAssessments = null,
         ?int $countSessions = null,
         ?int $countAttendedSessions = null,
-        ?string $notSuggestedCoursesText = null
+        ?string $notSuggestedCourses = null
     ): array {
         $date = new ilDate(time(), IL_CAL_UNIX);
         $percentage = 0;
@@ -752,7 +755,10 @@ class ilParticipationCertificateTwigParser
             'suggested_courses' => $suggestedCourses,
             'additional_offer' => $additionalOffer,
             'initial_test' => $initialTest,
-            'not_suggested_courses_text' => $notSuggestedCoursesText
+            'not_suggested_courses' => [
+                'label' => $this->pl->txt('not_suggested_courses'),
+                'value' => $notSuggestedCourses
+            ]
         ];
 
         return $data;

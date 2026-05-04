@@ -116,3 +116,4 @@ failure_timeframe_save#:#Das Startdatum darf nicht nach dem Enddatum liegen
 failure_save_config#:#Beim Speichern der Konfiguration oder Hochladen der Datei ist ein Fehler aufgetreten.
 individual_assessments#:#Videokonferenzen
 sessions#:#Sitzungen
+not_suggested_courses#:#Nicht empfohlene-Kurse
