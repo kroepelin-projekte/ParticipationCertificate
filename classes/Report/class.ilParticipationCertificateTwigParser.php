@@ -252,6 +252,10 @@ class ilParticipationCertificateTwigParser
                 }
             }
 
+            if (empty($notSuggestedCourses)) {
+                $notSuggestedCourses = '0/0';
+            }
+
             $arr_render = $this->fetchDataCertificate(
                 $usr_id,
                 $refId,
@@ -328,7 +332,6 @@ class ilParticipationCertificateTwigParser
         $part_pdf = new ilParticipationCertificatePDFGenerator();
         foreach ( $coursesToPrint as $courseObj ) {
             $containerRefId = $tree->getParentId($courseObj['ref_id']);
-
             $countIndividualAssessments = 0;
             $countCompletedIndividualAssessments = 0;
             $countSessions = 0;
@@ -439,7 +442,7 @@ class ilParticipationCertificateTwigParser
                 }
             }
 
-            $notSuggestedCourses = $courseObj['not_suggested_courses'] ?? null;
+            $notSuggestedCourses = $courseObj['not_suggested_courses'] ?? '0/0';
 
             $arr_render = $this->fetchDataCertificate(
                 $this->usr_id[0],
@@ -473,6 +476,7 @@ class ilParticipationCertificateTwigParser
                 $countAttendedSessions,
                 $notSuggestedCourses
             );
+
             $part_pdf->generatePDF(
                 $this->twig_template->render($arr_render),
                 count($coursesToPrint),
