@@ -65,9 +65,6 @@
   {% endif %}
   </table>
 </div>
-
-{% endif %}
-
 {% if individual_assesments_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.individual_assessments}}</b></p>
@@ -90,6 +87,7 @@
         </tr>
     </table>
 </div>
+{% endif %}
 {% endif %}
 
 <div class="date"> <p>{{text_values.page1_location_date}}</p>  </div>
@@ -166,7 +164,6 @@
   </table>
 </div>
 <br/>{{text_values.page1_disclaimer}}<br/>
-{% endif %}
 {% if individual_assesments_included %}
 <div class="table_container">
     <p class="p-default"><b>{{text_values.individual_assessments}}</b></p>
@@ -190,10 +187,9 @@
     </table>
 </div>
 {% endif %}
-{% if additional_offer %}
-
 {% endif %}
-  {% if show_footer %}
+
+{% if show_footer %}
   <div class="footer"><i>{{text_values.footer_config}}</i></div>
 {% endif %}
 </div>
