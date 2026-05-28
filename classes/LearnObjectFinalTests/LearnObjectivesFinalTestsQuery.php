@@ -19,7 +19,7 @@ class LearnObjectivesFinalTestsQuery
     objective_tst.obj_id AS tst_obj_id,
     objective_tst.ref_id AS tst_ref_id,
     object_tst.title AS tst_title,
-    tmp_req_percentage.percentage AS tst_req_percentage
+    COALESCE(tmp_req_percentage.percentage, 100) AS tst_req_percentage
 FROM
     crs_objectives
         LEFT JOIN
