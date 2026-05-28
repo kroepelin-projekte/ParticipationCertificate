@@ -59,12 +59,10 @@ FROM
 
     private function getSqlReqPercentage(): string
     {
-        return "SELECT tst_id, 
-objective_id, 
-container_id, 
-percentage, 
-max(qp_seq) 
-from loc_rnd_qpl 
-group by tst_id, objective_id, container_id,percentage";
+        return "SELECT objective_id, course_id as container_id, limit_perc as percentage
+             from loc_user_results
+             where type=".ilLOUserResults::TYPE_QUALIFIED."
+             Group by objective_id,course_id, limit_perc";
+
     }
 }
