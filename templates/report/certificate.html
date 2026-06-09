@@ -14,18 +14,22 @@
  <div class="table_container">
   <p class="p-default"><b>{{text_values.page1_box1_title}}</b></p>
   <table class="table" id="table1">
-    {% if initial_test %}
-    <tr>
-      <td class="td1">{{text_values.page1_box1_row1}}</td>
-      <td class="td2">
-        {% if crsitest_itest_submitted %}
-        Ja
-        {% else %}
-        Nein
-        {% endif %}
-        </td>
-    </tr>
-    {% endif %}
+      <tr>
+          <td class="td1">
+              {% if final_test %}
+              {{text_values.page1_box1_row1_alternative}}
+              {% else %}
+              {{text_values.page1_box1_row1}}
+              {% endif %}
+          </td>
+          <td class="td2">
+              {% if crsitest_itest_submitted %}
+              Ja
+              {% else %}
+              Nein
+              {% endif %}
+          </td>
+      </tr>
     {% if suggested_courses %}
     <tr>
       <td class="td1">{{text_values.page1_box1_row2}}</td>
@@ -119,9 +123,14 @@
 <div class="table_container">
   <p><b>{{text_values.page2_box1_title}}</b></p>
   <table class="table" id="table3">
-  {% if initial_test %}
   <tr>
-    <td class="td1">{{text_values.page2_box1_row1}}</td>
+    <td class="td1">
+        {% if final_test %}
+        {{text_values.page2_box1_row1_alternative}}
+        {% else %}
+        {{text_values.page2_box1_row1}}
+        {% endif %}
+    </td>
     <td class="td2">{{text_values.page2_box1_row1_total_questions}} Fragen aus den Themengebieten:
       <ul>
       {% for key, lo in arr_lo_master_crs %}
@@ -130,7 +139,6 @@
       </ul>
     </td>
   </tr>
-  {% endif %}
   {% if suggested_courses %}
   <tr>
     <td class="td1">{{text_values.page2_box1_row2}}</td>

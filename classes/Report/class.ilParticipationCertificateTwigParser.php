@@ -109,7 +109,7 @@ class ilParticipationCertificateTwigParser
      * @param int|null    $courseRefId
      * @param bool|null   $suggestedCourses
      * @param bool|null   $additionalOffer
-     * @param bool|null   $initialTest
+     * @param bool|null   $finalTest
      * @param bool|null   $homeworkInclude
      * @param bool|null   $individualAssesmentsIncluded
      * @param bool|null   $sessionsIncluded
@@ -134,7 +134,7 @@ class ilParticipationCertificateTwigParser
         ?int $courseRefId = null,
         ?bool $suggestedCourses = true,
         ?bool $additionalOffer = true,
-        ?bool $initialTest = true,
+        ?bool $finalTest = true,
         ?bool $homeworkInclude = true,
         ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true,
@@ -167,6 +167,7 @@ class ilParticipationCertificateTwigParser
         }
 
         $initialTestStates = ilCrsInitialTestStates::getData($this->usr_ids);
+        $finalTestStates = ilCrsFinalTestStates::getData($this->usr_ids);
         $excerciseStates = ilExcerciseStates::getData($this->usr_ids, $this->group_ref_id);
         $learnSuggResults = ilLearnObjectSuggResults::getData($this->usr_ids);
 
@@ -267,6 +268,7 @@ class ilParticipationCertificateTwigParser
                 $userData,
                 $loMasterCourse,
                 $initialTestStates,
+                $finalTestStates,
                 $learnSuggResults,
                 $excerciseStates,
                 $newIassStates,
@@ -279,7 +281,7 @@ class ilParticipationCertificateTwigParser
                 $page1IssuerSignature,
                 $suggestedCourses,
                 $additionalOffer,
-                $initialTest,
+                $finalTest,
                 $homeworkInclude,
                 $individualAssesmentsIncluded,
                 $sessionsIncluded,
@@ -562,7 +564,7 @@ class ilParticipationCertificateTwigParser
      * @param string      $page1IssuerSignature
      * @param bool        $suggestedCourses
      * @param bool        $additionalOffer
-     * @param bool        $initialTest
+     * @param bool        $finalTest
      * @param bool        $homeworkIncluded
      * @param bool|null   $individualAssesmentsIncluded
      * @param bool|null   $sessionsIncluded
@@ -587,6 +589,7 @@ class ilParticipationCertificateTwigParser
         array $userData,
         array $loMasterCourse,
         array $initialTestStates,
+        array $finalTestStates,
         array $learnSuggestionResults,
         array $excerciseStates,
         array $newIassStates,
@@ -599,7 +602,7 @@ class ilParticipationCertificateTwigParser
         string $page1IssuerSignature,
         bool $suggestedCourses,
         bool $additionalOffer,
-        bool $initialTest,
+        bool $finalTest,
         ?bool $homeworkIncluded = true,
         ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true,
@@ -645,11 +648,13 @@ class ilParticipationCertificateTwigParser
         if (is_array($loMasterCourse) && array_key_exists($userId, $loMasterCourse) && is_array($loMasterCourse[$userId])) {
             $useLoMasterCourse = $loMasterCourse[$userId];
         }
+
         if ($this->edited) {
             $initialTestState = $this->array[0];
             $learnSuggestResults = $this->array[1];
             $iassState = $this->array[2];
             $excercisePercentage = $this->array[3];
+            $testState = $initialTestState;
         } else {
 
             //Initial Test
@@ -657,11 +662,25 @@ class ilParticipationCertificateTwigParser
             if (key_exists($userId, $initialTestStates) && is_object($initialTestStates[$userId])) {
                 $initialTestState = $initialTestStates[$userId]->getCrsitestItestSubmitted();
             }
+
+            $testState = $initialTestState;
+
+            //Final Test
+            $finalTestState = 0;
+            if (key_exists($userId, $finalTestStates) && is_object($finalTestStates[$userId])) {
+                $finalTestState = $finalTestStates[$userId]->getCrsqtestQtestSubmitted();
+            }
+
+            if ($finalTest) {
+                $testState = $finalTestState;
+            }
+
             //Percentage final tests of suggested modules
             $learnSuggestResults = 0;
             if (key_exists($userId, $learnSuggestionResults) && is_object($learnSuggestionResults[$userId])) {
                 $learnSuggestResults = $learnSuggestionResults[$userId]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $refId), true);
             }
+
             //Home Work
             $excercisePercentage = 0;
             if (key_exists($userId, $excerciseStates) && is_object($excerciseStates[$userId])) {
@@ -731,7 +750,7 @@ class ilParticipationCertificateTwigParser
         if (!$selfPrint) {
             $suggestedCourses = true;
             $additionalOffer = true;
-            $initialTest = true;
+            $finalTest = true;
         }
 
         if ($eMentoring) {
@@ -743,7 +762,7 @@ class ilParticipationCertificateTwigParser
             'show_ementoring' => $eMentoring,
             'show_footer' => $this->footer,
             'arr_lo_master_crs' => $useLoMasterCourse,
-            'crsitest_itest_submitted' => $initialTestState,
+            'crsitest_itest_submitted' => $testState/*$initialTestState*/,
             'learn_sugg_reached_percentage' => $learnSuggestResults,
             'iass_state' => $percentage,
             'iass_states' => $iassStates,
@@ -765,7 +784,7 @@ class ilParticipationCertificateTwigParser
             'sessions_included' => $sessionsIncluded,
             'suggested_courses' => $suggestedCourses,
             'additional_offer' => $additionalOffer,
-            'initial_test' => $initialTest,
+            'final_test' => $finalTest,
             'not_suggested_courses' => [
                 'label' => $this->pl->txt('not_suggested_courses'),
                 'value' => $notSuggestedCourses
