@@ -760,7 +760,7 @@ if (!is_object($config)) {
                 'config-type' => $con->getConfigType(),
                 'config-value-type' => $con->getConfigValueType(),
                 'config-key' => 'page2_box1_row1_alternative',
-                'config-value' => 'Abschluss Abschlusstest',
+                'config-value' => 'Abschlusstest',
                 'global-config-id' => $con->getGlobalConfigId(),
                 'group-ref-id' => $con->getGroupRefId(),
                 'order-by' => $orderBy,
