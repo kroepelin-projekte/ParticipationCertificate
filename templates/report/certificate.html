@@ -16,13 +16,6 @@
   <table class="table" id="table1">
       {% if not final_test %}
       <tr>
-          <!--<td class="td1">
-              {% if final_test %}
-              {{text_values.page1_box1_row1_alternative}}
-              {% else %}
-              {{text_values.page1_box1_row1}}
-              {% endif %}
-          </td>-->
           <td class="td1">
               {{text_values.page1_box1_row1}}
           </td>
@@ -138,8 +131,7 @@
 <div class="table_container">
   <p><b>{{text_values.page2_box1_title}}</b></p>
   <table class="table" id="table3">
-  {% if final_test %}
-  {% else %}
+  {% if not final_test %}
   <tr>
       <td class="td1">{{text_values.page2_box1_row1}}</td>
       <td class="td2">{{text_values.page2_box1_row1_total_questions}} Fragen aus den Themengebieten:
