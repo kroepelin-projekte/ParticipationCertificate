@@ -103,15 +103,15 @@ class ilLearnObjectFinalTestStates {
 	}
 
     /**
-     * @param int   $refId
+     * @param int   $courseObjId
      * @param array $userIds
      * @return array
      */
-    public static function getDataByCourseRefId(int $refId, array $userIds = array()): array
+    public static function getDataByCourseRefId(int $courseObjId, array $userIds = array()): array
     {
         global $DIC;
         $ilDB = $DIC->database();
-        $result = $ilDB->query(self::getSQLByMasterCourseRefId($refId, $userIds));
+        $result = $ilDB->query(self::getSQLByMasterCourseObjId($courseObjId, $userIds));
         $locftst_data = array();
 
         while ($row = $ilDB->fetchAssoc($result)) {
@@ -143,14 +143,14 @@ class ilLearnObjectFinalTestStates {
 
     /**
      * @param array $userIds
-     * @param int   $refId
+     * @param int   $courseObjId
      * @return string
      */
-    protected static function getSQLByMasterCourseRefId(int $refId, array $userIds = array()): string
+    protected static function getSQLByMasterCourseObjId(int $courseObjId, array $userIds = array()): string
     {
         global $DIC;
-        $ilDB = $DIC->database();
 
+        $ilDB = $DIC->database();
 
         $learn_objectives_sugg_courses_query = new LearnObjectivesSuggCoursesQuery();
         $learn_objectives_sugg_courses_query->createTemporaryTable(LearnObjectivesSuggCoursesQuery::DEFAULT_TMP_TABLE_NAME."_1");
@@ -205,7 +205,7 @@ class ilLearnObjectFinalTestStates {
 			        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
 			        AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
 			        AND  loc_user_results.objective_id = final_tests.crs_objective_id 
-			        WHERE learn_objective_crs.master_crs_id = " . $refId . "
+			        WHERE learn_objective_crs.master_crs_id = " . $ilDB->quote($courseObjId, 'integer')  . "
 			        ORDER BY learn_objective_crs.master_crs_objective_position, final_tests.crs_objective_position";
 
         return $select;
@@ -221,13 +221,13 @@ class ilLearnObjectFinalTestStates {
 		$ilDB->query($sql);
 	}
 
-	public static function createTemporaryTableLearnObjectFinalTest(array $arr_usr_ids = array(), string $table_name = 'tmp_lo_fin_test'): void
+	public static function createTemporaryTableLearnObjectFinalTest(int $courseObjId, array $arr_usr_ids = array(), string $table_name = 'tmp_lo_fin_test'): void
     {
 		global $DIC;
 		$ilDB = $DIC->database();
 
-
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQL($arr_usr_ids) . ")";
+        $ilDB->query("DROP TEMPORARY TABLE IF EXISTS $table_name");
+		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQLByMasterCourseObjId($courseObjId, $arr_usr_ids)/*self::getSQL($arr_usr_ids)*/ . ")";
 
 		//echo $sql."; "; exit;
 

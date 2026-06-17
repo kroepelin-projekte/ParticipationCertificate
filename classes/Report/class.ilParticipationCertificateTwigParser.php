@@ -181,12 +181,12 @@ class ilParticipationCertificateTwigParser
         $this->tpl->setOnScreenMessage('success', $this->pl->txt('print_done'), true);
 
         $refId = $this->group_ref_id;
-
+        $courseObjId = ilObject::_lookupObjectId($refId);
         $groupRefId = ParticipationCertificateHelper::getGroupRefId($courseRefId);
         $newIassStates = ilIassStatesMulti::getData($this->usr_ids, (int) $groupRefId);
         $xaliStates = xaliStates::getData($this->usr_ids, $refId);
         $userData = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
-        $loMasterCourse = ilLearningObjectivesMasterCrs::getData(ilObject::_lookupObjectId($refId), $this->usr_ids);
+        $loMasterCourse = ilLearningObjectivesMasterCrs::getData($courseObjId, $this->usr_ids);
 
         if (!empty($firstname) && !empty($lastname)) {
             $this->setUserData($userData, $firstname, $lastname);
@@ -195,7 +195,7 @@ class ilParticipationCertificateTwigParser
         $initialTestStates = ilCrsInitialTestStates::getData($this->usr_ids);
         $finalTestStates = ilCrsFinalTestStates::getData($this->usr_ids, (int) $refId);
         $excerciseStates = ilExcerciseStates::getData($this->usr_ids, $this->group_ref_id);
-        $learnSuggResults = ilLearnObjectSuggResults::getData($this->usr_ids);
+        $learnSuggResults = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
         $partPdf = new ilParticipationCertificatePDFGenerator();
 
         $logoPath = '';
@@ -423,10 +423,12 @@ class ilParticipationCertificateTwigParser
 
             $this->setUserData($userData, $firstname, $lastname);
 
+            $courseObjId = ilObject::_lookupObjectId((int) $courseObj['ref_id']);
+
             $initialTestStates = ilCrsInitialTestStates::getData($this->usr_ids);
             $finalTestStates = ilCrsFinalTestStates::getData($this->usr_ids, (int) $courseObj['ref_id']);
             $excerciseStates = ilExcerciseStates::getData($this->usr_ids, $courseObj['ref_id']);
-            $learnSugestionResults = ilLearnObjectSuggResults::getData($this->usr_ids);
+            $learnSugestionResults = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
 
             $logoPath = '';
             $logoIsSavedInResourceStorage = false;

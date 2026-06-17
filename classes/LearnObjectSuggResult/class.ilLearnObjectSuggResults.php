@@ -1,11 +1,11 @@
 <?php
 class ilLearnObjectSuggResults {
 
-	public static function getData(array $arr_usr_ids = array()): array
+	public static function getData(int $courseObjId, array $arr_usr_ids = array()): array
     {
 		global $DIC;
 		$ilDB = $DIC->database();
-		$result = $ilDB->query(self::getSQL($arr_usr_ids));
+		$result = $ilDB->query(self::getSQL($courseObjId, $arr_usr_ids));
 		$reached_percentage_data = array();
 		while ($row = $ilDB->fetchAssoc($result)) {
 			$reached_percentage = new ilLearnObjectSuggResult();
@@ -17,25 +17,13 @@ class ilLearnObjectSuggResults {
 			$reached_percentage->setLimitPercentage((int)$row['limit_perc']);
 			$reached_percentage_data[(int)$row['usr_id']] = $reached_percentage;
 		}
-/*
-        $ilDB = $DIC->database();
-        $result = $ilDB->query(self::getSQLObjectiveAverage($arr_usr_ids));
-        while ($row = $ilDB->fetchAssoc($result)) {
-            $reached_percentage = $reached_percentage_data[$row['usr_id']];
-            $reached_percentage->setObjectiveAveragePercentage($row['objective_completed_as_percentage']);
-            $reached_percentage->setCertOutputString($row['objective_completed_as_fraction']);
-
-
-            $reached_percentage_data[$row['usr_id']] = $reached_percentage;
-        }*/
-
 
 		return $reached_percentage_data;
 	}
 
-	protected static function getSQL(array $arr_usr_ids = array()): string
+	protected static function getSQL(int $courseObjId, array $arr_usr_ids = array()): string
     {
-		ilLearnObjectFinalTestStates::createTemporaryTableLearnObjectFinalTest($arr_usr_ids, 'tmp_lo_fin_test');
+		ilLearnObjectFinalTestStates::createTemporaryTableLearnObjectFinalTest($courseObjId,$arr_usr_ids, 'tmp_lo_fin_test');
 
         $select = "SELECT round((SUM(objectives_sug_percentage) / SUM(suggested)),0) as points_as_percentage,
 					usr_id, 
