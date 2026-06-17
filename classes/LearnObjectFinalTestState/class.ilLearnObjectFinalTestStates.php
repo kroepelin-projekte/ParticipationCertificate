@@ -227,9 +227,7 @@ class ilLearnObjectFinalTestStates {
 		$ilDB = $DIC->database();
 
         $ilDB->query("DROP TEMPORARY TABLE IF EXISTS $table_name");
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQLByMasterCourseObjId($courseObjId, $arr_usr_ids)/*self::getSQL($arr_usr_ids)*/ . ")";
-
-		//echo $sql."; "; exit;
+		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQLByMasterCourseObjId($courseObjId, $arr_usr_ids) . ")";
 
 		$ilDB->query($sql);
 	}
