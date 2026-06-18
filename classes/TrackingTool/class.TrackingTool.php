@@ -36,16 +36,14 @@ class TrackingTool
                 continue;
             }
 
-            $total++;
+            foreach ($learningObjective['courses'] as $learningObjectiveCourse) {
 
-            if (
-                isset($learningObjective['count_completed_courses'], $learningObjective['courses']) &&
-                $learningObjective['count_completed_courses'] === count($learningObjective['courses'])
-            ) {
-                $completed++;
+                if ($learningObjectiveCourse['test_percentage'] !== null && $learningObjectiveCourse['test_percentage'] >= $learningObjectiveCourse['test_required_percentage']) {
+                    $completed++;
+                }
+                $total++;
             }
         }
-
         return $total > 0 ? $completed . '/' . $total : '0/0';
     }
 

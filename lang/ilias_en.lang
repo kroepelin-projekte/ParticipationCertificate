@@ -117,3 +117,4 @@ failure_save_config#:#An error occurred while saving the configuration or upload
 individual_assessments#:#Video Conferences
 sessions#:#Sessions
 not_suggested_courses#:#Not suggested courses
+not_suggested_learning_modules#:#Not suggested learning modules

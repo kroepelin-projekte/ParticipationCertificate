@@ -842,7 +842,7 @@ class ilParticipationCertificateTwigParser
             'final_test' => $finalTest,
             'final_test_reached_percent' => $finalTestReachedPointsPercent . '%',
             'not_suggested_courses' => [
-                'label' => $this->pl->txt('not_suggested_courses'),
+                'label' => $this->pl->txt('not_suggested_learning_modules'),
                 'value' => $notSuggestedCourses
             ]
         ];
