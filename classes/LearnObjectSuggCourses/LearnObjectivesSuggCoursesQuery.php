@@ -20,6 +20,8 @@ class LearnObjectivesSuggCoursesQuery {
 
         $table_name = $this->sanitizeTableName($table_name);
 
+        $ilDB->query("DROP TEMPORARY TABLE IF EXISTS $table_name");
+
 		$sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX usc (user_id, target_obj_id, objective_id)) (".$this->getSQL().")";
 		//echo $sql."; ";
 		$ilDB->query($sql);

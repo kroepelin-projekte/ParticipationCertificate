@@ -107,7 +107,7 @@ class ilLearnObjectFinalTestStates {
      * @param array $userIds
      * @return array
      */
-    public static function getDataByCourseRefId(int $courseObjId, array $userIds = array()): array
+    public static function getDataByCourseObjId(int $courseObjId, array $userIds = array()): array
     {
         global $DIC;
         $ilDB = $DIC->database();
@@ -180,10 +180,8 @@ class ilLearnObjectFinalTestStates {
 					
     				CASE WHEN loc_user_results.result_perc >= final_tests.tst_req_percentage then 1 else 0 end as objectives_all_completed,
     				
-    				
     				CASE WHEN exists (SELECT   * from ".LearnObjectivesSuggCoursesQuery::DEFAULT_TMP_TABLE_NAME."_1
  where objective_id = learn_objective_crs.master_crs_objective_id AND  user_id = crs_memb.usr_id)  AND loc_user_results.result_perc >= final_tests.tst_req_percentage then 1 else 0 end as objectives_sug_completed,
- 
  
     				CASE WHEN exists (SELECT   * from ".LearnObjectivesSuggCoursesQuery::DEFAULT_TMP_TABLE_NAME."_2
  where objective_id = learn_objective_crs.master_crs_objective_id AND  user_id = crs_memb.usr_id)  then loc_user_results.result_perc else 0 end as objectives_sug_percentage,
@@ -191,20 +189,20 @@ class ilLearnObjectFinalTestStates {
     				CASE WHEN exists (SELECT   * from ".LearnObjectivesSuggCoursesQuery::DEFAULT_TMP_TABLE_NAME."_3
  where objective_id = learn_objective_crs.master_crs_objective_id AND  user_id = crs_memb.usr_id)  then 1 else 0 end as suggested
  
- 
                     FROM 
                     
-                    (".$learn_objectives_courses_query->getSQL().") as learn_objective_crs
+                    (".$learn_objectives_courses_query->getSQL($courseObjId).") as learn_objective_crs
                     
                     INNER JOIN (SELECT * from ".LearnObjectivesFinalTestsQuery::DEFAULT_TMP_TABLE_NAME.") as final_tests on final_tests.crs_id = learn_objective_crs.learn_objective_crs_obj_id
                     
                     INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $userIds, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
                     
-                    LEFT JOIN
-    loc_user_results ON loc_user_results.course_id = final_tests.crs_id
-			        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
-			        AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
-			        AND  loc_user_results.objective_id = final_tests.crs_objective_id 
+                    LEFT JOIN loc_user_results
+                        ON loc_user_results.course_id = learn_objective_crs.master_crs_id
+                        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
+                        AND loc_user_results.objective_id = learn_objective_crs.master_crs_objective_id
+                        AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
+                        
 			        WHERE learn_objective_crs.master_crs_id = " . $ilDB->quote($courseObjId, 'integer')  . "
 			        ORDER BY learn_objective_crs.master_crs_objective_position, final_tests.crs_objective_position";
 

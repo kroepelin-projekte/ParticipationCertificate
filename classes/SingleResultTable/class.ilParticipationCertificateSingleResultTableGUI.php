@@ -31,6 +31,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 	 */
 	protected array $sugg;
 
+    private int $courseObjId;
+
     /**
      * @throws ilCtrlException
      * @throws ilException
@@ -68,10 +70,13 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 		$this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, [ 'ref_id', 'group_id' ]);
 		$this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
 
+
+        $this->courseObjId = ilObject::_lookupObjId($_GET['ref_id']);
+
 		$cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
 		$this->usr_ids = $cert_access->getUserIdsOfGroup();
 		$this->usr_id = $usr_id;
-		$this->sugg = getLearnSuggs::getData($usr_id);
+		$this->sugg = getLearnSuggs::getData($usr_id, $this->courseObjId);
 
 		parent::__construct($a_parent_obj, $a_parent_cmd);
 
@@ -95,7 +100,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
     {
 		$cols = array();
 
-		$finalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id ]);
+		/*$finalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id ]);*/
+        $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->courseObjId, [$this->usr_id ]);
 		$sorted = $this->sortColumns();
 		$i = 0;
 
@@ -134,9 +140,9 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 	function sortColumns(): array
     {
 		//First sort scores
-		$scores = NewLearningObjectiveScores::getData($this->usr_id);
+		$scores = NewLearningObjectiveScores::getData($this->usr_id, $this->courseObjId);
 		//if the scores are equal, sort because of the weight value
-		$weights = getFineWeights::getData();
+		$weights = getFineWeights::getData($this->courseObjId);
 		$newWeights = (array)$weights;
 
 		$sorting = array();
@@ -183,7 +189,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 
 	public function parseData(): array
     {
-        $arr_FinalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id]);
+        /*$arr_FinalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id]);*/
+        $arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->courseObjId, [$this->usr_id]);
 		$usr_id = $this->usr_id;
 		$rec_array = array();
         $processed = array();

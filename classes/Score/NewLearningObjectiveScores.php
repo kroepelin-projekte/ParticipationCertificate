@@ -4,11 +4,11 @@ use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Suggestion\LearningObjective
 
 class NewLearningObjectiveScores {
 
-	public static function getData(int $usr_id): array
+	public static function getData(int $usr_id, int $courseObjId): array
     {
 		global $DIC;
 		$ilDB = $DIC->database();
-		$result = $ilDB->query(self::getSQL($usr_id));
+		$result = $ilDB->query(self::getSQL($usr_id, $courseObjId));
 		$scores = array();
 
 		while ($row = $ilDB->fetchAssoc($result)) {
@@ -25,7 +25,7 @@ class NewLearningObjectiveScores {
 	}
 
 
-	protected static function getSQL(int $usr_id): string
+	protected static function getSQL(int $usr_id, int $crsObjId): string
     {
 		global $DIC;
 		$ilDB = $DIC->database();
@@ -33,7 +33,7 @@ class NewLearningObjectiveScores {
 					inner join crs_objectives on scores.objective_id = crs_objectives.objective_id 
 					left join " . LearningObjectiveSuggestion::TABLE_NAME . " as suggestion on 
 					crs_objectives.objective_id = suggestion.objective_id AND scores.user_id = suggestion.user_id 
-					where scores.user_id = " . $ilDB->quote($usr_id, "integer") . " 
+					where scores.user_id = " . $ilDB->quote($usr_id, "integer") . " AND scores.course_obj_id = " . $ilDB->quote($crsObjId, "integer") . "
 					order by scores.course_obj_id DESC, coalesce(suggestion.sort, (SELECT MAX(sugg.sort)+1 FROM " .
                     LearningObjectiveSuggestion::TABLE_NAME . " as sugg)) ASC, crs_objectives.position ASC";
 

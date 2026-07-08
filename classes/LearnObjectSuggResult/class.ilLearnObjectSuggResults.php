@@ -23,7 +23,7 @@ class ilLearnObjectSuggResults {
 
 	protected static function getSQL(int $courseObjId, array $arr_usr_ids = array()): string
     {
-		ilLearnObjectFinalTestStates::createTemporaryTableLearnObjectFinalTest($courseObjId,$arr_usr_ids, 'tmp_lo_fin_test');
+		ilLearnObjectFinalTestStates::createTemporaryTableLearnObjectFinalTest($courseObjId, $arr_usr_ids, 'tmp_lo_fin_test');
 
         $select = "SELECT round((SUM(objectives_sug_percentage) / SUM(suggested)),0) as points_as_percentage,
 					usr_id, 

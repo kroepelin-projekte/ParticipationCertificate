@@ -298,7 +298,8 @@ class ilParticipationCertificateResultTableGUI implements I\DataRetrieval
         $arr_usr_data = $this->excludeUserIdIfFiltered($arr_usr_data);
         $arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
         $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
-        $arr_final_tests = ilLearnObjectFinalTestStates::getData($this->usr_ids);
+        /*$arr_final_tests = ilLearnObjectFinalTestStates::getData($this->usr_ids);*/
+        $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, $this->usr_ids);
         $arr_new_iass_states = ilIassStatesMulti::getData($this->usr_ids, $this->refId);
         $arr_xali_states = xaliStates::getData($this->usr_ids, $this->refId);
         $arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $this->refId);

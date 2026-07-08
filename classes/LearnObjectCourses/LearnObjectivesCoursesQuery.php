@@ -3,9 +3,13 @@ class LearnObjectivesCoursesQuery {
 
 	const DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_courses';
 
-	public function getSQL(): string
+	public function getSQL($courseObjId): string
     {
-		return "SELECT  crs_objectives.crs_id as master_crs_id, 
+        global $DIC;
+
+        $ilDB = $DIC->database();
+
+        return "SELECT  crs_objectives.crs_id as master_crs_id, 
 		master_crs_obj.title as master_crs_title,
 		crs_objectives.title as learn_objective_title,
 		crs_objectives.objective_id as master_crs_objective_id, 
@@ -18,7 +22,8 @@ class LearnObjectivesCoursesQuery {
         inner join object_data as master_crs_obj on master_crs_obj.obj_id = crs_objectives.crs_id
 		inner join crs_objective_lm as objective_crsr on objective_crsr.objective_id = crs_objectives.objective_id and objective_crsr.type = 'crsr'
 		inner join container_reference as real_objective_crs on real_objective_crs.obj_id = objective_crsr.obj_id
-        inner join object_data as objective_crs_obj on objective_crs_obj.obj_id = real_objective_crs.target_obj_id";
+        inner join object_data as objective_crs_obj on objective_crs_obj.obj_id = real_objective_crs.target_obj_id 
+        WHERE crs_objectives.crs_id = " . $ilDB->quote($courseObjId, 'integer');
 	}
 
 	/**

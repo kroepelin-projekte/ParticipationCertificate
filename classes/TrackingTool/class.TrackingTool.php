@@ -58,62 +58,67 @@ class TrackingTool
         bool $printIsAsynchronous,
         ?string $refId = null
     ): array {
-        $sorted = self::sortByScore($userId);
-
         $trackingLearningObjectives = [];
-        if (!empty($refId)) {
 
-            $courseObjId = ilObjCourse::_lookupObjectId($refId);
+        if (empty($refId)) {
+            return $trackingLearningObjectives;
+        }
 
-            if ($printIsAsynchronous) {
-                $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseRefId($courseObjId, [$userId]);
-            } else {
-                $finalTestsStates = ilLearnObjectFinalTestStates::getData([$userId]);
-            }
 
-            $requiredPercentages = [];
-            foreach ($finalTestsStates as $key => $finalTestState) {
-                foreach ($finalTestState as $k => $value) {
-                    $masterCrsId = $value[0]->getLocftestMasterCrsId();
-                    $dataFinalTest = self::getDataFinalTest($courseObjId);
+        $courseObjId = ilObjCourse::_lookupObjectId($refId);
 
-                    $tst = null;
-                    if (!empty($dataFinalTest['qtest'])) {
-                        $tst = new ilObjTest($dataFinalTest['qtest'], true);
-                    }
+        $sorted = self::sortByScore($userId, $courseObjId);
 
-                    if ($tst instanceof ilObjTest) {
-                        $schema = $tst->getMarkSchema();
-                        foreach ($schema->getMarkSteps() as $mark) {
-                            if ($mark->getPassed()) {
-                                $requiredPercentages[$masterCrsId] = (int) $mark->getMinimumLevel();
-                                break;
-                            }
+
+        /* if ($printIsAsynchronous) {
+             $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, [$userId]);
+         } else {
+             dd("OK");
+             $finalTestsStates = ilLearnObjectFinalTestStates::getData([$userId]);
+         }*/
+        $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, [$userId]);
+
+        $requiredPercentages = [];
+        foreach ($finalTestsStates as $key => $finalTestState) {
+            foreach ($finalTestState as $k => $value) {
+                $masterCrsId = $value[0]->getLocftestMasterCrsId();
+                $dataFinalTest = self::getDataFinalTest($courseObjId);
+
+                $tst = null;
+                if (!empty($dataFinalTest['qtest'])) {
+                    $tst = new ilObjTest($dataFinalTest['qtest'], true);
+                }
+
+                if ($tst instanceof ilObjTest) {
+                    $schema = $tst->getMarkSchema();
+                    foreach ($schema->getMarkSteps() as $mark) {
+                        if ($mark->getPassed()) {
+                            $requiredPercentages[$masterCrsId] = (int) $mark->getMinimumLevel();
+                            break;
                         }
                     }
-
-                    if (empty($requiredPercentages)) {
-                        $requiredPercentages[$masterCrsId] = 60;
-                    }
                 }
-            }
 
-            $learningObjectives = [];
-            if (count($finalTestsStates)) {
-                $learningObjectives = self::getLearningObjectives($sorted, $finalTestsStates[$userId]);
-            }
-
-            if( !empty($finalTestsStates[$userId])) {
-                $trackingToolData = self::getTrackingToolData($finalTestsStates, $userId);
-
-                $trackingLearningObjectives = self::storeCoursesInLearningObjectives(
-                    $learningObjectives,
-                    $trackingToolData,
-                    $requiredPercentages
-                );
+                if (empty($requiredPercentages)) {
+                    $requiredPercentages[$masterCrsId] = 60;
+                }
             }
         }
 
+        $learningObjectives = [];
+        if (count($finalTestsStates)) {
+            $learningObjectives = self::getLearningObjectives($sorted, $finalTestsStates[$userId]);
+        }
+
+        if( !empty($finalTestsStates[$userId])) {
+            $trackingToolData = self::getTrackingToolData($finalTestsStates, $userId);
+
+            $trackingLearningObjectives = self::storeCoursesInLearningObjectives(
+                $learningObjectives,
+                $trackingToolData,
+                $requiredPercentages
+            );
+        }
         return $trackingLearningObjectives;
     }
 
@@ -129,6 +134,7 @@ class TrackingTool
 
         foreach ($finalTestsStates[$userId] as $finalTests) {
             foreach ($finalTests as $key => $value) {
+                /** @var ilLearnObjectFinalTestState $value */
                 if ($value->getLocftestCrsObjId()) {
                     // check if data already exists
                     $crsObjId = $value->getLocftestCrsObjId();
@@ -205,23 +211,26 @@ class TrackingTool
                         'default' => true,
                         'score' => $sort_arr['score'],
                         'width' => 'auto',
+                        'weight' => $sort_arr['weight'],
                         'suggested' => $sort_arr['suggested'],
                     );
                 }
             }
         }
+
         return $learningObjectives;
     }
 
     /**
      * @param int $userId
+     * @param int $courseObjId
      * @return array
      */
-    private static function sortByScore(int $userId): array
+    private static function sortByScore(int $userId,int $courseObjId): array
     {
-        $scores = NewLearningObjectiveScores::getData($userId);
-        $weights = getFineWeights::getData();
-        $suggs = getLearnSuggs::getData($userId);
+        $scores = NewLearningObjectiveScores::getData($userId, $courseObjId);
+        $weights = getFineWeights::getData($courseObjId);
+        $suggs = getLearnSuggs::getData($userId, $courseObjId);
 
         $sorting = [];
 
@@ -234,8 +243,6 @@ class TrackingTool
             if (key_exists('weight_fine_' . $score->getObjectiveId(), $weights)) {
                 $fine = $weights['weight_fine_' . $score->getObjectiveId()];
             }
-
-
 
             $suggested = false;
             foreach ($suggs as $sugg) {
