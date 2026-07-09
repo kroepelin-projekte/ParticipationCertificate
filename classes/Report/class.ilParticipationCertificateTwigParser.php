@@ -281,8 +281,7 @@ class ilParticipationCertificateTwigParser
 
             $notSuggestedCourses = TrackingTool::getNotRecommendedLearningObjectivesForCertificate(
                 (int) $usr_id,
-                $courseRefId,
-                $printIsAsynchronous
+                $courseRefId
             );
 
             $finalTestReachedPointsPercent = 0;
@@ -489,8 +488,7 @@ class ilParticipationCertificateTwigParser
 
             $notSuggestedCourses = TrackingTool::getNotRecommendedLearningObjectivesForCertificate(
                 $userId,
-                $courseObj['ref_id'],
-                $printIsAsynchronous
+                $courseObj['ref_id']
             );
 
             $finalTestReachedPointsPercent = 0;

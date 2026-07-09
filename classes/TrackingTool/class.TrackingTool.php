@@ -7,24 +7,22 @@ use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Log\Log;
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Config\ConfigProvider;
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\LearningObjective\LearningObjectiveCourse;
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\User\User;
+use JetBrains\PhpStorm\NoReturn;
 
 class TrackingTool
 {
     /**
      * @param int  $userId
      * @param int  $courseRefId
-     * @param bool $printIsAsynchronous
      * @return string|null
      */
     #[NoReturn]
     public static function getNotRecommendedLearningObjectivesForCertificate(
         int $userId,
-        int $courseRefId,
-        bool $printIsAsynchronous
+        int $courseRefId
     ): string|null {
         $learningObjectives = self::getTrackingToolLearningObjectives(
             $userId,
-            $printIsAsynchronous,
             $courseRefId
         );
 
@@ -55,7 +53,6 @@ class TrackingTool
      */
     public static function getTrackingToolLearningObjectives(
         int $userId,
-        bool $printIsAsynchronous,
         ?string $refId = null
     ): array {
         $trackingLearningObjectives = [];
@@ -64,18 +61,8 @@ class TrackingTool
             return $trackingLearningObjectives;
         }
 
-
         $courseObjId = ilObjCourse::_lookupObjectId($refId);
-
         $sorted = self::sortByScore($userId, $courseObjId);
-
-
-        /* if ($printIsAsynchronous) {
-             $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, [$userId]);
-         } else {
-             dd("OK");
-             $finalTestsStates = ilLearnObjectFinalTestStates::getData([$userId]);
-         }*/
         $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, [$userId]);
 
         $requiredPercentages = [];
