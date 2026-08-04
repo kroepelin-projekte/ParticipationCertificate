@@ -259,6 +259,7 @@ class ilParticipationCertificateTwigParser
             $this->usr_id = $this->excludeUsersFromPrintIfMissingUserData($this->usr_id);
         }
 
+        $renderedCertificates = [];
         foreach ($this->usr_id as $usr_id) {
             $countIndividualAssessments = 0;
             $countCompletedIndividualAssessments = 0;
@@ -330,13 +331,13 @@ class ilParticipationCertificateTwigParser
                 $countAttendedSessions,
                 $notSuggestedCourses
             );
-
-            $partPdf->generatePDF(
-                $this->twig_template->render($arr_render),
-                count($this->usr_id),
-                $printIsAsynchronous
-            );
+            $renderedCertificates[] = $this->twig_template->render($arr_render);
         }
+
+        $partPdf->generatePDF(
+            $renderedCertificates,
+            $printIsAsynchronous
+        );
     }
 
     /**
@@ -358,6 +359,7 @@ class ilParticipationCertificateTwigParser
      * @throws arException
      * @throws ilDateTimeException
      */
+    #[NoReturn]
     public function parseDataMultipleCourses(
         array $coursesToPrint,
         string $firstname,
@@ -370,6 +372,7 @@ class ilParticipationCertificateTwigParser
     ): void {
         global $DIC;
 
+        $renderedCertificates = [];
         $tree = $DIC->repositoryTree();
         $part_pdf = new ilParticipationCertificatePDFGenerator();
         foreach ( $coursesToPrint as $courseObj ) {
@@ -470,7 +473,7 @@ class ilParticipationCertificateTwigParser
                 if ($isFile && !empty($file) && !$file->getResourceStorage()) {
                     $page1IssuerSignature = ilParticipationCertificateConfig::returnPicturePath('absolute', $courseObj['ref_id'], ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME);
 
-                } else if(!empty($file) && $file->getResourceStorage()) {
+                } elseif(!empty($file) && $file->getResourceStorage()) {
                     $signatureIsSavedInResourceStorage = true;
                 }
             } else {
@@ -537,13 +540,13 @@ class ilParticipationCertificateTwigParser
                 $countAttendedSessions,
                 $notSuggestedCourses
             );
-
-            $part_pdf->generatePDF(
-                $this->twig_template->render($arr_render),
-                count($coursesToPrint),
-                $printIsAsynchronous
-            );
+            $renderedCertificates[] = $this->twig_template->render($arr_render);
         }
+
+        $part_pdf->generatePDF(
+            $renderedCertificates,
+            $printIsAsynchronous
+        );
     }
 
     /**

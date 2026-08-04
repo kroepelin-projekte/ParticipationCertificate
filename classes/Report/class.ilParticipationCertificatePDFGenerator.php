@@ -5,6 +5,7 @@ use setasign\Fpdi\PdfParser\PdfParserException;
 use setasign\Fpdi\PdfParser\Type\PdfTypeException;
 use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use Mpdf\MpdfException;
+use JetBrains\PhpStorm\NoReturn;
 
 /**
  * Class ilParticipationCertificatePDFGenerator
@@ -55,103 +56,45 @@ class ilParticipationCertificatePDFGenerator
      * @throws MpdfException
      * @throws PdfParserException
      */
+    #[NoReturn]
     public function generatePDF(
-        string $rendered,
-        int $total_users,
+        array $renderedCertificates,
         bool $printIsAsynchronous = false
     ): void {
-        global $printCount, $tempFile;
 
         require_once __DIR__ . '/../../vendor/autoload.php';
 
-        //mPDF Instanz wird erzeugt. Mit Margin-Left-Right:20.
         $mpdf = new Mpdf([
             'tempDir' => '/tmp/mpdf',
             'default_font' => 'dejavusans'
         ]);
 
-        //Css file wird geladen
-        $css = file_get_contents('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/report/Teilnahmebescheinigung.css');
-        $printCount++;
+        $css = file_get_contents(
+            './' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY .
+            '/templates/report/Teilnahmebescheinigung.css'
+        );
 
-        //Checkt ob es nur einen User in der Gruppe hat. Wenn True wird das PDf direkt nur für diesen gedruckt
-        if ($total_users == 1) {
+        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
 
-            if ($printIsAsynchronous) {
-                $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-                $mpdf->WriteHTML($rendered, \Mpdf\HTMLParserMode::HTML_BODY);
-
-                // return PDF as a base64 string
-                $pdfString = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
-
-                echo json_encode([
-                    'success' => true,
-                    'pdf_base64' => base64_encode($pdfString)
-                ]);
-                exit;
-            }
-
-            $mpdf->WriteHTML($css, 1);
-
-            $mpdf->WriteHTML($rendered, 2);
-            $mpdf->Output($this->pl->txt('plugin') . '.pdf', 'D');
-            exit;
-
-
-        }
-        //Checkt ob es der erste Durchlauf ist. Wenn True wird das erste PDF erzeugt und auf dem Server abgelegt.
-        if ($printCount == 1) {
-            $mpdf->WriteHTML($css, 1);
-            $mpdf->WriteHTML($rendered, 2);
-            $mpdf->Output($tempFile . '.pdf', 'F');
-        } elseif ($printCount == $total_users) {
-
-
-            if ($printIsAsynchronous) {
-                $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-                $mpdf->WriteHTML($rendered, \Mpdf\HTMLParserMode::HTML_BODY);
-
-                $page = $mpdf->SetSourceFile($tempFile . '.pdf');
-                for ($i = 1; $i <= $page; $i++) {
-                    $mpdf->AddPage();
-                    $tplID = $mpdf->ImportPage($i);
-                    $mpdf->UseTemplate($tplID);
-                }
-
-                // return PDF as a base64 string
-                $pdfString = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
-
-                echo json_encode([
-                    'success' => true,
-                    'pdf_base64' => base64_encode($pdfString)
-                ]);
-                exit;
-            }
-
-            /* Checkt ob es der letzte Durchlauf ist. Wenn ja wird das letzte PDF erzeugt und das vorhandene PDF auf dem Server
-			 wird hinten an das erzeugte PDF angehängt. Anschliessend wird das fertige PDF dem User im Browser als Download angeboten. */
-            $mpdf->WriteHTML($css, 1);
-            $mpdf->WriteHTML($rendered, 2);
-            $page = $mpdf->SetSourceFile($tempFile . '.pdf');
-            for ($i = 1; $i <= $page; $i++) {
+        foreach ($renderedCertificates as $index => $rendered) {
+            if ($index > 0) {
                 $mpdf->AddPage();
-                $tplID = $mpdf->ImportPage($i);
-                $mpdf->UseTemplate($tplID);
             }
-            $mpdf->Output($this->pl->txt("plugin") . '.pdf', 'D');
-            exit;
-        } else {
-            /* Wenn es nicht der erste oder letzte Durchlauf ist, wird ein neues PDF erzeugt. Die bereits erzeugten PDF auf dem Server
-            werden hinten angehängt. Danach wird es wieder auf dem Server gespeichert um im nächsten Durchlauf wieder anzuhängen.*/
-            $mpdf->WriteHTML($css, 1);
-            $mpdf->WriteHTML($rendered, 2);
-            $page = $mpdf->SetSourceFile($tempFile . '.pdf');
-            for ($i = 1; $i <= $page; $i++) {
-                $mpdf->AddPage();
-                $tplID = $mpdf->ImportPage($i);
-                $mpdf->UseTemplate($tplID);
-            }
-            $mpdf->Output($tempFile . '.pdf', 'F');
+
+            $mpdf->WriteHTML($rendered, \Mpdf\HTMLParserMode::HTML_BODY);
         }
+
+        if ($printIsAsynchronous) {
+            $pdfString = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+            echo json_encode([
+                'success' => true,
+                'pdf_base64' => base64_encode($pdfString)
+            ]);
+            exit;
+        }
+
+        $mpdf->Output($this->pl->txt('plugin') . '.pdf', 'D');
+        exit;
     }
 }
