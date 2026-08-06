@@ -156,6 +156,7 @@ class ilParticipationCertificateTwigParser
      * @throws ilDateTimeException
      * @throws ilObjectNotFoundException
      */
+    #[NoReturn]
     public function parseData(
         bool $selfPrint = false,
         bool $printIsAsynchronous = false,
@@ -164,7 +165,6 @@ class ilParticipationCertificateTwigParser
         ?bool $additionalOffer = true,
         ?bool $finalTest = true,
         ?bool $homeworkInclude = true,
-        ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true,
         ?string $firstname = null,
         ?string $lastname = null
@@ -321,7 +321,6 @@ class ilParticipationCertificateTwigParser
                 $additionalOffer,
                 $finalTest,
                 $homeworkInclude,
-                $individualAssesmentsIncluded,
                 $sessionsIncluded,
                 $firstname,
                 $lastname,
@@ -367,7 +366,6 @@ class ilParticipationCertificateTwigParser
         int $userId,
         bool $printIsAsynchronous = false,
         ?bool $homeworkInclude = true,
-        ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true
     ): void {
         global $DIC;
@@ -530,7 +528,6 @@ class ilParticipationCertificateTwigParser
                 $courseObj['additional_offer'] ?? false,
                 $courseObj['final_test'] ?? false,
                 $homeworkInclude,
-                $individualAssesmentsIncluded,
                 $sessionsIncluded,
                 $firstname,
                 $lastname,
@@ -607,6 +604,8 @@ class ilParticipationCertificateTwigParser
      * @param array       $userData
      * @param array       $loMasterCourse
      * @param array       $initialTestStates
+     * @param array       $finalTestStates
+     * @param float       $finalTestReachedPointsPercent
      * @param array       $learnSuggestionResults
      * @param array       $excerciseStates
      * @param array       $newIassStates
@@ -621,7 +620,6 @@ class ilParticipationCertificateTwigParser
      * @param bool        $additionalOffer
      * @param bool        $finalTest
      * @param bool        $homeworkIncluded
-     * @param bool|null   $individualAssesmentsIncluded
      * @param bool|null   $sessionsIncluded
      * @param string|null $firstname
      * @param string|null $lastname
@@ -660,7 +658,6 @@ class ilParticipationCertificateTwigParser
         bool $additionalOffer,
         bool $finalTest,
         ?bool $homeworkIncluded = true,
-        ?bool $individualAssesmentsIncluded = true,
         ?bool $sessionsIncluded = true,
         ?string $firstname = null,
         ?string $lastname = null,
@@ -826,17 +823,11 @@ class ilParticipationCertificateTwigParser
             'logo_path' => $logoPath,
             'page1_issuer_signature' => $page1IssuerSignature,
             'standard_value' => $certConfigValue,
-            'individual_assessments_heading' => $this->pl->txt('individual_assessments_heading'),
-            'individual_assessments' => [
-                'label' => $this->pl->txt('individual_assessments'),
-                'value' => $countCompletedIndividualAssessments . '/' . $countIndividualAssessments
-            ],
             'sessions' => [
                 'label' => $this->pl->txt('sessions'),
-                'value' => $countAttendedSessions . '/' . $countSessions
+                'value' => ($countAttendedSessions + $countCompletedIndividualAssessments) . '/' . ($countSessions + $countIndividualAssessments)
             ],
             'homework_included' => $homeworkIncluded,
-            'individual_assesments_included' => $individualAssesmentsIncluded,
             'sessions_included' => $sessionsIncluded,
             'suggested_courses' => $suggestedCourses,
             'additional_offer' => $additionalOffer,

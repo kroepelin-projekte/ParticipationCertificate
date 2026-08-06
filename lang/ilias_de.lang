@@ -5,8 +5,8 @@ cols_lastname#:#Nachname (Druck)
 cols_alias_firstname#:#Vorname (sichtbar)
 cols_alias_lastname#:#Nachname (sichtbar)
 cols_initial_test_finished#:#Einstiegstest abgeschlossen
-cols_result_qualifying#:#Bearbeitung der empfohlenen Mathematik-Lernmodule
-cols_results_qualifying#:#Resultate der durchgeführten Tests der empfohlenen Mathematik-Lernmodule
+cols_result_qualifying#:#Bearbeitung der empfohlenen Lernmodule
+cols_results_qualifying#:#Resultate der durchgeführten Tests der empfohlenen Lernmodule
 cols_eMentoring_finished#:#Aktive Teilnahme an Videokonferenzen
 cols_eMentoring_homework#:#Bearbeitung der Aufgaben zu überfachlichen Themen (Anzahl)
 cols_eMentoring_percentage#:#Bearbeitung der Aufgaben zu überfachlichen Themen in Prozent
@@ -87,7 +87,7 @@ config_reseted#:#Die Konfiguration wurde zurückgesetzt
 calculation_by_points#:#Berechnung basierend auf Punkten
 calculation_by_completed_learning_objective#:#Berechnung aufgrund der Anzahl der erreichten Lernziele
 calculation_by_highest_value#:#Berechnung beider Varianten. Es gilt der jeweils bessere Wert.
-calculation_type_processing_state_suggested_objectives#:#Berechnungstyp 'Bearbeitung der empfohlenen Mathematik-Lernmodule'
+calculation_type_processing_state_suggested_objectives#:#Berechnungstyp 'Bearbeitung der empfohlenen Lernmodule'
 config_result_table#:#Konfiguration Zeitraum & Berechnungstyp
 noname_noprint#:#Das Drucken der Teilnahmebescheinigung ist erst möglich wenn Sie Vor- und Nachname eingegeben haben. 
 helper_action_pre#:#Hier können Sie Ihre

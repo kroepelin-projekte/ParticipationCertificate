@@ -463,7 +463,7 @@ class ilParticipationCertificateResultGUI
     /**
      * @throws ilCtrlException
      */
-    protected function initTable(int $refId): string
+    protected function initTable(): string
     {
         global $DIC;
 
