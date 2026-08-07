@@ -97,9 +97,9 @@ class ilLearnObjectFinalTestStates
                     INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $userIds, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
                     
                     LEFT JOIN loc_user_results
-                        ON loc_user_results.course_id = learn_objective_crs.master_crs_id
+                        ON loc_user_results.course_id = final_tests.crs_id
                         AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
-                        AND loc_user_results.objective_id = learn_objective_crs.master_crs_objective_id
+                        AND loc_user_results.objective_id = final_tests.crs_objective_id
                         AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
                         
 			        WHERE learn_objective_crs.master_crs_id = " . $ilDB->quote($courseObjId, 'integer')  . "
