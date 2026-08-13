@@ -290,11 +290,11 @@ class ilParticipationCertificateTwigParser
                 !empty($finalTestStates[(int) $usr_id]['test_active_id']) &&
                 !empty($finalTestStates[(int) $usr_id]['crsqtest_qtest_tries'])
             ) {
-                $finalTestReachedPointsPercent = $this->getFinalTestReachedPointsInPercent(
+                $finalTestReachedPointsPercent = round($this->getFinalTestReachedPointsInPercent(
                     $refId,
                     $finalTestStates[ (int) $usr_id]['test_active_id'],
                     $finalTestStates[ (int) $usr_id]['crsqtest_qtest_tries']
-                );
+                ), 0);
             }
 
             $arr_render = $this->fetchDataCertificate(

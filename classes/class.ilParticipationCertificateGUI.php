@@ -116,8 +116,6 @@ class ilParticipationCertificateGUI
                     case self::CMD_RESULT_TABLE_CONFIG:
                     case self::CMD_SELF_PRINT:
                     case self::CMD_SELF_PRINT_SAVE:
-                        /*case self::CMD_PRINT_PDF:
-                        case self::CMD_PRINT_PDF_WITHOUT_MENTORING:*/
                         $this->{$cmd}();
                         break;
                     default:

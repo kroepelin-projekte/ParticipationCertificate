@@ -90,9 +90,7 @@ class ilParticipationCertificateResultModificationGUI
         $this->arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
         $this->arr_iass_states = ilIassStates::getData($this->usr_ids);
         $this->arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $_GET['ref_id']);
-        /*$this->arr_FinalTestsStates = ilLearnObjectFinalTestStates::getData($this->usr_ids);*/
         $this->arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, $this->usr_ids);
-        /*$this->array_obj_ids = ilLearnObjectFinalTestStates::getData($this->usr_ids);*/
         $this->array_obj_ids = $this->arr_FinalTestsStates;
 
         $this->ctrl->setParameterByClass(ilParticipationCertificateResultModificationGUI::class, 'edited', true);

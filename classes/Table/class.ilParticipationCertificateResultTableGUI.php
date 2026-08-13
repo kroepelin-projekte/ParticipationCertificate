@@ -382,9 +382,13 @@ class ilParticipationCertificateResultTableGUI implements I\DataRetrieval
                 }
             }
 
-            if (key_exists($usr_id, $arr_xali_states) && is_object($arr_xali_states[$usr_id])) {
-                $countPassed = $countPassed + $arr_xali_states[$usr_id]->getPassed();
-                $countTests = $countTests + $arr_xali_states[$usr_id]->getTotal();
+            $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->refId));
+            $countTests = $countTests + count($sessions);
+            foreach ($sessions as $session) {
+                $eventParticipants = new ilEventParticipants($session['obj_id']);
+                if ($eventParticipants->hasParticipated($usr_id)) {
+                    $countPassed++;
+                }
             }
 
             if($countTests > 0) {

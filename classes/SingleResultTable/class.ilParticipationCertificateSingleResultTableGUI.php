@@ -189,7 +189,6 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 
 	public function parseData(): array
     {
-        /*$arr_FinalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id]);*/
         $arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->courseObjId, [$this->usr_id]);
 		$usr_id = $this->usr_id;
 		$rec_array = array();
