@@ -1,5 +1,7 @@
 <?php
 
+use ILIAS\DI\Container;;
+
 /**
  * Class ilParticipationCertificatePlugin
  *
@@ -7,42 +9,24 @@
  */
 class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 {
-    public const PLUGIN_ID = "dhbwparticipationpdf";
+    public const string PLUGIN_ID = 'dhbwparticipationpdf';
 
-    public const PLUGIN_NAME = "ParticipationCertificate";
+    public const string PLUGIN_NAME = 'ParticipationCertificate';
 
-    public const PLUGIN_CLASS_NAME = self::class;
+    public const string PLUGIN_CLASS_NAME = self::class;
 
-    public const PLUGIN_DIRECTORY = "Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ParticipationCertificate";
+    public const string PLUGIN_DIRECTORY = 'Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ParticipationCertificate';
 
-    public const CERTIFICATIONS_PATH = 'dhbw_part_cert';
+    public const string CERTIFICATIONS_PATH = 'dhbw_part_cert';
 
-    public const PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB = '1.2.1';
+    public const string PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB = '1.2.1';
 
-    public const PLUGIN_VERSION_FOR_INSERTING_NEW_CONFIGS = '2.1.0';
+    public const string PLUGIN_VERSION_FOR_INSERTING_NEW_CONFIGS = '2.1.0';
 
     protected static ?ilParticipationCertificatePlugin $instance = null;
 
-    private $pluginInfo;
+    private ilPluginInfo $pluginInfo;
 
-
-    public function getPluginName(): string
-    {
-        return self::PLUGIN_NAME;
-    }
-    public static function getInstance(): ilParticipationCertificatePlugin
-    {
-        global $DIC;
-        if (is_null(self::$instance)) {
-            /** @var $component_factory ilComponentFactory */
-            $component_factory = $DIC['component.factory'];
-            /** @var $plugin ilParticipationCertificatePlugin */
-            $plugin = $component_factory->getPlugin(ilParticipationCertificatePlugin::PLUGIN_ID);
-            self::$instance = $plugin;
-        }
-
-        return self::$instance;
-    }
     protected ilDBInterface $db;
 
     public function __construct(
@@ -58,33 +42,62 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
         $this->pluginInfo = $this->getPluginInfo();
     }
 
+    public function getPluginName(): string
+    {
+        return self::PLUGIN_NAME;
+    }
+
+    /**
+     * @return ilParticipationCertificatePlugin
+     */
+    public static function getInstance(): ilParticipationCertificatePlugin
+    {
+        global $DIC;
+
+        /** @var ilParticipationCertificatePlugin $plugin */
+        $plugin = $DIC['component.factory']->getPlugin(self::PLUGIN_ID);
+
+        return $plugin;
+    }
+
+    /*public function exchangeUIRendererAfterInitialization(Container $dic): Closure
+    {
+        $renderer = $dic->raw('ui.renderer');
+        $ctrl = $dic->ctrl();
+        $cmd_class = $ctrl->getCmdClass();
+        $cmd = $ctrl->getCmd();
+
+
+        return $renderer;
+    }*/
+
     protected function afterUninstall(): void
     {
-        $this->db->dropTable('participationcert', false);
-        $this->db->dropTable('dhbw_part_cert_ob_conf', false);
-        $this->db->dropTable('dhbw_part_cert_conf', false);
-        $this->db->dropTable('dhbw_part_cert_gl_conf', false);
-        $this->db->dropTable('dhbw_part_cert_files', false);
-
-        $sequences = [
+        $tables = [
             'participationcert',
             'dhbw_part_cert_ob_conf',
             'dhbw_part_cert_conf',
             'dhbw_part_cert_gl_conf',
             'dhbw_part_cert_files'
         ];
-        foreach ($sequences as $sequence) {
+
+        foreach ($tables as $table) {
             try {
-                $this->db->dropSequence($sequence);
+                $this->db->dropTable($table, false);
+                $this->db->dropSequence($table);
             } catch (Exception $e) {
                 //ignore
             }
         }
     }
 
+    /**
+     * @param string $imageName
+     * @return string
+     */
     public function getImagePath(string $imageName): string
     {
-        return $this->getDirectory() . "/templates/images/" . $imageName;
+        return $this->getDirectory() . '/templates/images/' . $imageName;
     }
 
     /**
@@ -161,7 +174,7 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
             if ($globalConfigId !== 0 && !in_array($globalConfigId, $configWasCreatedForForGlobalIds)) {
                 /**
                  * @var ilParticipationCertificateConfig $config
-                 */
+                 **/
                 $orderBy = max($orderByGlobalIds[$globalConfigId]) + 1;
 
                 $newConfigIndividualAssessments = new ilParticipationCertificateConfig();

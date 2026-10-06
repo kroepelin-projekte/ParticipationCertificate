@@ -24,23 +24,27 @@ class ilParticipationCertificateAccess {
 		$this->db = $DIC->database();
 	}
 
-
+    /**
+     * @return bool
+     */
 	public function hasCurrentUserWriteAccess(): bool
 	{
-		if ($this->access->checkAccess("write", "", $this->group_ref_id)) {
+		if ($this->access->checkAccess('write', '', $this->group_ref_id)) {
 			return true;
 		}
-		if ($this->access->checkAccess("read_learning_progress", "", $this->group_ref_id)) {
+		if ($this->access->checkAccess('read_learning_progress', '', $this->group_ref_id)) {
 			return true;
 		}
 
 		return false;
 	}
 
-
+    /**
+     * @return bool
+     */
 	public function hasCurrentUserAdminAccess(): bool
 	{
-		if ($this->access->checkAccess("write", "", $this->group_ref_id)) {
+		if ($this->access->checkAccess('write', '', $this->group_ref_id)) {
 			return true;
 		}
 
@@ -50,9 +54,9 @@ class ilParticipationCertificateAccess {
 	/**
 	 * @throws Exception
 	 */
-	public function hasCurrentUserPrintAccess(?bool $printByCourseMember = false): bool
+	public function hasCurrentUserPrintAccess(?bool $print_by_course_member = false): bool
 	{
-        if (!$printByCourseMember && $this->hasCurrentUserWriteAccess()) {
+        if (!$print_by_course_member && $this->hasCurrentUserWriteAccess()) {
             return true;
         }
 
@@ -66,7 +70,7 @@ class ilParticipationCertificateAccess {
 	public function isSelfPrintEnabled(): bool
 	{
 		// formerly hasCurrentUserPrintAccess
-		$enable_self_print = boolval(ilParticipationCertificateConfig::getConfig("enable_self_print", $this->group_ref_id));
+		$enable_self_print = boolval(ilParticipationCertificateConfig::getConfig('enable_self_print', $this->group_ref_id));
 
 		if ($enable_self_print) {
 			$start = new DateTime(ilParticipationCertificateConfig::getConfig('self_print_start', $this->group_ref_id));
@@ -79,29 +83,36 @@ class ilParticipationCertificateAccess {
 		return false;
 	}
 
-
+    /**
+     * @return bool
+     */
 	public function hasCurrentUserReadAccess(): bool
 	{
-		if ($this->access->checkAccess("read", "", $this->group_ref_id)) {
+		if ($this->access->checkAccess('read', '', $this->group_ref_id)) {
 			return true;
 		}
 
 		return false;
 	}
 
-
+    /**
+     * @return bool
+     */
 	public function hasCurrentUserSpecialAccess(): bool
 	{
-		if ($this->access->checkAccess("read_learning_progress", "", $this->group_ref_id)) {
+		if ($this->access->checkAccess('read_learning_progress', '', $this->group_ref_id)) {
 			return true;
 		}
 
 		return false;
 	}
 
-
+    /**
+     * @return array
+     */
 	public function getUserIdsOfGroup(): array
 	{
+        $usr_data = [];
 		if ($this->hasCurrentUserWriteAccess() || $this->hasCurrentUserSpecialAccess()) {
 			$objecttype = ilObject::_lookupType($this->group_ref_id, true);
 			if ($objecttype != 'grp' and $objecttype != 'crs') {
@@ -110,21 +121,15 @@ class ilParticipationCertificateAccess {
 			$select = "select obj_members.usr_id from obj_members
 						inner join object_data as grp_obj on grp_obj.obj_id = obj_members.obj_id and grp_obj.type = '". $objecttype ."'
 						inner join object_reference as grp_ref on grp_ref.obj_id = obj_members.obj_id
-						where grp_ref.ref_id = " . $this->db->quote($this->group_ref_id, "integer") . " and obj_members.member >= 1";
+						where grp_ref.ref_id = " . $this->db->quote($this->group_ref_id, 'integer') . " and obj_members.member >= 1";
 			$result = $this->db->query($select);
-			$usr_data = array();
+
 			while ($row = $this->db->fetchAssoc($result)) {
 				$usr_data[] = $row['usr_id'];
 			}
-
-			return $usr_data;
 		} elseif ($this->hasCurrentUserReadAccess()) {
-			$usr_data = array();
 			$usr_data[] = $this->usr->getId();
-
-			return $usr_data;
 		}
-
-		return array();
+		return $usr_data;
 	}
 }

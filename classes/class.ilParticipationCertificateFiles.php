@@ -4,7 +4,7 @@ use ILIAS\ResourceStorage\Identification\ResourceIdentification;
 
 class ilParticipationCertificateFiles extends ActiveRecord
 {
-	const TABLE_NAME = 'dhbw_part_cert_files';
+    public const string TABLE_NAME = 'dhbw_part_cert_files';
 
     /**
      * @var int
@@ -44,88 +44,123 @@ class ilParticipationCertificateFiles extends ActiveRecord
      */
     protected bool $resource_storage;
 
-	public function getConnectorContainerName(): string
-    {
-		return self::TABLE_NAME;
-	}
-
-	public static function returnDbTableName(): string
-    {
-		return self::TABLE_NAME;
-	}
-
-	public function __construct($primary_key = 0, arConnector $connector = null) {
-		parent::__construct($primary_key, $connector);
-	}
-
     /**
-     * @param string $configId
-     * @param string $fileType
-     * @return ActiveRecord|null
+     * @param                  $primary_key
+     * @param arConnector|null $connector
      */
-	static function getFile(
-        string $configId,
-        string $fileType
-    ): ActiveRecord|null
+    public function __construct($primary_key = 0, arConnector $connector = null)
     {
-		/**
-		 * @var ilParticipationCertificateFiles|null $config
-		 */
-		$file = self::where([
-            'config_id' => $configId,
-            'type' => $fileType,
-		])->first();
-
-        return $file ?? null;
-	}
-
-	static function setFile(
-        string $configId,
-        string $fileType,
-        bool $resourceStorage
-    ): void {
-		/**
-		 * @var ilParticipationCertificateFiles|null $file
-		 */
-		$file = self::where([
-            'config_id' => $configId,
-            'type' => $fileType,
-		])->first();
-
-		if (!empty($file)) {
-            $file->setConfigId($configId);
-            $file->setType($fileType);
-            $file->setResourceStorage($resourceStorage);
-            $file->update();
-		} else {
-            $file = new self();
-            $file->setConfigId($configId);
-            $file->setResourceStorage($resourceStorage);
-            $file->setType($fileType);
-            $file->create();
-		}
-	}
-
-    public function setConfigId(string $groupRefId): void
-    {
-        $this->config_id = $groupRefId;
+        parent::__construct($primary_key, $connector);
     }
 
+    /**
+     * @return string
+     */
+    public function getConnectorContainerName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public static function returnDbTableName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @param string $config_id
+     * @param string $file_type
+     * @return ActiveRecord|null
+     */
+    public static function getFile(
+        string $config_id,
+        string $file_type
+    ): ActiveRecord|null {
+        /**
+         * @var ilParticipationCertificateFiles|null $config
+         */
+        $file = self::where([
+            'config_id' => $config_id,
+            'type' => $file_type,
+        ])->first();
+
+        return $file ?? null;
+    }
+
+    /**
+     * @param string $config_id
+     * @param string $file_type
+     * @param bool   $resource_storage
+     * @return void
+     */
+    public static function setFile(
+        string $config_id,
+        string $file_type,
+        bool $resource_storage
+    ): void {
+        /**
+         * @var ilParticipationCertificateFiles|null $file
+         */
+        $file = self::where([
+            'config_id' => $config_id,
+            'type' => $file_type,
+        ])->first();
+
+        if (!empty($file)) {
+            $file->setConfigId($config_id);
+            $file->setType($file_type);
+            $file->setResourceStorage($resource_storage);
+            $file->update();
+        } else {
+            $file = new self();
+            $file->setConfigId($config_id);
+            $file->setResourceStorage($resource_storage);
+            $file->setType($file_type);
+            $file->create();
+        }
+    }
+
+    /**
+     * @param string $group_ref_id
+     * @return void
+     */
+    public function setConfigId(string $group_ref_id): void
+    {
+        $this->config_id = $group_ref_id;
+    }
+
+    /**
+     * @param string $type
+     * @return void
+     */
     public function setType(string $type): void
     {
         $this->type = $type;
     }
 
-    public function setResourceStorage(bool $resourceStorage): void
+    /**
+     * @param bool $resource_storage
+     * @return void
+     */
+    public function setResourceStorage(bool $resource_storage): void
     {
-        $this->resource_storage = $resourceStorage;
+        $this->resource_storage = $resource_storage;
     }
 
-	public function setId(int $id): void
+    /**
+     * @param int $id
+     * @return void
+     */
+    public function setId(int $id): void
     {
-		$this->id = $id;
-	}
+        $this->id = $id;
+    }
 
+    /**
+     * @return int
+     */
     public function getId(): int
     {
         return $this->id;
@@ -159,26 +194,26 @@ class ilParticipationCertificateFiles extends ActiveRecord
      * Files are stored under ./data/default/dhbw_part_cert in ILIAS8, while the resource storage is used in ILIAS9.
      *
      * @param        $value
-     * @param string $configId
-     * @param string $fileType
+     * @param string $config_id
+     * @param string $file_type
      * @return string
      */
-    public function getFileSrcByStorageType (
+    public function getFileSrcByStorageType(
         $value,
-        string $configId,
-        string $fileType
+        string $config_id,
+        string $file_type
     ): string {
         global $DIC;
 
-        $file = ilParticipationCertificateFiles::getFile($configId, $fileType);
+        $file = ilParticipationCertificateFiles::getFile($config_id, $file_type);
 
         if (empty($file)) {
             return '';
         }
-        $fileArray = $file->asArray();
+        $file_array = $file->asArray();
 
         $src = '';
-        if($fileArray['resource_storage']) {
+        if ($file_array['resource_storage']) {
             $resource = new ResourceIdentification($value);
 
             if ($DIC->resourceStorage()->manage()->find($resource)) {
@@ -187,25 +222,25 @@ class ilParticipationCertificateFiles extends ActiveRecord
                            ->getSrc();
             }
         } else {
-            $fileName = ilParticipationCertificateConfig::LOGO_FILE_NAME;
-            if($fileType === 'page1_issuer_signature') {
-                $fileName = ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME;
+            $file_name = ilParticipationCertificateConfig::LOGO_FILE_NAME;
+            if ($file_type === 'page1_issuer_signature') {
+                $file_name = ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME;
             }
 
-            $filePath = ilParticipationCertificateConfig::returnPicturePath(
+            $file_path = ilParticipationCertificateConfig::returnPicturePath(
                 'relative',
-                $configId,
-                $fileName
+                $config_id,
+                $file_name
             );
 
-            if (is_file($filePath)) {
+            if (is_file($file_path)) {
                 $stream = \ILIAS\Filesystem\Stream\Streams::ofResource(
-                    fopen($filePath, 'r')
+                    fopen($file_path, 'r')
                 );
 
                 $src = $DIC->fileDelivery()->buildTokenURL(
                     $stream,
-                    $fileName,
+                    $file_name,
                     \ILIAS\FileDelivery\Delivery\Disposition::INLINE,
                     $DIC->user()->getId(),
                     6

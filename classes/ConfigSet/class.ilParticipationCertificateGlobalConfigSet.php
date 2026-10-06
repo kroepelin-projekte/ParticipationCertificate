@@ -1,21 +1,7 @@
 <?php
 class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
 
-	const TABLE_NAME = 'dhbw_part_cert_gl_conf';
-
-	public function getConnectorContainerName(): string
-    {
-		return self::TABLE_NAME;
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function returnDbTableName(): string
-    {
-		return self::TABLE_NAME;
-	}
-
+    public const string TABLE_NAME = 'dhbw_part_cert_gl_conf';
 
 	/**
 	 * @var int
@@ -52,43 +38,87 @@ class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
 	 * @db_fieldtype    text
 	 * @db_length       1024
 	 */
-	protected string $title = "untitled";
+	protected string $title = 'untitled';
 
+    /**
+     * @return string
+     */
+    public function getConnectorContainerName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public static function returnDbTableName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @return int
+     */
 	public function getId(): int
     {
 		return $this->id;
 	}
 
+    /**
+     * @param int $id
+     * @return void
+     */
 	public function setId(int $id): void
     {
 		$this->id = $id;
 	}
 
+    /**
+     * @return int
+     */
 	public function getOrderBy(): int
     {
 		return $this->order_by;
 	}
 
+    /**
+     * @param int $order_by
+     * @return void
+     */
 	public function setOrderBy(int $order_by): void
     {
 		$this->order_by = $order_by;
 	}
 
+    /**
+     * @return string
+     */
 	public function getTitle(): string
     {
 		return $this->title;
 	}
 
+    /**
+     * @param string $title
+     * @return void
+     */
 	public function setTitle(string $title): void
     {
 		$this->title = $title;
 	}
 
+    /**
+     * @return int
+     */
 	public function getActive(): int
     {
 		return $this->active;
 	}
 
+    /**
+     * @param int $active
+     * @return void
+     */
 	public function setActive(int $active): void
     {
 		$this->active = $active;
@@ -99,12 +129,10 @@ class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
      */
 	public static function createNewFromConfigs(array $part_cert_configs): ilParticipationCertificateGlobalConfigSet
     {
-
 		$gl_configs = new ilParticipationCertificateGlobalConfigSets();
 		$gl_config = $gl_configs->addNewConfig();
-		$gl_config->setTitle("untitled");
+		$gl_config->setTitle('untitled');
 		$gl_config->store();
-
 
 		foreach($part_cert_configs as $config) {
             $file = null;
@@ -154,7 +182,6 @@ class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
                 );
             }
 		}
-
 		return $gl_config;
 	}
 }

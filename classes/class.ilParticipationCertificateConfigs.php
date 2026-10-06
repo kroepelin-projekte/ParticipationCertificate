@@ -12,7 +12,9 @@ class ilParticipationCertificateConfigs {
      */
 	public function getGlobalConfigSet(int $global_config_id = 0): array
     {
-		return ilParticipationCertificateConfig::where(array( "global_config_id" => $global_config_id ))->orderBy('order_by')->get();
+		return ilParticipationCertificateConfig::where([
+            'global_config_id' => $global_config_id
+        ])->orderBy('order_by')->get();
 	}
 
     /**
@@ -21,21 +23,26 @@ class ilParticipationCertificateConfigs {
      */
     public function getObjectConfigSet(int $obj_ref_id = 0): array
     {
-        return ilParticipationCertificateConfig::where(array( "group_ref_id" => $obj_ref_id ))->orderBy('order_by')->get();
+        return ilParticipationCertificateConfig::where([
+            'group_ref_id' => $obj_ref_id
+        ])->orderBy('order_by')->get();
     }
 
     /**
      * @throws arException
      */
-    public function returnTextValues(int $group_ref_id = 0, int $config_type = ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE): array
-    {
-		$arr_config = ilParticipationCertificateConfig::where(array(
-			"config_type" => $config_type,
-			"group_ref_id" => $group_ref_id,
+    public function returnTextValues(
+        int $group_ref_id = 0,
+        int $config_type = ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE
+    ): array {
+		$arr_config = ilParticipationCertificateConfig::where([
+			'config_type' => $config_type,
+			'group_ref_id' => $group_ref_id,
 			'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT
-		))->orderBy('order_by')->getArray('config_key', 'config_value');
-		if (count($arr_config) == 0) {
+		])->orderBy('order_by')
+          ->getArray('config_key', 'config_value');
 
+        if (count($arr_config) == 0) {
            $part_cert_ob_conf = new ilParticipationCertificateObjectConfigSet();
             /**
              * @var $arr_ob_conf ilParticipationCertificateObjectConfigSet
@@ -46,17 +53,21 @@ class ilParticipationCertificateConfigs {
                $global_config_id = $arr_ob_conf->getGlConfTemplateId();
            }
 
-			$arr_config = ilParticipationCertificateConfig::where(array(
-				"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
+			$arr_config = ilParticipationCertificateConfig::where([
+				'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
 				'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT,
-				"group_ref_id" => 0,
-                "global_config_id" => $global_config_id,
-			))->orderBy('order_by')->getArray('config_key', 'config_value');
+				'group_ref_id' => 0,
+                'global_config_id' => $global_config_id,
+			])->orderBy('order_by')->getArray('config_key', 'config_value');
 		}
 
 		return $arr_config;
 	}
 
+    /**
+     * @param int $group_ref_id
+     * @return bool|string
+     */
 	public function returnPercentValue(int $group_ref_id = 0): bool|string
     {
 		/**
@@ -67,6 +78,7 @@ class ilParticipationCertificateConfigs {
 			'config_key' => 'percent_value',
 			'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP
 		))->first();
+
 		if(is_object($config)) {
 			return $config->getConfigValue();
 		}
@@ -82,8 +94,9 @@ class ilParticipationCertificateConfigs {
 	 */
 	public function getObjConfigSetIfNoneCreateDefaultAndCreateNewObjConfigValues(int $obj_ref_id): array
     {
-
-		$cert_obj_config = ilParticipationCertificateObjectConfigSet::where([ 'obj_ref_id' => $obj_ref_id ])->first();
+		$cert_obj_config = ilParticipationCertificateObjectConfigSet::where([
+            'obj_ref_id' => $obj_ref_id
+        ])->first();
 
 		if (!is_object($cert_obj_config)) {
 			$global_configs = new ilParticipationCertificateGlobalConfigSets();
@@ -101,9 +114,9 @@ class ilParticipationCertificateConfigs {
 				break;
 			case ilParticipationCertificateObjectConfigSet::CONFIG_TYPE_OWN:
 
-                $globalConfigSet = $this->getGlobalConfigSet($cert_obj_config->getGlConfTemplateId());
+                $global_config_set = $this->getGlobalConfigSet($cert_obj_config->getGlConfTemplateId());
 
-				foreach ($globalConfigSet as $global_config_value) {
+				foreach ($global_config_set as $global_config_value) {
 					if (!$this->getParticipationObjConfigValueByKey($obj_ref_id, $global_config_value->getConfigKey())) {
                         $this->createParticipationObjConfigValueByGlobalConfigValue($obj_ref_id, $global_config_value);
 					}
@@ -111,66 +124,81 @@ class ilParticipationCertificateConfigs {
 
 				return
 					ilParticipationCertificateConfig::where([
-					"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP,
-					"group_ref_id" => $obj_ref_id,
-					"config_value_type" => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT
+					'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP,
+					'group_ref_id' => $obj_ref_id,
+					'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT
 				])->orderBy('order_by')->get();
 
 				break;
 		}
 	}
 
-	private function getParticipationObjConfigValueByKey(int $obj_ref_id, string $config_key): bool|ilParticipationCertificateConfig
+    /**
+     * @param int    $obj_ref_id
+     * @param string $config_key
+     * @return ActiveRecord|false|null
+     */
+	private function getParticipationObjConfigValueByKey(int $obj_ref_id, string $config_key): ActiveRecord|false|null
     {
-		if (ilParticipationCertificateConfig::where([
-			"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP,
-			"config_key" => $config_key,
-			"group_ref_id" => $obj_ref_id
-		])->count()) {
-			return ilParticipationCertificateConfig::where([
-				"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP,
-				"config_key" => $config_key,
-				"group_ref_id" => $obj_ref_id
-			])->first();
+        $config = ilParticipationCertificateConfig::where([
+            'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP,
+            'config_key' => $config_key,
+            'group_ref_id' => $obj_ref_id
+        ]);
+
+		if ($config->count()) {
+			return $config->first();
 		};
 
 		return false;
 	}
 
-	public function getParticipationTemplateConfigValueByKey(int $global_config_id, string $config_key): bool|ilParticipationCertificateConfig
+    /**
+     * @param int    $global_config_id
+     * @param string $config_key
+     * @return ActiveRecord|false|null
+     */
+	public function getParticipationTemplateConfigValueByKey(int $global_config_id, string $config_key): ActiveRecord|false|null
     {
-		if (ilParticipationCertificateConfig::where([
-			"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
-			"config_key" => $config_key,
-			"global_config_id" => $global_config_id
-		])->count()) {
-			return ilParticipationCertificateConfig::where([
-				"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
-				"config_key" => $config_key,
-				"global_config_id" => $global_config_id
-			])->first();
+        $config = ilParticipationCertificateConfig::where([
+            'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
+            'config_key' => $config_key,
+            'global_config_id' => $global_config_id
+        ]);
+
+		if ($config->count()) {
+			return $config->first();
+		};
+		return false;
+	}
+
+    /**
+     * @param string $config_key
+     * @return ActiveRecord|false|null
+     */
+	public function getParticipationGlobalConfigValueByKey(string $config_key): ActiveRecord|false|null
+    {
+        $config = ilParticipationCertificateConfig::where([
+            'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+            'config_key' => $config_key,
+        ]);
+
+		if ($config->count()) {
+			return $config->first();
 		};
 
 		return false;
 	}
 
-	public function getParticipationGlobalConfigValueByKey(string $config_key): bool|ilParticipationCertificateConfig
-    {
-		if (ilParticipationCertificateConfig::where([
-			"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-			"config_key" => $config_key,
-		])->count()) {
-			return ilParticipationCertificateConfig::where([
-				"config_type" => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-				"config_key" => $config_key,
-			])->first();
-		};
-
-		return false;
-	}
-
-	private function createParticipationObjConfigValueByGlobalConfigValue(int $obj_ref_id, ilParticipationCertificateConfig $global_config_value): void
-    {
+    /**
+     * @param int                              $obj_ref_id
+     * @param ilParticipationCertificateConfig $global_config_value
+     * @return void
+     */
+	private function createParticipationObjConfigValueByGlobalConfigValue(
+        int $obj_ref_id,
+        ilParticipationCertificateConfig $global_config_value
+    ): void {
 		$part_cert_obj_config_value = $global_config_value;
 		$part_cert_obj_config_value->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP);
 		$part_cert_obj_config_value->setGroupRefId($obj_ref_id);
@@ -178,6 +206,11 @@ class ilParticipationCertificateConfigs {
 		$part_cert_obj_config_value->create();
 	}
 
+    /**
+     * @param int $obj_ref_id
+     * @param int $global_template_id
+     * @return void
+     */
 	public function setObjToUseCertTemplate(int $obj_ref_id, int $global_template_id): void
     {
 		$this->deleteObjConfigSet($obj_ref_id);
@@ -193,36 +226,41 @@ class ilParticipationCertificateConfigs {
 		$part_cert_config->setGlConfTemplateId($global_template_id);
 		$part_cert_config->store();
 
-        $fileLogo = ilParticipationCertificateFiles::getFile(
+        $file_logo = ilParticipationCertificateFiles::getFile(
             $global_template_id,
             'logo'
         );
 
-        if (!empty($fileLogo)) {
-            if(!$fileLogo->getResourceStorage() && is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::LOGO_FILE_NAME))) {
+        if (!empty($file_logo)) {
+            if(!$file_logo->getResourceStorage() && is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::LOGO_FILE_NAME))) {
                 copy(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::LOGO_FILE_NAME), ilParticipationCertificateConfig::returnPicturePath('absolute', $obj_ref_id, ilParticipationCertificateConfig::LOGO_FILE_NAME));
                 ilParticipationCertificateFiles::setFile($obj_ref_id, 'logo', false);
-            } elseif ($fileLogo->getResourceStorage()) {
+            } elseif ($file_logo->getResourceStorage()) {
                 ilParticipationCertificateFiles::setFile($obj_ref_id, 'logo', true);
             }
         }
 
-        $fileSignature = ilParticipationCertificateFiles::getFile(
+        $file_signature = ilParticipationCertificateFiles::getFile(
             $global_template_id,
             'page1_issuer_signature'
         );
 
-        if (!empty($fileSignature)) {
-            if(!$fileSignature->getResourceStorage() && is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME))) {
+        if (!empty($file_signature)) {
+            if(!$file_signature->getResourceStorage() && is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME))) {
                 copy(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME), ilParticipationCertificateConfig::returnPicturePath('absolute', $obj_ref_id, ilParticipationCertificateConfig::ISSUER_SIGNATURE_FILE_NAME));
                 ilParticipationCertificateFiles::setFile($obj_ref_id, 'page1_issuer_signature', false);
 
-            }elseif ($fileSignature->getResourceStorage()) {
+            }elseif ($file_signature->getResourceStorage()) {
                 ilParticipationCertificateFiles::setFile($obj_ref_id, 'page1_issuer_signature', true);
             }
         }
 	}
 
+    /**
+     * @param int $obj_ref_id
+     * @param int $global_template_id
+     * @return void
+     */
 	public function setOwnCertConfigFromTemplate(int $obj_ref_id, int $global_template_id): void
     {
 		$part_cert_config = ilParticipationCertificateObjectConfigSet::where([ 'obj_ref_id' => $obj_ref_id ])->first();
@@ -237,13 +275,21 @@ class ilParticipationCertificateConfigs {
 		$this->createOrUpdateObjConfigSetFromTemplate($obj_ref_id, $global_template_id);
 	}
 
+    /**
+     * @param int $obj_ref_id
+     * @param int $global_template_id
+     * @return void
+     */
 	private function createOrUpdateObjConfigSetFromTemplate(int $obj_ref_id, int $global_template_id): void
     {
 		$this->deleteObjConfigSet($obj_ref_id);
-		foreach (ilParticipationCertificateConfig::where([
-			'config_type' => ilParticipationCertificateObjectConfigSet::CONFIG_TYPE_TEMPLATE,
-			"global_config_id" => $global_template_id
-		])->get() as  $part_cert_template_config_value) {
+
+        $config = ilParticipationCertificateConfig::where([
+            'config_type' => ilParticipationCertificateObjectConfigSet::CONFIG_TYPE_TEMPLATE,
+            'global_config_id' => $global_template_id
+        ])->get();
+
+		foreach ($config as  $part_cert_template_config_value) {
 			/**
 			 * @var ilParticipationCertificateConfig $part_cert_template_config_value
 			 */
@@ -253,7 +299,7 @@ class ilParticipationCertificateConfigs {
 			$part_cert_config_value->setGlobalConfigId(0);
 			$part_cert_config_value->create();
 
-			if($part_cert_template_config_value->getConfigKey() == "logo") {
+			if($part_cert_template_config_value->getConfigKey() == 'logo') {
                 $file = ilParticipationCertificateFiles::getFile(
                     $global_template_id,
                     'logo'
@@ -262,19 +308,51 @@ class ilParticipationCertificateConfigs {
 				if (!empty($file)) {
                     if (!$file->getResourceStorage() && is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::LOGO_FILE_NAME))) {
 
-                        if (is_file(ilParticipationCertificateConfig::returnPicturePath('absolute', $obj_ref_id, ilParticipationCertificateConfig::LOGO_FILE_NAME))) {
-                            unlink(ilParticipationCertificateConfig::returnPicturePath('absolute', $obj_ref_id, ilParticipationCertificateConfig::LOGO_FILE_NAME));
+                        if (is_file(
+                            ilParticipationCertificateConfig::returnPicturePath(
+                                'absolute',
+                                $obj_ref_id,
+                                ilParticipationCertificateConfig::LOGO_FILE_NAME
+                             )
+                        )) {
+                            unlink(
+                                ilParticipationCertificateConfig::returnPicturePath(
+                                    'absolute',
+                                    $obj_ref_id,
+                                    ilParticipationCertificateConfig::LOGO_FILE_NAME
+                                )
+                            );
                         }
-                        copy(ilParticipationCertificateConfig::returnPicturePath('absolute', $global_template_id, ilParticipationCertificateConfig::LOGO_FILE_NAME), ilParticipationCertificateConfig::returnPicturePath('absolute', $obj_ref_id, ilParticipationCertificateConfig::LOGO_FILE_NAME));
 
-                        ilParticipationCertificateFiles::setFile($obj_ref_id, 'logo', false);
+                        copy(
+                            ilParticipationCertificateConfig::returnPicturePath(
+                                'absolute',
+                                $global_template_id,
+                                ilParticipationCertificateConfig::LOGO_FILE_NAME
+                            ),
+                            ilParticipationCertificateConfig::returnPicturePath(
+                                'absolute',
+                                $obj_ref_id,
+                                ilParticipationCertificateConfig::LOGO_FILE_NAME
+                            )
+                        );
+
+                        ilParticipationCertificateFiles::setFile(
+                            $obj_ref_id,
+                            'logo',
+                            false
+                        );
                     }elseif ($file->getResourceStorage()) {
-                        ilParticipationCertificateFiles::setFile($obj_ref_id, 'logo', true);
+                        ilParticipationCertificateFiles::setFile(
+                            $obj_ref_id,
+                            'logo',
+                            true
+                        );
                     }
                 }
             }
 
-            if($part_cert_template_config_value->getConfigKey() == "page1_issuer_signature") {
+            if($part_cert_template_config_value->getConfigKey() == 'page1_issuer_signature') {
                 $file = ilParticipationCertificateFiles::getFile(
                     $global_template_id,
                     'page1_issuer_signature'
@@ -296,10 +374,17 @@ class ilParticipationCertificateConfigs {
 		}
 	}
 
+    /**
+     * @param int $obj_ref_id
+     * @return void
+     */
 	private function deleteObjConfigSet(int $obj_ref_id): void
     {
-		$arr_config = ilParticipationCertificateConfig::where([ "group_ref_id" => $obj_ref_id ])->get();
-		if (count($arr_config)) {
+		$arr_config = ilParticipationCertificateConfig::where([
+            'group_ref_id' => $obj_ref_id
+        ])->get();
+
+        if (count($arr_config)) {
 			foreach ($arr_config as $config) {
 
 				/**
@@ -311,10 +396,11 @@ class ilParticipationCertificateConfigs {
 
                 }
 
-
 				switch ($config->getConfigKey()) {
-					case "page1_issuer_signature":
-						ilParticipationCertificateConfig::deletePicture($config->getGroupRefId(), $config->getConfigKey() . ".png");
+					case 'page1_issuer_signature':
+						ilParticipationCertificateConfig::deletePicture(
+                            $config->getGroupRefId(),
+                            $config->getConfigKey() . '.png');
 						break;
 					default:
 						break;
@@ -331,7 +417,6 @@ class ilParticipationCertificateConfigs {
 	 */
 	public function returnCertTextDefaultValues(): array
     {
-
 		$arr_configs = [];
 
 		$cert_config = new ilParticipationCertificateConfig();
