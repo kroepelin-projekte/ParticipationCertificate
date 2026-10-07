@@ -544,18 +544,22 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        $form = $this->buildForm($id, $set_type);
+        $form = $this->buildForm((int) $id, (int) $set_type);
 
         $this->tpl->setContent($renderer->render($form));
     }
 
     /**
+     * @param int $global_config_id
+     * @param int $set_type
+     * @return Standard
      * @throws arException
      * @throws ilCtrlException
      */
-    private function buildForm($global_config_id, $set_type): Standard
+    private function buildForm(int $global_config_id, int $set_type): Standard
     {
         global $DIC;
+
         $ui = $DIC->ui()->factory();
 
         $DIC->ctrl()->setParameter($this, 'id', $global_config_id);
@@ -563,23 +567,23 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
         $inputFields = [];
 
-        switch ($set_type) {
-            case ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE:
-                /**
-                 * @var ilParticipationCertificateGlobalConfigSet $global_config
-                 */
-                $global_config = ilParticipationCertificateGlobalConfigSet::findOrGetInstance($global_config_id);
+        /**
+         * @var ilParticipationCertificateGlobalConfigSet $global_config
+         */
+        if ($set_type == ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE) {
+            $global_config = ilParticipationCertificateGlobalConfigSet::findOrGetInstance($global_config_id);
 
-                $inputFields['config_title'] = $ui->input()->field()->text(
-                    $this->pl->txt('config_title')
-                )->withValue($global_config->getTitle() ?? '');
+            $inputFields['config_title'] = $ui->input()->field()->text(
+                $this->pl->txt('config_title')
+            )->withValue($global_config->getTitle() ?? '');
         }
 
-        foreach (ilParticipationCertificateConfig::where(array(
+        $configs = ilParticipationCertificateConfig::where(array(
             'config_type' => (int) $set_type,
             'global_config_id' => $global_config_id
-        ))->orderBy('order_by')->get() as $config) {
+        ))->orderBy('order_by')->get();
 
+        foreach ($configs as $config) {
             /**
              * @var ilParticipationCertificateConfig $config
              */
@@ -587,8 +591,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
                 case 'udf_firstname':
                 case 'udf_lastname':
                 case 'udf_gender':
-
                     $options = $this->getUdfDropdownValues();
+
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->select(
                         $this->pl->txt($config->getConfigKey()),
                         $options,
@@ -598,13 +602,13 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
                     break;
 
                 case 'color':
-                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorpicker(
+                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorSelect(
                         $this->pl->txt('color'),
                         ''
                     )->withValue('#' . $config->getConfigValue() ?? '');
                     break;
                 case 'unsugg_color':
-                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorpicker(
+                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorSelect(
                         $this->pl->txt('unsugg_color'),
                         ''
                     )->withValue('#' . $config->getConfigValue() ?? '');
@@ -716,7 +720,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $DIC->ctrl()->setParameter($this, 'id', $global_config_id);
         $DIC->ctrl()->setParameter($this, 'set_type', $set_type);
 
-        $form  = $this->buildForm($global_config_id, $set_type);
+        $form  = $this->buildForm((int) $global_config_id, (int) $set_type);
 
         $form  = $form->withRequest($DIC->http()->request());
         $form_data = $form->getData()['config'];

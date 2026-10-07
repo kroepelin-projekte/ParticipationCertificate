@@ -710,7 +710,7 @@ $ilDB->createSequence('dhbw_part_cert_files');
 $config = ilParticipationCertificateConfig::where(array('config_key' => 'page1_box1_row1'))->get();
 
 if (!is_object($config)) {
-    $data = [];
+    $udf_definition_data = [];
     foreach($config as $con) {
         $configLastOrderBy = ilParticipationCertificateConfig::where([
                 'global_config_id' => $con->getGlobalConfigId()
@@ -718,7 +718,7 @@ if (!is_object($config)) {
 
         $orderBy = $configLastOrderBy->getOrderBy() + 1;
 
-        $data[] = [
+        $udf_definition_data[] = [
             'config-type' => $con->getConfigType(),
             'config-value-type' => $con->getConfigValueType(),
             'config-key' => 'page1_box1_row1_alternative',
@@ -729,7 +729,7 @@ if (!is_object($config)) {
         ];
     }
 
-    foreach($data as $config) {
+    foreach($udf_definition_data as $config) {
         $part_conf = new ilParticipationCertificateConfig();
         $part_conf->setConfigType($config['config-type']);
         $part_conf->setConfigValueType($config['config-value-type']);
@@ -741,4 +741,28 @@ if (!is_object($config)) {
         $part_conf->store();
     }
 }
+?>
+
+<#42>
+<?php
+
+$query = "SELECT * FROM udf_field_id_map";
+
+$results = $this->db->query($query);
+
+$udf_definition_data = [];
+while ($row = $this->db->fetchAssoc($results)) {
+    $udf_definition_data[$row['old_field_id']] = $row['field_id'];
+}
+
+$fields = ['udf_firstname', 'udf_lastname', 'udf_gender'];
+$configs = [];
+foreach ($fields as $field) {
+    $config =  ilParticipationCertificateConfig::where(['config_key' => $field])
+                      ->first();
+
+    $config->setConfigValue($udf_definition_data[$config->getConfigValue()]);
+    $config->update();
+}
+
 ?>
