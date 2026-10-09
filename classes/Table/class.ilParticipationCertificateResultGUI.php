@@ -139,9 +139,12 @@ class ilParticipationCertificateResultGUI
 
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
 
+
         if (method_exists($this->tpl, 'loadStandardTemplate')) {
             $this->tpl->loadStandardTemplate();
         } else {
+
+            // TODO remove it
             $this->tpl->getStandardTemplate();
         }
         $this->initHeader();
@@ -231,7 +234,7 @@ class ilParticipationCertificateResultGUI
      */
     private function exportExcel()
     {
-        $result_table = new ilParticipationCertificateResultTableGUI();
+        /*$result_table = new ilParticipationCertificateResultTableGUI();
 
         $filter_firstname = '';
         $is_filter_active = false;
@@ -276,12 +279,12 @@ class ilParticipationCertificateResultGUI
         ob_end_clean();
 
         $filename = 'export';
-        $excel->sendToClient($filename);
+        $excel->sendToClient($filename);*/
     }
 
     private function exportCSV()
     {
-        $result_table = new ilParticipationCertificateResultTableGUI();
+        /*$result_table = new ilParticipationCertificateResultTableGUI();
 
         $filter_firstname = '';
         $is_filter_active = false;
@@ -320,7 +323,7 @@ class ilParticipationCertificateResultGUI
         header('Cache-Control: must-revalidate, post-check=0,pre-check=0');
         header('Pragma: public');
         echo $csv->getCSVString();
-        exit();
+        exit();*/
     }
 
     protected function fillMetaExcel(ilExcel $a_excel, int &$a_row): void
@@ -524,7 +527,7 @@ class ilParticipationCertificateResultGUI
                     $user_ids = [];
 
                     $config_entries = $_GET['config_entry'];
-                    if (!empty($config_entries)) {
+                    /*if (!empty($config_entries)) {
                         if ($config_entries[0] === 'ALL_OBJECTS') {
                             $resultTable = new ilParticipationCertificateResultTableGUI();
                             $data = $resultTable->records();
@@ -534,7 +537,7 @@ class ilParticipationCertificateResultGUI
                         }
                     }
 
-                    new ilParticipationCertificateMultipleResultGUI($user_ids, $this->course_ref_id);
+                    new ilParticipationCertificateMultipleResultGUI($user_ids, $this->course_ref_id);*/
                     break;
                 case 'adjust_results':
                     $result_modification_gui = new ilParticipationCertificateResultModificationGUI();
@@ -598,7 +601,7 @@ class ilParticipationCertificateResultGUI
             if ($ementoring !== null) {
                 $ementor = $ementoring;
             }
-		
+
             if (!empty($usr_id)) {
                 $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_id);
                 $usr_id = $this->excludeUserIfDataMissing($usr_id, $arr_usr_data);
@@ -639,7 +642,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = $_GET['config_entry'];
+            /*$config_entries = $_GET['config_entry'];
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -678,7 +681,7 @@ class ilParticipationCertificateResultGUI
                 false,
                 false,
                 $this->course_ref_id
-            );
+            );*/
         } else {
             $DIC->ctrl()->redirectToURL('login.php');
         }
@@ -697,7 +700,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = $_GET['config_entry'];
+           /* $config_entries = $_GET['config_entry'];
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -735,7 +738,7 @@ class ilParticipationCertificateResultGUI
                 false,
                 false,
                 $this->course_ref_id
-            );
+            );*/
         } else {
             $DIC->ctrl()->redirectToURL('login.php');
         }
@@ -748,13 +751,13 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        $result_table = new ilParticipationCertificateResultTableGUI();
+        /*$result_table = new ilParticipationCertificateResultTableGUI();
         $filter = $result_table->buildFilter();
         $filter_data = $DIC->uiService()->filter()->getData($filter);
 
         if (!empty($filter_data['firstname'])) {
             $this->ctrl->setParameterByClass(self::class, 'filter_firstname', $filter_data['firstname']);
-        }
+        }*/
 
         if (!empty($filter_data['lastname'])) {
             $this->ctrl->setParameterByClass(self::class, 'filter_lastname', $filter_data['lastname']);

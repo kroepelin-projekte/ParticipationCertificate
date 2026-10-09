@@ -896,20 +896,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
     }
 
     /**
-     */
-    /*protected function addTabs(
-        string $id,
-        string $text,
-        string $link
-    ) : void {
-        $this->tabs->addTab(
-            $id,
-            $text,
-            $link
-        );
-    }*/
-
-    /**
      * @return void
      * @throws ilCtrlException
      */

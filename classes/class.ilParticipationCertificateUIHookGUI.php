@@ -22,7 +22,7 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
 
     protected array $keywords;
 
-    private string $objecttype;
+    private string $object_type;
 
     public function __construct()
     {
@@ -37,9 +37,9 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             } else {
                 $this->group_ref_id = 0;
             }
-            $this->objecttype = ilObject::_lookupType($this->group_ref_id, true);
+            $this->object_type = ilObject::_lookupType($this->group_ref_id, true);
 
-            if ($this->group_ref_id === 0 || ($this->objecttype !== 'crs' and $this->objecttype !== 'grp')) {
+            if ($this->group_ref_id === 0 || ($this->object_type !== 'crs' and $this->object_type !== 'grp')) {
                 return;
             }
             $this->learn_group = ilObjectFactory::getInstanceByRefId($this->group_ref_id);
@@ -72,12 +72,11 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
                  * @var ilTabsGUI $tabs
                  */
                 $tabs = $a_par['tabs'];
-                // TODO
-/*                $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
+                $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
 				$tabs->addTab(self::TAB_CERTIFICATES, $this->pl->txt('plugin'), $this->ctrl->getLinkTargetByClass(array(
 					ilUIPluginRouterGUI::class,
 					ilParticipationCertificateResultGUI::class
-				), ilParticipationCertificateResultGUI::CMD_CONTENT));*/
+				), ilParticipationCertificateResultGUI::CMD_CONTENT));
             }
         }
     }
@@ -88,14 +87,14 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
     public function checkGroup(): bool
     {
         foreach ($this->ctrl->getCallHistory() as $GUIClassesArray) {
-            if (($this->objecttype === 'crs') && key_exists(
+            if (($this->object_type === 'crs') && key_exists(
                     'cmdClass', $GUIClassesArray
                 ) && ($GUIClassesArray['cmdClass'] == ilObjCourseGUI::class)) {
                 if ($this->strposa($this->learn_group_title, $this->keywords) !== false) {
                     return true;
                 }
             }
-            if (($this->objecttype === 'grp') && key_exists(
+            if (($this->object_type === 'grp') && key_exists(
                     'cmdClass', $GUIClassesArray
                 ) && ($GUIClassesArray['cmdClass'] == ilObjGroupGUI::class)) {
                 if ($this->strposa($this->learn_group_title, $this->keywords) !== false) {
