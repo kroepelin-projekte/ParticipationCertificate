@@ -148,7 +148,10 @@ class ilParticipationCertificateResultTableGUI
             $this->usr_ids,
             $this->range,
             $this->order,
-            $this->ref_id
+            $this->ref_id,
+            $this->firstname,
+            $this->lastname,
+            $this->buildProgressBar(...)
         ) implements DataRetrieval {
             private bool $ementoring;
             private ilParticipationCertificatePlugin $pl;
@@ -156,14 +159,31 @@ class ilParticipationCertificateResultTableGUI
             private array $range;
             private mixed $order;
             private int $ref_id;
+            private ?string $firstname;
+            private ?string $lastname;
+            private Closure $progress_bar_builder;
 
+            /**
+             * @param bool                             $ementoring
+             * @param ilParticipationCertificatePlugin $pl
+             * @param array                            $usr_ids
+             * @param array                            $range
+             * @param mixed                            $order
+             * @param int                              $ref_id
+             * @param string|null                      $firstname
+             * @param string|null                      $lastname
+             * @param Closure                          $progress_bar_builder
+             */
             public function __construct(
                 bool $ementoring,
                 ilParticipationCertificatePlugin $pl,
                 array $usr_ids,
                 array $range,
                 mixed $order,
-                int $ref_id
+                int $ref_id,
+                ?string $firstname,
+                ?string $lastname,
+                Closure $progress_bar_builder
             ) {
                 $this->ementoring = $ementoring;
                 $this->pl = $pl;
@@ -171,6 +191,22 @@ class ilParticipationCertificateResultTableGUI
                 $this->range = $range;
                 $this->order = $order;
                 $this->ref_id = $ref_id;
+                $this->firstname = $firstname;
+                $this->lastname = $lastname;
+                $this->progress_bar_builder = $progress_bar_builder;
+            }
+
+            /**
+             * Delegates to ilParticipationCertificateResultTableGUI::buildProgressBar()
+             * @param int $a_perc_result
+             * @param int $a_perc_limit
+             * @return string
+             */
+            private function buildProgressBar(
+                int $a_perc_result,
+                int $a_perc_limit
+            ): string {
+                return ($this->progress_bar_builder)($a_perc_result, $a_perc_limit);
             }
 
             /**
@@ -194,13 +230,13 @@ class ilParticipationCertificateResultTableGUI
             ): \Generator {
                 $data = $this->getRecords($range, $order);
 
-                $ementoringIsActive = false;
+                $ementoring_is_active = false;
                 if($this->ementoring) {
-                    $ementoringIsActive = true;
+                    $ementoring_is_active = true;
                 }
 
                 foreach ($data as $key => $record) {
-                    yield $row_builder->buildDataRow($record['usr_id'] . '_' . $ementoringIsActive, $record);
+                    yield $row_builder->buildDataRow($record['usr_id'] . '_' . $ementoring_is_active, $record);
                 }
             }
 
@@ -226,74 +262,70 @@ class ilParticipationCertificateResultTableGUI
             protected function getRecords(?Range $range = null, ?Order $order = null): array
             {
                 $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids, $this->range[1], $this->range[0], $this->order, '');
-
-                $courseObjId = ilObject::_lookupObjectId((int) $this->ref_id);
+                $course_obj_id = ilObject::_lookupObjectId((int) $this->ref_id);
 
                 $arr_usr_data = $this->excludeUserIdIfFiltered($arr_usr_data);
                 $arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
-                $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
-                $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, $this->usr_ids);
+                $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
+                $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $this->usr_ids);
                 $arr_new_iass_states = ilIassStatesMulti::getData($this->usr_ids, $this->ref_id);
                 $arr_xali_states = xaliStates::getData($this->usr_ids, $this->ref_id);
                 $arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $this->ref_id);
 
                 $rows = array();
-                foreach ($arr_usr_data as $usr_id=>$userdata) {
+                foreach ($arr_usr_data as $usr_id=>$user_data) {
                     $row = array();
                     $row['usr_id'] = $usr_id;
-                    $row['loginname'] = $arr_usr_data[$usr_id]->getPartCertUserName();
-                    if ($arr_usr_data[$usr_id]->getPartCertFirstname()  != NULL) {
-                        $row['firstname'] = $arr_usr_data[$usr_id]->getPartCertFirstname();
-                    } else {
-                        $row['firstname'] = '';
-                    }
-                    if ($arr_usr_data[$usr_id]->getPartCertLastname() != NULL) {
-                        $row['lastname'] = $arr_usr_data[$usr_id]->getPartCertLastname();
-                    } else {
-                        $row['lastname'] = '';
+                    $row['loginname'] = $user_data->getPartCertUserName();
+
+                    $row['firstname'] = '';
+                    if ($user_data->getPartCertFirstname()  != NULL) {
+                        $row['firstname'] = $user_data->getPartCertFirstname();
                     }
 
+                    $row['lastname'] = '';
+                    if ($user_data->getPartCertLastname() != NULL) {
+                        $row['lastname'] = $user_data->getPartCertLastname();
+                    }
+
+                    $row['initial_test_finished'] = $this->pl->txt('no');
                     if (key_exists($usr_id, $arr_initial_test_states) && is_object($arr_initial_test_states[$usr_id])) {
                         $row['initial_test_finished'] = $arr_initial_test_states[$usr_id]->getCrsitestItestSubmitted();
                         if ($row['initial_test_finished'] == 1) {
-                            $row['initial_test_finished'] = $this->pl->txt("yes");
+                            $row['initial_test_finished'] = $this->pl->txt('yes');
                         } else {
-                            $row['initial_test_finished'] = $this->pl->txt("no");
+                            $row['initial_test_finished'] = $this->pl->txt('no');
                         }
-                    } else {
-                        $row['initial_test_finished'] = $this->pl->txt("no");
                     }
+
                     if ((key_exists($usr_id, $arr_learn_reached_percentages)) && (is_object($arr_learn_reached_percentages[$usr_id]))) {
-                        $learnSuggestionResults = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
-                        $learnSuggestResults = $learnSuggestionResults[$usr_id]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $this->ref_id), true);
-                        $row['result_qualifing_tests'] = $learnSuggestResults;
+                        $learn_suggestion_results = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
+                        $learn_suggest_results = $learn_suggestion_results[$usr_id]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $this->ref_id), true);
+                        $row['result_qualifing_tests'] = $learn_suggest_results;
                     } else {
                         $row['result_qualifing_tests'] = $this->buildProgressBar(0,0);
                     }
 
                     $rec_array = [];
                     $array_results = [];
-
                     if (key_exists($usr_id, $arr_final_tests) && (is_array($arr_final_tests[$usr_id]))) {
 
                         foreach ($arr_final_tests[$usr_id] as $usr_objectives) {
-
                             if (is_array($usr_objectives)) {
                                 foreach ($usr_objectives as $rec) {
 
                                     if ($rec->getObjectivesSuggested()) {
-
                                         if (!array_key_exists($rec->getLocftestObjectiveId(), $rec_array)) {
                                             $rec_array[$rec->getLocftestObjectiveId()] = $rec->getLocftestLearnObjectiveTitle() . '<br/>';
                                         }
 
-                                        $locTestPercentage = $rec->getLocftestPercentage();
-                                        $percentageText = ($locTestPercentage !== null) ? round($locTestPercentage, 0) . '%' : '0%';
+                                        $loc_test_percentage = $rec->getLocftestPercentage();
+                                        $percentage_text = ($loc_test_percentage !== null) ? round($loc_test_percentage, 0) . '%' : '0%';
 
                                         /**
                                          * @var ilLearnObjectFinalTestState $rec
                                          */
-                                        $rec_array[$rec->getLocftestObjectiveId()] .= '- ' . $percentageText .
+                                        $rec_array[$rec->getLocftestObjectiveId()] .= '- ' . $percentage_text .
                                             ' ' . $rec->getLocftestObjectiveTitle() . '<br/>';
                                     }
                                 }
@@ -304,43 +336,43 @@ class ilParticipationCertificateResultTableGUI
                         $row['results_qualifing_tests'] = implode('<br/><br/>', $array_results);
 
                     } else {
-                        $row['results_qualifing_tests'] = $this->pl->txt("no_tests");
+                        $row['results_qualifing_tests'] = $this->pl->txt('no_tests');
                     }
 
-                    $countPassed = 0;
-                    $countTests = 0;
+                    $count_passed = 0;
+                    $count_tests = 0;
                     if (key_exists($usr_id, $arr_new_iass_states) && is_array($arr_new_iass_states[$usr_id])) {
                         foreach ($arr_new_iass_states[$usr_id] as $item) {
-                            $countPassed = $countPassed + $item->getPassed();
-                            $countTests = $countTests + $item->getTotal();
+                            $count_passed = $count_passed + $item->getPassed();
+                            $count_tests = $count_tests + $item->getTotal();
                         }
                     }
 
                     $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->ref_id));
-                    $countTests = $countTests + count($sessions);
+                    $count_tests = $count_tests + count($sessions);
                     foreach ($sessions as $session) {
-                        $eventParticipants = new ilEventParticipants($session['obj_id']);
-                        if ($eventParticipants->hasParticipated($usr_id)) {
-                            $countPassed++;
+                        $event_participants = new ilEventParticipants($session['obj_id']);
+                        if ($event_participants->hasParticipated($usr_id)) {
+                            $count_passed++;
                         }
                     }
 
-                    if($countTests > 0) {
-                        $percentage = $countPassed / $countTests * 100;
-                        switch ($countTests) {
+                    if($count_tests > 0) {
+                        $percentage = $count_passed / $count_tests * 100;
+                        switch ($count_tests) {
                             case 1:
-                                if ($countPassed == 1) {
-                                    $row['eMentoring_finished'] = ilUtil::img("./" . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . "/templates/images/passed.svg");
+                                if ($count_passed == 1) {
+                                    $row['eMentoring_finished'] = ilUtil::img('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/images/passed.svg');
                                 } else {
-                                    $row['eMentoring_finished'] = ilUtil::img("./" . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . "/templates/images/failed.svg");
+                                    $row['eMentoring_finished'] = ilUtil::img('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/images/failed.svg');
                                 }
                                 break;
                             default:
-                                $row['eMentoring_finished'] = $countPassed . "/" . $countTests;
+                                $row['eMentoring_finished'] = $count_passed . '/' . $count_tests;
                                 break;
                         }
                     } else {
-                        $row['eMentoring_finished'] = ilUtil::img("./" . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . "/templates/images/not_attempted.svg");
+                        $row['eMentoring_finished'] = ilUtil::img('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/images/not_attempted.svg');
                     }
 
                     if (key_exists($usr_id, $arr_excercise_states) && is_object($arr_excercise_states[$usr_id])) {
@@ -357,30 +389,31 @@ class ilParticipationCertificateResultTableGUI
             }
 
             /**
-             * @param array $userData
+             * @param array $user_data
              * @return array
              */
-            private function excludeUserIdIfFiltered(array $userData): array
+            private function excludeUserIdIfFiltered(array $user_data): array
             {
-                foreach($userData as $userId => $user) {
+                foreach($user_data as $user_id => $user) {
                     if ((!empty($this->firstname) && $user->getPartCertFirstname() !== $this->firstname) ||
                         (!empty($this->lastname) && $user->getPartCertLastname() !== $this->lastname)
                     ) {
-                        unset($userData[$userId]);
+                        unset($user_data[$user_id]);
 
-                        $this->usr_ids = array_values(array_filter($this->usr_ids, function($value) use ($userId) {
-                            return $value !== $userId;
+                        $this->usr_ids = array_values(array_filter($this->usr_ids, function($value) use ($user_id) {
+                            return $value !== $user_id;
                         }));
                     }
                 }
-                return $userData;
+                return $user_data;
             }
         };
-
         return $data_retrieval;
     }
 
-    //should not be necessary anymore
+    /**
+     * @return array
+     */
     public function getSelectableColumns(): array
     {
         $cols = [];
@@ -443,19 +476,6 @@ class ilParticipationCertificateResultTableGUI
         return $cols;
     }
 
-    protected function doSelect(Order $order, Range $range): array
-    {
-        $sql_order_part = $order->join('ORDER BY', fn(...$o) => implode(' ', $o));
-        $sql_range_part = sprintf('LIMIT %2$s OFFSET %1$s', ...$range->unpack());
-        $this->range = $range->unpack();
-        $this->order = $order->join('', fn(...$o) => implode(' ', $o));
-
-        return array_map(
-            fn($rec) => array_merge($rec, ['sql_order' => $sql_order_part, 'sql_range' => $sql_range_part]),
-            $this->records()
-        );
-    }
-
     /**
      * @return array
      */
@@ -463,40 +483,40 @@ class ilParticipationCertificateResultTableGUI
     {
         $write_access = $this->cert_access->hasCurrentUserWriteAccess();
 
-        $f = $this->ui_factory;
+        $factory = $this->ui_factory;
 
         if ($write_access) {
-            $cols['loginname'] = $f->table()->column()
+            $cols['loginname'] = $factory->table()->column()
                                    ->text($this->pl->txt('loginname'))
                                    ->withIsSortable(true)
                                    ->withIsOptional(true);
         }
-        $cols['firstname'] = $f->table()->column()
+        $cols['firstname'] = $factory->table()->column()
                                ->text($this->pl->txt('cols_firstname'))
                                ->withIsSortable($write_access);
-        $cols['lastname'] = $f->table()->column()
+        $cols['lastname'] = $factory->table()->column()
                               ->text($this->pl->txt('cols_lastname'))
                               ->withIsSortable($write_access);
-        $cols['initial_test_finished'] = $f->table()->column()
+        $cols['initial_test_finished'] = $factory->table()->column()
                                            ->text($this->pl->txt('cols_initial_test_finished'))
                                            ->withIsSortable(false);
-        $cols['result_qualifing_tests'] = $f->table()->column()
+        $cols['result_qualifing_tests'] = $factory->table()->column()
                                             ->text($this->pl->txt('cols_result_qualifying'))
                                             ->withIsSortable(false);
-        $cols['results_qualifing_tests'] = $f->table()->column()
+        $cols['results_qualifing_tests'] = $factory->table()->column()
                                              ->text($this->pl->txt('cols_results_qualifying'))
                                              ->withIsSortable(false)
                                              ->withIsOptional(true, false);
         if ($this->ementoring or $write_access) {
-            $cols['eMentoring_finished'] = $f->table()->column()
+            $cols['eMentoring_finished'] = $factory->table()->column()
                                              ->text($this->pl->txt('cols_eMentoring_finished'))
                                              ->withIsSortable(false)
                                              ->withIsOptional(true, $this->ementoring);
-            $cols['eMentoring_homework'] = $f->table()->column()
+            $cols['eMentoring_homework'] = $factory->table()->column()
                                              ->text($this->pl->txt('cols_eMentoring_homework'))
                                              ->withIsSortable(false)
                                              ->withIsOptional(true, $this->ementoring);
-            $cols['eMentoring_percentage'] = $f->table()->column()
+            $cols['eMentoring_percentage'] = $factory->table()->column()
                                                ->text($this->pl->txt('cols_eMentoring_percentage'))
                                                ->withIsSortable(false)
                                                ->withIsOptional(true, $this->ementoring);
@@ -507,7 +527,7 @@ class ilParticipationCertificateResultTableGUI
     /**
      * @throws ilCtrlException
      */
-    private function getActions(bool $eMentoringIsActive): array
+    private function getActions(bool $ementoring_is_active): array
     {
         global $DIC;
 
@@ -521,7 +541,7 @@ class ilParticipationCertificateResultTableGUI
                 'entry'
             );
 
-        if ($eMentoringIsActive) {
+        if ($ementoring_is_active) {
             $actions['print_with_ementorining'] = $f->table()->action()->single(
                 $this->pl->txt('list_print_with'),
                 $url_builder->withParameter($this->action_parameter_token, 'print_with_ementorining'),
@@ -534,7 +554,6 @@ class ilParticipationCertificateResultTableGUI
                 $this->row_id_token
             );
         }
-
 
         $actions['print_without_ementorining'] = $f->table()->action()->single(
             $this->pl->txt('list_print_without'),
@@ -574,12 +593,18 @@ class ilParticipationCertificateResultTableGUI
         return $actions;
     }
 
-    protected function buildProgressBar(int $a_perc_result, int $a_perc_limit): string
+    /**
+     * @param int $a_perc_result
+     * @param int $a_perc_limit
+     * @return string
+     * @throws DateMalformedStringException
+     */
+    public function buildProgressBar(int $a_perc_result, int $a_perc_limit): string
     {
-        $groupRefId = filter_input(INPUT_GET, 'ref_id');
+        $group_ref_id = filter_input(INPUT_GET, 'ref_id');
 
-        $start = ilParticipationCertificateConfig::getConfig('period_start', $groupRefId);
-        $end = ilParticipationCertificateConfig::getConfig('period_end', $groupRefId);
+        $start = ilParticipationCertificateConfig::getConfig('period_start', $group_ref_id);
+        $end = ilParticipationCertificateConfig::getConfig('period_end', $group_ref_id);
 
         if ($start !== NULL && $end !== NULL) {
             // Period set
@@ -601,33 +626,28 @@ class ilParticipationCertificateResultTableGUI
                 if ($a_perc_result >= 90) {
                     // 90% reached
                     $css_class = self::GREEN_PROGRESS;
-                } else {
-                    // <90%
-                    if ($current <= $end) {
-                        // End not reached
-                        if ($a_perc_result >= ($perc_limit - 30)) {
-                            // In time or already farer
-                            $css_class = self::GREEN_PROGRESS;
-                        } else {
-                            if ($a_perc_result >= ($perc_limit - 40)) {
-                                //
-                                $css_class = self::ORANGE_PROGRESS;
-                            } else {
-                                // Not in time
-                                $css_class = self::RED_PROGRESS;
-
-                                if ($a_perc_result === 0) {
-                                    $css_class .= ' percent-0';
-                                }
-                            }
-                        }
+                } elseif ($current <= $end) {
+                    // End not reached
+                    if ($a_perc_result >= ($perc_limit - 30)) {
+                        // In time or already farer
+                        $css_class = self::GREEN_PROGRESS;
+                    } elseif ($a_perc_result >= ($perc_limit - 40)) {
+                        //
+                        $css_class = self::ORANGE_PROGRESS;
                     } else {
-                        // End reached
+                        // Not in time
                         $css_class = self::RED_PROGRESS;
 
                         if ($a_perc_result === 0) {
                             $css_class .= ' percent-0';
                         }
+                    }
+                } else {
+                    // End reached
+                    $css_class = self::RED_PROGRESS;
+
+                    if ($a_perc_result === 0) {
+                        $css_class .= ' percent-0';
                     }
                 }
 
@@ -689,13 +709,13 @@ class ilParticipationCertificateResultTableGUI
 
         $ui = $DIC->ui()->factory();
 
-        $inputFirstname = $ui->input()->field()->text('Firstname');
-        $inputLastname = $ui->input()->field()->text('Lastname');
+        $input_firstname = $ui->input()->field()->text('Firstname');
+        $input_lastname = $ui->input()->field()->text('Lastname');
 
         $action = $DIC->ctrl()->getLinkTargetByClass(
             ilParticipationCertificateResultGUI::class,
             'applyFilter',
-            "",
+            '',
             false
         );
 
@@ -703,8 +723,8 @@ class ilParticipationCertificateResultTableGUI
             'filter-results',
             $action,
             [
-                'firstname' => $inputFirstname,
-                'lastname' => $inputLastname,
+                'firstname' => $input_firstname,
+                'lastname' => $input_lastname,
             ],
             [true, true],
             true,
