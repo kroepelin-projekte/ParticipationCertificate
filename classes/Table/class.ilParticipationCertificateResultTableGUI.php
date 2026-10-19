@@ -269,7 +269,6 @@ class ilParticipationCertificateResultTableGUI
                 $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
                 $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $this->usr_ids);
                 $arr_new_iass_states = ilIassStatesMulti::getData($this->usr_ids, $this->ref_id);
-                $arr_xali_states = xaliStates::getData($this->usr_ids, $this->ref_id);
                 $arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $this->ref_id);
 
                 $rows = array();
