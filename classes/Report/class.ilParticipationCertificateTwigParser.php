@@ -197,7 +197,6 @@ class ilParticipationCertificateTwigParser
         $course_obj_id = ilObject::_lookupObjectId($ref_id);
         $group_ref_id = ParticipationCertificateHelper::getGroupRefId($course_ref_id);
         $new_iass_states = ilIassStatesMulti::getData($this->usr_ids, (int) $group_ref_id);
-        $xali_states = xaliStates::getData($this->usr_ids, $ref_id);
         $user_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
         $lo_master_course = ilLearningObjectivesMasterCrs::getData($course_obj_id, $this->usr_ids);
 
