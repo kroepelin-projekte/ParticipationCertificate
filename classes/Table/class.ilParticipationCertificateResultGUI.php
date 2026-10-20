@@ -218,7 +218,7 @@ class ilParticipationCertificateResultGUI
             
         }
 
-        $table_html = $this->initTable((int) $this->course_ref_id);
+        $table_html = $this->initTable();
         $this->tpl->setContent($table_html);
 
         if (method_exists($this->tpl, 'printToStdout')) {
@@ -234,7 +234,7 @@ class ilParticipationCertificateResultGUI
      */
     private function exportExcel()
     {
-        /*$result_table = new ilParticipationCertificateResultTableGUI();
+        $result_table = new ilParticipationCertificateResultTableGUI();
 
         $filter_firstname = '';
         $is_filter_active = false;
@@ -255,7 +255,7 @@ class ilParticipationCertificateResultGUI
             $result_table->setFilter($filter_firstname, $filter_lastname);
         }
 
-        $data = $result_table->records();
+        $data = $result_table->getRecords();
 
         $excel = new ilExcel();
         $excel->addSheet('TEST'
@@ -279,12 +279,15 @@ class ilParticipationCertificateResultGUI
         ob_end_clean();
 
         $filename = 'export';
-        $excel->sendToClient($filename);*/
+        $excel->sendToClient($filename);
     }
 
+    /**
+     * @return void
+     */
     private function exportCSV()
     {
-        /*$result_table = new ilParticipationCertificateResultTableGUI();
+        $result_table = new ilParticipationCertificateResultTableGUI();
 
         $filter_firstname = '';
         $is_filter_active = false;
@@ -305,7 +308,7 @@ class ilParticipationCertificateResultGUI
             $result_table->setFilter($filter_firstname, $filter_lastname);
         }
 
-        $data = $result_table->records();
+        $data = $result_table->getRecords();
         $csv = new ilCSVWriter();
         $csv->setSeparator(';');
 
@@ -323,7 +326,7 @@ class ilParticipationCertificateResultGUI
         header('Cache-Control: must-revalidate, post-check=0,pre-check=0');
         header('Pragma: public');
         echo $csv->getCSVString();
-        exit();*/
+        exit();
     }
 
     protected function fillMetaExcel(ilExcel $a_excel, int &$a_row): void
@@ -642,7 +645,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            /*$config_entries = $_GET['config_entry'];
+            $config_entries = $_GET['config_entry'];
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -681,7 +684,7 @@ class ilParticipationCertificateResultGUI
                 false,
                 false,
                 $this->course_ref_id
-            );*/
+            );
         } else {
             $DIC->ctrl()->redirectToURL('login.php');
         }
@@ -700,7 +703,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-           /* $config_entries = $_GET['config_entry'];
+            $config_entries = $_GET['config_entry'];
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -738,7 +741,7 @@ class ilParticipationCertificateResultGUI
                 false,
                 false,
                 $this->course_ref_id
-            );*/
+            );
         } else {
             $DIC->ctrl()->redirectToURL('login.php');
         }
@@ -751,13 +754,13 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        /*$result_table = new ilParticipationCertificateResultTableGUI();
+        $result_table = new ilParticipationCertificateResultTableGUI();
         $filter = $result_table->buildFilter();
         $filter_data = $DIC->uiService()->filter()->getData($filter);
 
         if (!empty($filter_data['firstname'])) {
             $this->ctrl->setParameterByClass(self::class, 'filter_firstname', $filter_data['firstname']);
-        }*/
+        }
 
         if (!empty($filter_data['lastname'])) {
             $this->ctrl->setParameterByClass(self::class, 'filter_lastname', $filter_data['lastname']);
