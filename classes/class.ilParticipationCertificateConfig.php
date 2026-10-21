@@ -206,23 +206,6 @@ class ilParticipationCertificateConfig extends ActiveRecord
     }
 
     /**
-     * @param array  $file_data
-     * @param int    $template_id
-     * @param string $file_name
-     * @return string
-     * @throws ilException
-     */
-    public static function storePicture(array $file_data, int $template_id, string $file_name): string
-    {
-        self::deletePicture($template_id, $file_name);
-
-        $file_path = self::getFileStoragePath('img', 'absolute', $template_id, true);
-        ilFileUtils::moveUploadedFile($file_data['tmp_name'], '', $file_path . $file_name);
-
-        return self::returnPicturePath('relative', $template_id, $file_name);
-    }
-
-    /**
      * @param int    $template_id
      * @param string $file_name
      * @return void
@@ -381,19 +364,5 @@ class ilParticipationCertificateConfig extends ActiveRecord
     public function setOrderBy(int $order_by): void
     {
         $this->order_by = $order_by;
-    }
-
-    /**
-     * @return array
-     */
-    public static function returnDefaultValuesTypeOther(): array
-    {
-        return array(
-            'udf_firstname' => 0,
-            'udf_lastname' => 0,
-            'color' => '73B249',
-            'keyword' => 'Lerngruppe',
-            'Logo' => null,
-        );
     }
 }

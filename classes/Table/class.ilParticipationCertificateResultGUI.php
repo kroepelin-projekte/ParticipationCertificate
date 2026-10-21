@@ -2,6 +2,7 @@
 
 use Twig\Error\SyntaxError;
 use Twig\Error\LoaderError;
+use JetBrains\PhpStorm\NoReturn;
 
 /**
  * Class ilParticipationCertificateResultGUI
@@ -57,15 +58,15 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        $refId = $this->fetchUrlParameter('ref_id', FILTER_DEFAULT);
+        $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
         $this->toolbar = $DIC->toolbar();
         $this->tabs = $DIC->tabs();
         $this->ctrl = $DIC->ctrl();
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->course_ref_id = (int) $refId;
+        $this->course_ref_id = (int) $ref_id;
         $this->lng = $DIC->language();
-	    $this->cert_access = new ilParticipationCertificateAccess($refId);
+	    $this->cert_access = new ilParticipationCertificateAccess($ref_id);
 	    
         $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->course_ref_id);
         if ($ementoring === NULL) {
@@ -177,12 +178,14 @@ class ilParticipationCertificateResultGUI
                 $this->toolbar->addComponent($toolbar_button);
             }
 
-            if (!empty($_GET['filter_firstname'])) {
-                $this->ctrl->setParameter($this, 'filter_firstname', $_GET['filter_firstname']);
+            $filter_firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
+            if (!empty($filter_firstname)) {
+                $this->ctrl->setParameter($this, 'filter_firstname', $filter_firstname);
             }
 
-            if (!empty($_GET['filter_lastname'])) {
-                $this->ctrl->setParameter($this, 'filter_lastname', $_GET['filter_lastname']);
+            $filter_lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
+            if (!empty($filter_lastname)) {
+                $this->ctrl->setParameter($this, 'filter_lastname', $filter_lastname);
             }
 
             $toolbar_button = $ui->button()->standard(
@@ -199,23 +202,25 @@ class ilParticipationCertificateResultGUI
         }
 
         $target_ref = 0;
-        if ($this->cert_access->isSelfPrintEnabled() and !$this->cert_access->hasCurrentUserPrintAccess()) {
-			$global_config_sets = ilParticipationCertificateConfig::where(['config_type'=>3, 'global_config_id' => 0 ])->orderBy('order_by')->get();
+        if ($this->cert_access->isSelfPrintEnabled() && !$this->cert_access->hasCurrentUserPrintAccess()) {
+            $global_config_sets = ilParticipationCertificateConfig::where(['config_type'=>3, 'global_config_id' => 0 ])->orderBy('order_by')->get();
+
             foreach ($global_config_sets as $config) {
 				if ($config->getConfigKey() == 'true_name_helper') {
 					$target_ref=$config->getConfigValue();
 				}
 			}
             $this->tpl->setOnScreenMessage('failure',$this->pl->txt('noname_noprint'), true);
-	    if (is_numeric($target_ref) and ($target_ref > 0) and (ilObject::_lookupType(ilObject::_lookupObjectId($target_ref),false) == 'xudf')) {
+
+            if (is_numeric($target_ref) && ($target_ref > 0)) {
                 $msgurl = ' <a href="ilias.php?baseClass=ilObjPluginDispatchGUI&cmd=forward&ref_id=' . $target_ref . '">' .  $this->pl->txt('helper_name') . '</a>';
-	    } else {
-		$msgurl = ' <a href="ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile">' . $this->pl->txt('helper_name') . '</a>';
-	    }
-            $msgadd= $this->pl->txt('helper_action_pre') . $msgurl . $this->pl->txt('helper_action_post');
+            } else {
+                $msgurl = ' <a href="ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile">' . $this->pl->txt('helper_name') . '</a>';
+            }
+
+            $msgadd = $this->pl->txt('helper_action_pre') . $msgurl . $this->pl->txt('helper_action_post');
             $this->tpl->setOnScreenMessage('info',$msgadd, true);
-				//Variants sendQuestion, send Info or unified Failure (with some codechange). two same not possible
-            
+            //Variants sendQuestion, send Info or unified Failure (with some codechange). two same not possible
         }
 
         $table_html = $this->initTable();
@@ -238,14 +243,14 @@ class ilParticipationCertificateResultGUI
 
         $filter_firstname = '';
         $is_filter_active = false;
-        $firstname = $this->fetchUrlParameter('filter_firstname', FILTER_DEFAULT);
+        $firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
         if (!empty($firstname)) {
             $filter_firstname = $firstname;
             $is_filter_active = true;
         }
 
         $filter_lastname = '';
-        $lastname = $this->fetchUrlParameter('filter_lastname', FILTER_DEFAULT);
+        $lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
         if (!empty($lastname)) {
             $filter_lastname = $lastname;
             $is_filter_active = true;
@@ -285,20 +290,21 @@ class ilParticipationCertificateResultGUI
     /**
      * @return void
      */
+    #[NoReturn]
     private function exportCSV()
     {
         $result_table = new ilParticipationCertificateResultTableGUI();
 
         $filter_firstname = '';
         $is_filter_active = false;
-        $firstname = $this->fetchUrlParameter('filter_firstname', FILTER_DEFAULT);
+        $firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
         if (!empty($firstname)) {
             $filter_firstname = $firstname;
             $is_filter_active = true;
         }
 
         $filter_lastname = '';
-        $lastname = $this->fetchUrlParameter('filter_lastname', FILTER_DEFAULT);
+        $lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
         if (!empty($lastname)) {
             $filter_lastname = $lastname;
             $is_filter_active = true;
@@ -530,17 +536,17 @@ class ilParticipationCertificateResultGUI
                     $user_ids = [];
 
                     $config_entries = $_GET['config_entry'];
-                    /*if (!empty($config_entries)) {
+                    if (!empty($config_entries)) {
                         if ($config_entries[0] === 'ALL_OBJECTS') {
                             $resultTable = new ilParticipationCertificateResultTableGUI();
-                            $data = $resultTable->records();
+                            $data = $resultTable->getRecords();
                             $user_ids = array_column($data, 'usr_id');
                         } else {
                             $user_ids = $this->excludeUserIdsFromUrlParameters($config_entries);
                         }
                     }
 
-                    new ilParticipationCertificateMultipleResultGUI($user_ids, $this->course_ref_id);*/
+                    new ilParticipationCertificateMultipleResultGUI($user_ids, $this->course_ref_id);
                     break;
                 case 'adjust_results':
                     $result_modification_gui = new ilParticipationCertificateResultModificationGUI();
@@ -656,7 +662,7 @@ class ilParticipationCertificateResultGUI
 
             if ($config_entries[0] === 'ALL_OBJECTS') {
                 $result_table = new ilParticipationCertificateResultTableGUI();
-                $data = $result_table->records();
+                $data = $result_table->getRecords();
                 $usr_ids = array_column($data, 'usr_id');
             } else {
                 foreach ($config_entries as $entry) {
@@ -713,7 +719,7 @@ class ilParticipationCertificateResultGUI
 
             if ($config_entries[0] === 'ALL_OBJECTS') {
                 $result_table = new ilParticipationCertificateResultTableGUI();
-                $data = $result_table->records();
+                $data = $result_table->getRecords();
                 $usr_ids = array_column($data, 'usr_id');
             } else {
                 foreach ($config_entries as $entry) {
@@ -815,15 +821,5 @@ class ilParticipationCertificateResultGUI
     private function excludeURLParameters(string $parameter): array
     {
         return explode('_', $parameter);
-    }
-
-    /**
-     * @param string $param
-     * @param int    $filter
-     * @return mixed
-     */
-    protected function fetchUrlParameter(string $param, int $filter): mixed
-    {
-        return filter_input(INPUT_GET, $param, $filter);
     }
 }

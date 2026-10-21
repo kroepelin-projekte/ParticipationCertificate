@@ -114,20 +114,6 @@ class ilLearnObjectFinalTestStates
     }
 
     /**
-     * @param string $table_name
-     * @return void
-     */
-	protected static function createTemporaryTableTestMaxResult(string $table_name = 'tmp_test_max_result'): void
-    {
-		global $DIC;
-		$ilDB = $DIC->database();
-
-
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX af (active_fi)) (SELECT max(points) as points, active_fi, maxpoints FROM tst_pass_result group by active_fi, maxpoints)";
-		$ilDB->query($sql);
-	}
-
-    /**
      * @param int    $course_obj_id
      * @param array  $arr_usr_ids
      * @param string $table_name

@@ -883,29 +883,4 @@ class ilParticipationCertificateTwigParser
 
         return $data;
     }
-
-    /**
-     * @param int $objective_container
-     * @param int $user_id
-     * @return array
-     */
-    public function getActiveIdForTest(int $objective_container, int $user_id): array
-    {
-        global $DIC;
-
-        $ilDB = $DIC->database();
-
-        $result = $ilDB->queryF(
-            "SELECT * FROM tst_active
-              WHERE objective_container = %s AND user_fi = %s",
-            ['integer', 'integer'],
-            [$objective_container, $user_id]
-        );
-
-        $data = [];
-        while ($row = $ilDB->fetchAssoc($result)) {
-            $data[] = $row;
-        }
-        return $data;
-    }
 }

@@ -29,42 +29,6 @@ class ilParticipationCertificateConfigs {
     }
 
     /**
-     * @throws arException
-     */
-    public function returnTextValues(
-        int $group_ref_id = 0,
-        int $config_type = ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE
-    ): array {
-		$arr_config = ilParticipationCertificateConfig::where([
-			'config_type' => $config_type,
-			'group_ref_id' => $group_ref_id,
-			'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT
-		])->orderBy('order_by')
-          ->getArray('config_key', 'config_value');
-
-        if (count($arr_config) == 0) {
-           $part_cert_ob_conf = new ilParticipationCertificateObjectConfigSet();
-            /**
-             * @var $arr_ob_conf ilParticipationCertificateObjectConfigSet
-             */
-           $arr_ob_conf = $part_cert_ob_conf::where(array('config_type' => ilParticipationCertificateObjectConfigSet::CONFIG_TYPE_TEMPLATE))->first();
-            $global_config_id = 0;
-           if(is_object($arr_ob_conf)) {
-               $global_config_id = $arr_ob_conf->getGlConfTemplateId();
-           }
-
-			$arr_config = ilParticipationCertificateConfig::where([
-				'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE,
-				'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT,
-				'group_ref_id' => 0,
-                'global_config_id' => $global_config_id,
-			])->orderBy('order_by')->getArray('config_key', 'config_value');
-		}
-
-		return $arr_config;
-	}
-
-    /**
      * @param int $group_ref_id
      * @return bool|string
      */

@@ -69,39 +69,4 @@ class ParticipationCertificateHelper
         }
         return $group_ref_id;
     }
-
-    /**
-     * @param int                   $container_ref_id
-     * @param InternalDomainService $domain
-     * @return int|null
-     * @throws ilDatabaseException
-     * @throws ilObjectNotFoundException
-     */
-
-    private static function getSessionsOfContainer(
-        int $container_ref_id,
-        InternalDomainService $domain
-    ): int|null {
-        $container_object_factory = \ilObjectFactory::getInstanceByRefId($container_ref_id);
-
-        $item_presentation = $domain
-            ->content()
-            ->itemPresentation(
-                $container_object_factory, // TODO replace it with container ???
-                null,
-                false
-            );
-
-        $items = $item_presentation->getAllRefIds();
-
-        $session_ref_ids = null;
-        foreach ($items as $key => $item_ref_id) {
-            $item_object = \ilObjectFactory::getInstanceByRefId($item_ref_id);
-
-            if ($item_object->getType() === 'grp') {
-                $session_ref_ids = (int) $item_ref_id;
-            }
-        }
-        return $session_ref_ids;
-    }
 }

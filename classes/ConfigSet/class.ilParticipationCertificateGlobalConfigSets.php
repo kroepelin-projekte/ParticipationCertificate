@@ -6,14 +6,6 @@ class ilParticipationCertificateGlobalConfigSets {
 	}
 
     /**
-     * @return array
-     */
-	public function getAllConfigsAsArray(): array
-    {
-		return ilParticipationCertificateGlobalConfigSet::orderBy('order_by')->getArray();
-	}
-
-    /**
      * @return ilParticipationCertificateGlobalConfigSet
      */
 	public function addNewConfig(): ilParticipationCertificateGlobalConfigSet
