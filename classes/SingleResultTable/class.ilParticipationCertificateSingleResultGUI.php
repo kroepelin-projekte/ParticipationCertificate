@@ -80,12 +80,27 @@ class ilParticipationCertificateSingleResultGUI
      */
     public function display(): void
     {
+        global $DIC;
+
+        $renderer = $DIC->ui()->renderer();
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
-        $this->initHeader();
 
-        $this->initTable();
 
-        $this->tpl->setContent($this->table->getHTML());
+        $arr_usr_data = ilPartCertUsersData::getData($this->pl, [$this->usr_id]);
+        $name_user = $arr_usr_data[$this->usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$this->usr_id]->getPartCertLastname();
+        if ($name_user == ' ') {
+            $name_user = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$this->usr_id]->getPartCertUserName();
+        }
+
+        $result_table = new ilParticipationCertificateSingleResultTableGUI2($this->usr_id);
+        $table = $result_table->getTableForRepresentation();
+
+        $table_html = '<div id="dhbw_part_cert_res">';
+        $table_html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for ') . ' ' . $name_user . '</h2>';
+        $table_html .= $renderer->render($table->withRequest($DIC->http()->request()));
+        $table_html .= '</div>';
+
+        $this->tpl->setContent($table_html);
         if (method_exists($this->tpl, 'printToStdout')) {
             $this->tpl->printToStdout();
         } else {
@@ -103,15 +118,6 @@ class ilParticipationCertificateSingleResultGUI
         $this->tpl->setTitleIcon(ilObject::_getIcon($this->learn_group->getId()));
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
         $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(ilParticipationCertificateResultGUI::class, ilParticipationCertificateResultGUI::CMD_CONTENT));
-    }
-
-    /**
-     * @throws ilException
-     * @throws ilCtrlException
-     */
-    public function initTable(): void
-    {
-        $this->table = new ilParticipationCertificateSingleResultTableGUI($this, ilParticipationCertificateSingleResultGUI::CMD_DISPLAY, $this->usr_id);
     }
 
     /**

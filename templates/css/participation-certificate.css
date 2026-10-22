@@ -15,3 +15,11 @@
 .c-toolbar__item .navbar-form .c-input[data-il-ui-component]  {
     grid-template-columns: 10%;
 }
+
+.c-table-data__table thead tr th:first-child  {
+    display: none;
+}
+
+.c-table-data__table tbody tr td:first-child  {
+    display: none;
+}

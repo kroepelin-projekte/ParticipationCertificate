@@ -64,7 +64,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI
 			'config_key' => 'unsugg_color',
 			'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
 		))->first();
-		if (is_Object($unsugg_config)) { 
+
+		if (is_Object($unsugg_config)) {
 			$this->unsugg_color = $unsugg_config->getConfigValue();
 		} else {
 			$this->unsugg_color = '909090';
@@ -111,9 +112,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI
      */
 	public function getSelectableColumns(): array
     {
-		$cols = array();
+		$cols = [];
 
-		/*$finalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id ]);*/
         $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->course_obj_id, [$this->usr_id ]);
 		$sorted = $this->sortColumns();
 		$i = 0;
@@ -129,8 +129,8 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI
                     foreach ($finalTestsStates_course as $finalTestsState) {
                         $cols[$finalTestsState->getLocftestCrsObjId()] = array(
                             'txt' => $finalTestsState->getLocftestLearnObjectiveTitle(),
-                            'obj_id' => $sorted[$sort_key]['obj_id'],
-                            'objective_id' => $sorted[$sort_key]['objective_id'],
+                            'obj_id' => $sort_arr['obj_id'],
+                            'objective_id' => $sort_arr['objective_id'],
                             'default' => true,
                             'width' => 'auto',
                         );
