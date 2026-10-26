@@ -120,6 +120,7 @@ class ilParticipationCertificateResultTableGUI
             $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
                           ->withRequest($DIC->http()->request());
         }
+
         return $table;
 
     }

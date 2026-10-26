@@ -16,25 +16,25 @@
     grid-template-columns: 10%;
 }
 
-.c-table-data__table thead tr th:first-child  {
+.dhbw_part_cert_res .c-table-data__table thead tr th:first-child  {
     display: none;
 }
 
-.c-table-data__table tbody tr td:first-child  {
+.dhbw_part_cert_res .c-table-data__table tbody tr td:first-child  {
     display: none;
 }
 
-#dhbw_part_cert_res table  {
+.dhbw_part_cert_res table  {
     width: 100%;
 }
 
-#dhbw_part_cert_res .c-table-data__cell  {
+.dhbw_part_cert_res .c-table-data__cell  {
     border: none;
     border-bottom: 1px solid #ddd;
     padding: 0;
 }
 
-#dhbw_part_cert_res .c-table-data__cell span.td-span  {
+.dhbw_part_cert_res .c-table-data__cell span.td-span  {
     display: block;
     overflow:hidden;
     padding: 9px;

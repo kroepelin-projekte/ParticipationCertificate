@@ -20,7 +20,7 @@ class ilParticipationCertificateMultipleResultGUI
     protected ilToolbarGUI $toolbar;
 
     /**
-     * @var ilParticipationCertificateMultipleResultTableGUI[]
+     * @var ilParticipationCertificateSingleResultTableGUI[]
      */
     protected array $tables = array();
 
@@ -93,6 +93,10 @@ class ilParticipationCertificateMultipleResultGUI
      */
     private function show_all_results(): void
     {
+        global $DIC;
+
+        $renderer = $DIC->ui()->renderer();
+
         if (method_exists($this->tpl, 'loadStandardTemplate')) {
             $this->tpl->loadStandardTemplate();
         } else {
@@ -100,13 +104,23 @@ class ilParticipationCertificateMultipleResultGUI
         }
 
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
-        $this->initHeader();
+        $this->tpl->addJavaScript('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/js/participation-certificate.js');
 
+        $this->initHeader();
         $this->initTables();
 
         $html = '';
-        foreach ($this->tables as $table) {
-            $html .= $table->getHTML();
+        foreach ($this->tables as $usr_id => $table) {
+            $arr_usr_data = ilPartCertUsersData::getData($this->pl, [$usr_id]);
+            $name_user = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
+            if ($name_user == ' ') {
+                $name_user = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$usr_id]->getPartCertUserName();
+            }
+
+            $html .= '<div class="dhbw_part_cert_res">';
+            $html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for ') . ' ' . $name_user . '</h2>';
+            $html .= $renderer->render($table->withRequest($DIC->http()->request()));
+            $html .= '</div>';
         }
 
         $this->tpl->setContent($html);
@@ -127,9 +141,18 @@ class ilParticipationCertificateMultipleResultGUI
 
     protected function initTables(): void
     {
+        global $DIC;
+
+        $renderer = $DIC->ui()->renderer();
+
         $this->ctrl->saveParameterByClass(ilParticipationCertificateMultipleResultGUI::class, 'ref_id');
         foreach ($this->usr_ids as $usr_id) {
-            $this->tables[] = new ilParticipationCertificateMultipleResultTableGUI($this, self::CMD_SHOW_SELECTED_ALL_RESULTS, $usr_id, $this->usr_ids);
+        /*    $this->tables[] = new ilParticipationCertificateMultipleResultTableGUI($this, self::CMD_SHOW_SELECTED_ALL_RESULTS, $usr_id, $this->usr_ids);
+        */
+            $result_table = new ilParticipationCertificateSingleResultTableGUI($usr_id);
+            $table = $result_table->getTableForRepresentation();
+
+            $this->tables[$usr_id] = $table;
         }
     }
 }
