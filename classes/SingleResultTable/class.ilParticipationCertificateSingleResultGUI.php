@@ -84,7 +84,9 @@ class ilParticipationCertificateSingleResultGUI
 
         $renderer = $DIC->ui()->renderer();
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
+        $this->tpl->addJavaScript('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/js/participation-certificate.js');
 
+        $this->initHeader();
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, [$this->usr_id]);
         $name_user = $arr_usr_data[$this->usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$this->usr_id]->getPartCertLastname();

@@ -63,14 +63,14 @@ class ilParticipationCertificateSingleResultTableGUI2
         $this->tabs = $DIC->tabs();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-        $config = ilParticipationCertificateConfig::where(array(
+        /*$config = ilParticipationCertificateConfig::where(array(
             'config_key' => 'color',
             'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
         ))->first();
 
-        $this->color = $config->getConfigValue();
+        $this->color = $config->getConfigValue();*/
 
-        $unsugg_config = ilParticipationCertificateConfig::where(array(
+        /*$unsugg_config = ilParticipationCertificateConfig::where(array(
             'config_key' => 'unsugg_color',
             'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
         ))->first();
@@ -78,7 +78,7 @@ class ilParticipationCertificateSingleResultTableGUI2
         $this->unsugg_color = '909090';
         if (is_Object($unsugg_config)) {
             $this->unsugg_color = $unsugg_config->getConfigValue();
-        }
+        }*/
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, [ 'ref_id', 'group_id' ]);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
@@ -101,18 +101,18 @@ class ilParticipationCertificateSingleResultTableGUI2
     /**
      * @throws ilCtrlException
      */
-    public function getTableForRepresentation(
-        ?string $firstname = null,
-        ?string $lastname = null
-    ): I\Data {
+    public function getTableForRepresentation(): I\Data
+    {
         global $DIC;
 
         $request = $DIC->http()->request();
 
-        $data_retrieval = $this->getDataRetrieval();
-        $columns = $this->getColumsForRepresentation();
+        $columns_for_representation = $this->getColumsForRepresentation();
+        $columns = $this->getColumns();
 
-        $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
+        $data_retrieval = $this->getDataRetrieval($columns);
+
+        $table = $this->ui_factory->table()->data($data_retrieval, '', $columns_for_representation)
                                   ->withRequest($DIC->http()->request());
 
         return $table;
@@ -120,11 +120,14 @@ class ilParticipationCertificateSingleResultTableGUI2
     }
 
     /**
+     * @param array $columns
      * @return DataRetrieval
      */
-    private function getDataRetrieval(): I\DataRetrieval
+    private function getDataRetrieval(array $columns): I\DataRetrieval
     {
         $data_retrieval = new class (
+            $this->sugg,
+            $columns,
             $this->getRecords(...)
         ) implements DataRetrieval {
 
@@ -137,6 +140,14 @@ class ilParticipationCertificateSingleResultTableGUI2
             private Closure $records;
 
             private Closure $progress_bar_builder;
+
+            private $suggestions;
+
+            private array $columns;
+
+            private string $color;
+
+            private string $unsugg_color;
 
             /**
              * @param bool                             $ementoring
@@ -151,9 +162,30 @@ class ilParticipationCertificateSingleResultTableGUI2
              * @param string|null                      $lastname
              */
             public function __construct(
+                $suggestions,
+                array $columns,
                 Closure $records
             ) {
+                $this->suggestions = $suggestions;
+                $this->columns = $columns;
                 $this->records = $records;
+
+                $config = ilParticipationCertificateConfig::where(array(
+                    'config_key' => 'color',
+                    'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+                ))->first();
+
+                $this->color = $config->getConfigValue();
+
+                $unsugg_config = ilParticipationCertificateConfig::where(array(
+                    'config_key' => 'unsugg_color',
+                    'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+                ))->first();
+
+                $this->unsugg_color = '909090';
+                if (is_Object($unsugg_config)) {
+                    $this->unsugg_color = $unsugg_config->getConfigValue();
+                }
             }
 
             /**
@@ -189,19 +221,17 @@ class ilParticipationCertificateSingleResultTableGUI2
                             $value = $this->buildProgressBar($exploded_value, $value[1], $value[2]);
                         }
 
-
-
-                        // TODO
                         $background_color = '#FFFFFF';
-                        /*if ($this->searchForId($column['objective_id'], $this->sugg)) {
-                            $background_color = $this->color;
-                        } else {
-                            $background_color = $this->unsugg_color;
-                        }*/
-                        // TODO*/
+                        if ($column_id !== 'hidden') {
 
-
-                        $row[$column_id] = '<div style="background-color: ' . $background_color . '">' . $value . '</div>' ?? '';
+                            $objective_id = $this->columns[str_replace('crs_', '', $column_id)]['objective_id'];
+                            if ($this->searchForId($objective_id, $this->suggestions)) {
+                                $background_color = '#' . $this->color;
+                            } else {
+                                $background_color = '#' . $this->unsugg_color;
+                            }
+                        }
+                        $row[$column_id] = '<span class="td-span" style="background-color: ' . $background_color . ';' . '">' . $value . '</div>' ?? '';
                     }
 
                     yield $row_builder->buildDataRow(
@@ -275,6 +305,17 @@ class ilParticipationCertificateSingleResultTableGUI2
                     $tooltip_id,
                     ''
                 );
+            }
+
+            private function searchForId(int $id, array $array): bool
+            {
+                foreach ($array as $key => $val) {
+                    if ($val->getSuggObjectiveId() == $id) {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         };
         return $data_retrieval;
@@ -357,7 +398,6 @@ class ilParticipationCertificateSingleResultTableGUI2
                                      ->text('')
                                      ->withIsOptional(false)
                                      ->withIsSortable(false);
-
 
         foreach($columns as $obj_id => $column) {
             $cols['crs_' . $obj_id] = $factory->table()->column()
@@ -445,16 +485,5 @@ class ilParticipationCertificateSingleResultTableGUI2
             ];
         }
         return $sorting;
-    }
-
-    private function searchForId(int $id, array $array): bool
-    {
-        foreach ($array as $key => $val) {
-            if ($val->getSuggObjectiveId() == $id) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
