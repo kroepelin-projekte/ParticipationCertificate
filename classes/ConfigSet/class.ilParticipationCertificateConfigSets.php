@@ -1,6 +1,6 @@
 <?php
-class ilParticipationCertificateConfigSets {
-
+class ilParticipationCertificateConfigSets
+{
 	public function __construct() {
 
 	}

@@ -1,7 +1,5 @@
 <?php
 
-use ILIAS\DI\Container;;
-
 /**
  * Class ilParticipationCertificatePlugin
  *
@@ -13,8 +11,6 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
     public const string PLUGIN_NAME = 'ParticipationCertificate';
 
-    public const string PLUGIN_CLASS_NAME = self::class;
-
     public const string PLUGIN_DIRECTORY = 'Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ParticipationCertificate';
 
     public const string CERTIFICATIONS_PATH = 'dhbw_part_cert';
@@ -25,7 +21,7 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
     protected static ?ilParticipationCertificatePlugin $instance = null;
 
-    private ilPluginInfo $pluginInfo;
+    private ilPluginInfo $plugin_info;
 
     protected ilDBInterface $db;
 
@@ -39,7 +35,7 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
         $this->db = $DIC->database();
 
-        $this->pluginInfo = $this->getPluginInfo();
+        $this->plugin_info = $this->getPluginInfo();
     }
 
     public function getPluginName(): string
@@ -59,17 +55,6 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
         return $plugin;
     }
-
-    /*public function exchangeUIRendererAfterInitialization(Container $dic): Closure
-    {
-        $renderer = $dic->raw('ui.renderer');
-        $ctrl = $dic->ctrl();
-        $cmd_class = $ctrl->getCmdClass();
-        $cmd = $ctrl->getCmd();
-
-
-        return $renderer;
-    }*/
 
     protected function afterUninstall(): void
     {
@@ -92,12 +77,12 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
     }
 
     /**
-     * @param string $imageName
+     * @param string $image_name
      * @return string
      */
-    public function getImagePath(string $imageName): string
+    public function getImagePath(string $image_name): string
     {
-        return $this->getDirectory() . '/templates/images/' . $imageName;
+        return $this->getDirectory() . '/templates/images/' . $image_name;
     }
 
     /**
@@ -105,15 +90,15 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
      */
     protected function afterUpdate(): void
     {
-        $pluginVersion = $this->pluginInfo->getCurrentVersion();
-        $versionBeforeUpdate = $pluginVersion->getMajor() . '.' . $pluginVersion->getMinor() . '.' . $pluginVersion->getPatch();
+        $plugin_version = $this->plugin_info->getCurrentVersion();
+        $version_before_update = $plugin_version->getMajor() . '.' . $plugin_version->getMinor() . '.' . $plugin_version->getPatch();
 
         if (version_compare($this->getVersion(), self::PLUGIN_VERSION_FOR_INSERTING_NEW_CONFIGS, '=')) {
             $this->insertNewParticipationCertificateConfigs();
         }
 
 
-        if (version_compare($versionBeforeUpdate, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '>=')) {
+        if (version_compare($version_before_update, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '>=')) {
             return; // file paths already where transferred in database in an older version of the plugin
         }
 
@@ -155,50 +140,50 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
      */
     private function insertNewParticipationCertificateConfigs(): void
     {
-        $participationCertificateConfigs = ilParticipationCertificateConfig::get();
+        $participation_certificate_configs = ilParticipationCertificateConfig::get();
 
-        $orderByGlobalIds = [];
-        foreach ($participationCertificateConfigs as $config) {
+        $order_by_global_ids = [];
+        foreach ($participation_certificate_configs as $config) {
             /* @var $config ilParticipationCertificateConfig */
-            $orderByGlobalIds[$config->getGlobalConfigId()][] = $config->getOrderBy();
+            $order_by_global_ids[$config->getGlobalConfigId()][] = $config->getOrderBy();
         }
 
-        $configWasCreatedForForGlobalIds = [];
-        foreach ($participationCertificateConfigs as $config) {
+        $config_was_created_for_global_ids = [];
+        foreach ($participation_certificate_configs as $config) {
             /* @var $config ilParticipationCertificateConfig */
-            $globalConfigId = $config->getGlobalConfigId();
-            $configType = $config->getConfigType();
-            $groupRefId = $config->getGroupRefId();
-            $configValueType = $config->getConfigValueType();
+            $global_config_id = $config->getGlobalConfigId();
+            $config_type = $config->getConfigType();
+            $group_ref_id = $config->getGroupRefId();
+            $config_value_type = $config->getConfigValueType();
 
-            if ($globalConfigId !== 0 && !in_array($globalConfigId, $configWasCreatedForForGlobalIds)) {
+            if ($global_config_id !== 0 && !in_array($global_config_id, $config_was_created_for_global_ids)) {
                 /**
                  * @var ilParticipationCertificateConfig $config
                  **/
-                $orderBy = max($orderByGlobalIds[$globalConfigId]) + 1;
+                $order_by = max($order_by_global_ids[$global_config_id]) + 1;
 
-                $newConfigIndividualAssessments = new ilParticipationCertificateConfig();
-                $newConfigIndividualAssessments->setGroupRefId($groupRefId);
-                $newConfigIndividualAssessments->setConfigType($configType);
-                $newConfigIndividualAssessments->setGlobalConfigId($globalConfigId);
-                $newConfigIndividualAssessments->setConfigValueType($configValueType);
-                $newConfigIndividualAssessments->setConfigKey('individual_assessments');
-                $newConfigIndividualAssessments->setConfigValue('Individuelle Bewertungen');
-                $newConfigIndividualAssessments->setOrderBy($orderBy);
-                $newConfigIndividualAssessments->create();
+                $new_config_individual_assessments = new ilParticipationCertificateConfig();
+                $new_config_individual_assessments->setGroupRefId($group_ref_id);
+                $new_config_individual_assessments->setConfigType($config_type);
+                $new_config_individual_assessments->setGlobalConfigId($global_config_id);
+                $new_config_individual_assessments->setConfigValueType($config_value_type);
+                $new_config_individual_assessments->setConfigKey('individual_assessments');
+                $new_config_individual_assessments->setConfigValue('Individuelle Bewertungen');
+                $new_config_individual_assessments->setOrderBy($order_by);
+                $new_config_individual_assessments->create();
 
-                $orderBy++;
-                $newConfigSessions = new ilParticipationCertificateConfig();
-                $newConfigSessions->setGroupRefId($groupRefId);
-                $newConfigSessions->setConfigType($configType);
-                $newConfigSessions->setGlobalConfigId($globalConfigId);
-                $newConfigSessions->setConfigValueType($configValueType);
-                $newConfigSessions->setConfigKey('sessions');
-                $newConfigSessions->setConfigValue('Sitzungen');
-                $newConfigSessions->setOrderBy($orderBy);
-                $newConfigSessions->create();
+                $order_by++;
+                $new_config_sessions = new ilParticipationCertificateConfig();
+                $new_config_sessions->setGroupRefId($group_ref_id);
+                $new_config_sessions->setConfigType($config_type);
+                $new_config_sessions->setGlobalConfigId($global_config_id);
+                $new_config_sessions->setConfigValueType($config_value_type);
+                $new_config_sessions->setConfigKey('sessions');
+                $new_config_sessions->setConfigValue('Sitzungen');
+                $new_config_sessions->setOrderBy($order_by);
+                $new_config_sessions->create();
 
-                $configWasCreatedForForGlobalIds[] = $globalConfigId;
+                $config_was_created_for_global_ids[] = $global_config_id;
             }
         }
     }

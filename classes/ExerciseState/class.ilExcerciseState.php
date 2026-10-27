@@ -1,6 +1,6 @@
 <?php
-class ilExcerciseState {
-
+class ilExcerciseState
+{
 	protected string $exc_obj_title;
 
 	protected int $exc_obj_id;

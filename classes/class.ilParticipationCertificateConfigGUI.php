@@ -9,9 +9,8 @@ use ILIAS\UI\Component\Table\Data;
  * @ilCtrl_IsCalledBy  ilParticipationCertificateConfigGUI: ilObjComponentSettingsGUI
  * @ilCtrl_Calls ilParticipationCertificateConfigGUI: ilParticipationCertificatePDFGenerator
  */
-class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
+class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements ilCtrlSecurityInterface
 {
-
     private const string CMD_CONFIRM_RESET_CONFIG = 'confirm_reset_config';
 
     private const string CMD_RESET_CONFIG = 'resetConfig';
@@ -83,6 +82,22 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $this->logger = $DIC->logger()->root();
 
         $this->pl = ilParticipationCertificatePlugin::getInstance();
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getUnsafeGetCommands(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getSafePostCommands(): array
+    {
+        return [];
     }
 
     /**

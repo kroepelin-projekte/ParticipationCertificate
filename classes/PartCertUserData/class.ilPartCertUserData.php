@@ -1,4 +1,5 @@
 <?php
+
 class ilPartCertUserData {
 	protected int $part_cert_usr_id;
 

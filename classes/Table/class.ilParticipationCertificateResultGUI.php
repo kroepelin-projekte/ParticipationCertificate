@@ -113,11 +113,6 @@ class ilParticipationCertificateResultGUI
                     case ilParticipationCertificateMultipleResultGUI::CMD_SHOW_ALL_RESULTS:
                         $this->ctrl->forwardCommand(new ilParticipationCertificateMultipleResultGUI());
                         break;
-                    case self::CMD_PRINT_PDF:
-                    case self::CMD_PRINT_SELECTED:
-                    case self::CMD_PRINT_SELECTED_WITHOUTE_MENTORING:
-                        $this->{$cmd}();
-                        break;
                     default:
                         $this->{$cmd}();
                         break;
@@ -136,18 +131,9 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        global $rbacreview;
-
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
 
-
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-
-            // TODO remove it
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $ui = $DIC->ui()->factory();
@@ -512,7 +498,7 @@ class ilParticipationCertificateResultGUI
      */
     public function action(): void
     {
-        $action = $_GET['config_action'];
+        $action = Helper::fetchUrlParameter('config_action', 'string');
 
         if (!empty($action)) {
             switch ($action) {
@@ -535,7 +521,8 @@ class ilParticipationCertificateResultGUI
                 case 'show_selected_all_results':
                     $user_ids = [];
 
-                    $config_entries = $_GET['config_entry'];
+                    $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
+
                     if (!empty($config_entries)) {
                         if ($config_entries[0] === 'ALL_OBJECTS') {
                             $resultTable = new ilParticipationCertificateResultTableGUI();
@@ -558,7 +545,7 @@ class ilParticipationCertificateResultGUI
                     break;
 
                 case 'print_selected_without_ementorining':
-                    $this->printSelectedWithoutEmentoring();
+                    $this->printSelectedWithouteMentoring();
                     break;
             }
         }
@@ -591,8 +578,11 @@ class ilParticipationCertificateResultGUI
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
             $ementor = false;
             $usr_id = [];
-            if (!empty($_GET['config_entry'])) {
-                $url_parameters = $this->excludeURLParameters($_GET['config_entry'][0]);
+
+            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+
+            if (!empty($config_entry)) {
+                $url_parameters = $this->excludeURLParameters($config_entry[0]);
                 $user_id = $url_parameters[0];
                 $ementor = (bool) $url_parameters[1];
                 $usr_id[] = $user_id;
@@ -651,7 +641,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = $_GET['config_entry'];
+            $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -709,7 +699,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = $_GET['config_entry'];
+            $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);

@@ -68,8 +68,11 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
      * Modify GUI objects, before they generate output
      * @throws ilCtrlException
      */
-    function modifyGUI(string $a_comp, string $a_part, array $a_par = array()): void
-    {
+    public function modifyGUI(
+        string $a_comp,
+        string $a_part,
+        array $a_par = []
+    ): void {
         if ($a_part == 'tabs' && $this->checkGroup()) {
             $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
 
@@ -79,7 +82,7 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
                  */
                 $tabs = $a_par['tabs'];
                 $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
-				$tabs->addTab(
+                $tabs->addTab(
                     self::TAB_CERTIFICATES,
                     $this->pl->txt('plugin'),
                     $this->ctrl->getLinkTargetByClass(

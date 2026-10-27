@@ -22,17 +22,13 @@ class ilParticipationCertificateSingleResultTableGUI
 
     protected ilParticipationCertificatePlugin $pl;
 
-    protected array $filter = array();
+    protected array $filter = [];
 
     protected int $usr_id;
 
-    protected array $marks = array();
-
-    protected string $color;
+    protected array $marks = [];
 
     protected array $usr_ids;
-
-    private string $unsugg_color;
 
     /**
      * @var ilLearningObjectivesMasterCrs[]
@@ -66,12 +62,6 @@ class ilParticipationCertificateSingleResultTableGUI
         $this->usr_ids = $this->cert_access->getUserIdsOfGroup();
         $this->usr_id = $usr_id;
         $this->sugg = getLearnSuggs::getData($usr_id, $this->course_obj_id);
-
-        $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
-        $name_user = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
-        if ($name_user == ' ') {
-            $name_user = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$usr_id]->getPartCertUserName();
-        }
     }
 
     /**
@@ -80,8 +70,6 @@ class ilParticipationCertificateSingleResultTableGUI
     public function getTableForRepresentation(): I\Data
     {
         global $DIC;
-
-        $request = $DIC->http()->request();
 
         $columns_for_representation = $this->getColumsForRepresentation();
         $columns = $this->getColumns();
@@ -114,8 +102,6 @@ class ilParticipationCertificateSingleResultTableGUI
             public const string FAILED_PROGRESS_CSS_CLASS = 'ilCourseObjectiveProgressBarFailed';
 
             private Closure $records;
-
-            private Closure $progress_bar_builder;
 
             private $suggestions;
 

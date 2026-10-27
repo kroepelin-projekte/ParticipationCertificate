@@ -1,7 +1,7 @@
 <?php
 
-class ilIassStatesMulti {
-
+class ilIassStatesMulti
+{
     /**
      * @param array $arr_usr_ids
      * @param int   $group_ref_id

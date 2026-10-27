@@ -1,7 +1,6 @@
 <?php
 
 use ILIAS\UI\Component\Input\Container\Form\Standard;
-use ILIAS\Data\Factory;
 
 /**
  * Class ilParticipationCertificateGUI
@@ -9,7 +8,7 @@ use ILIAS\Data\Factory;
  * @ilCtrl_isCalledBy ilParticipationCertificateGUI: ilUIPluginRouterGUI
  * @ilCtrl_Calls      ilParticipationCertificateGUI: ilParticipationCertificateResultGUI
  */
-class ilParticipationCertificateGUI
+class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 {
     public const string CMD_SAVE = 'save';
 
@@ -87,6 +86,22 @@ class ilParticipationCertificateGUI
         $this->learn_group = ilObjectFactory::getInstanceByRefId($this->group_ref_id);
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, ['ref_id', 'group_id']);
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getUnsafeGetCommands(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getSafePostCommands(): array
+    {
+        return [];
     }
 
     /**
@@ -281,6 +296,7 @@ class ilParticipationCertificateGUI
     public function initForm(): Standard
     {
         global $DIC;
+
         $ui = $DIC->ui()->factory();
 
         $input_fields = [];

@@ -48,10 +48,11 @@ class ilParticipationCertificateSingleResultGUI
         $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
         $this->usr_ids = $cert_access->getUserIdsOfGroup();
 
-        $usr_id = $_GET[self::IDENTIFIER];
+        $usr_id = Helper::fetchUrlParameter('usr_id', 'string');
 
         if(empty($usr_id) && !empty($_GET['config_entry'])) {
-            $urlParameters = $this->excludeURLParameters($_GET['config_entry'][0]);
+            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $urlParameters = $this->excludeURLParameters($config_entry[0]);
             $usr_id = (int) $urlParameters[0];
         }
         $this->usr_id = $usr_id;
@@ -64,12 +65,8 @@ class ilParticipationCertificateSingleResultGUI
     {
         $next_class = $this->ctrl->getNextClass();
 
-        switch ($next_class) {
-            default:
-                $cmd = $this->ctrl->getCmd(self::CMD_DISPLAY);
-                $this->{$cmd}();
-                break;
-        }
+        $cmd = $this->ctrl->getCmd(self::CMD_DISPLAY);
+        $this->{$cmd}();
     }
 
     /**
@@ -106,34 +103,6 @@ class ilParticipationCertificateSingleResultGUI
         } else {
             $this->tpl->show();
         }
-    }
-
-    /**
-     * @return string
-     * @throws ilCtrlException
-     * @throws ilException
-     */
-    public function getTableHtml()
-    {
-        global $DIC;
-
-        $renderer = $DIC->ui()->renderer();
-
-        $arr_usr_data = ilPartCertUsersData::getData($this->pl, [$this->usr_id]);
-        $name_user = $arr_usr_data[$this->usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$this->usr_id]->getPartCertLastname();
-        if ($name_user == ' ') {
-            $name_user = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$this->usr_id]->getPartCertUserName();
-        }
-
-        $result_table = new ilParticipationCertificateSingleResultTableGUI($this->usr_id);
-        $table = $result_table->getTableForRepresentation();
-
-        $table_html = '<div id="dhbw_part_cert_res">';
-        $table_html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for ') . ' ' . $name_user . '</h2>';
-        $table_html .= $renderer->render($table->withRequest($DIC->http()->request()));
-        $table_html .= '</div>';
-
-        return $table_html;
     }
 
     /**

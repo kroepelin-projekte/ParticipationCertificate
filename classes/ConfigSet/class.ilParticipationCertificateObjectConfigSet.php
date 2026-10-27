@@ -1,7 +1,7 @@
 <?php
 
-class ilParticipationCertificateObjectConfigSet extends ActiveRecord {
-
+class ilParticipationCertificateObjectConfigSet extends ActiveRecord
+{
     public const string TABLE_NAME = 'dhbw_part_cert_ob_conf';
 
     public const int CONFIG_TYPE_TEMPLATE = 1;

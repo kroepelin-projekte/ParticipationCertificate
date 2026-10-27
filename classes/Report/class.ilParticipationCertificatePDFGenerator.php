@@ -45,8 +45,6 @@ class ilParticipationCertificatePDFGenerator
      */
     public function executeCommand(): void
     {
-        $cmd = $this->ctrl->getCmd();
-
         $cmd = $this->ctrl->getCmd(self::CMD_PDF);
         $this->{$cmd}();
     }

@@ -1,8 +1,6 @@
 <?php
-class LearnObjectivesCoursesQuery {
-
-    public const string DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_courses';
-
+class LearnObjectivesCoursesQuery
+{
     /**
      * @param $courseObjId
      * @return string
@@ -28,19 +26,5 @@ class LearnObjectivesCoursesQuery {
 		inner join container_reference as real_objective_crs on real_objective_crs.obj_id = objective_crsr.obj_id
         inner join object_data as objective_crs_obj on objective_crs_obj.obj_id = real_objective_crs.target_obj_id 
         WHERE crs_objectives.crs_id = " . $ilDB->quote($courseObjId, 'integer');
-	}
-
-	/**
-	 * @param string $table_name
-	 */
-	public function createTemporaryTable(string $table_name =  self::DEFAULT_TMP_TABLE_NAME): void
-    {
-		global $DIC;
-
-		$ilDB = $DIC->database();
-
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX cob (crs_id, objective_id)) (".$this->getSQL().")";
-
-		$ilDB->query($sql);
 	}
 }

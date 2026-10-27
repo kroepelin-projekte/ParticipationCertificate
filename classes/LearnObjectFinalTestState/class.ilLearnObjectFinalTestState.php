@@ -1,5 +1,6 @@
 <?php
-class ilLearnObjectFinalTestState {
+class ilLearnObjectFinalTestState
+{
     protected ?string $locftest_learn_objective_title;
 
     protected ?int $locftest_usr_id;

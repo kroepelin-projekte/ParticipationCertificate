@@ -1,7 +1,6 @@
 <?php
 class LearnObjectivesFinalTestsQuery
 {
-
     public const string DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_final_tests';
 
     /**

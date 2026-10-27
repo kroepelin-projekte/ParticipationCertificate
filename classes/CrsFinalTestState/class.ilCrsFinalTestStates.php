@@ -2,8 +2,8 @@
 
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Config\ConfigProvider;
 
-class ilCrsFinalTestStates {
-
+class ilCrsFinalTestStates
+{
     /**
      * @param array $user_ids
      * @param int   $crs_ref_id crsRefId

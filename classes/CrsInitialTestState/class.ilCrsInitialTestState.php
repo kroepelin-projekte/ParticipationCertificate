@@ -1,6 +1,7 @@
 <?php
 
-class ilCrsInitialTestState {
+class ilCrsInitialTestState
+{
 	protected int $crsitest_usr_id;
 
 	protected int $crsitest_crs_obj_id;

@@ -138,12 +138,9 @@ class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
             $file = null;
             $resourceStorage = false;
 
-            $file_path_id = 0;
             if($config->getGlobalConfigId() > 0) {
-                $configId = $config->getGlobalConfigId();
                 $file_path_id = $config->getGlobalConfigId() ;
             } else {
-                $configId = $config->getGroupRefId();
                 $file_path_id = $config->getGroupRefId();
             }
             $config->setGroupRefId(0);

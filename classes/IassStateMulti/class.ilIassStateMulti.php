@@ -1,6 +1,6 @@
 <?php
-class ilIassStateMulti {
-
+class ilIassStateMulti
+{
 	protected string $iass_obj_title;
 
 	protected int $iass_obj_id;

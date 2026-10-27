@@ -10,7 +10,6 @@ use ILIAS\Data\URI;
 use ILIAS\UI\URLBuilderToken;
 use ILIAS\UI\Component\Table\DataRetrieval;
 use ILIAS\UI\Component\Table\DataRowBuilder;
-use ILIAS\UI\Implementation\Component\Table\Data;
 
 class ilParticipationCertificateConfigSetTableGUI
 {
@@ -85,10 +84,6 @@ class ilParticipationCertificateConfigSetTableGUI
                 mixed $filter_data,
                 mixed $additional_parameters
             ): \Generator {
-                global $DIC;
-
-                $pl = ilParticipationCertificatePlugin::getInstance();
-                $ui_factory = $DIC->ui()->factory();
 
                 $records = $this->getRecords($range, $order);
 
@@ -157,8 +152,6 @@ class ilParticipationCertificateConfigSetTableGUI
              */
             protected function getRecords(?Range $range = null, ?Order $order = null): array
             {
-                global $DIC;
-
                 $pl = ilParticipationCertificatePlugin::getInstance();
 
                 $global_configs = new ilParticipationCertificateConfigSets();

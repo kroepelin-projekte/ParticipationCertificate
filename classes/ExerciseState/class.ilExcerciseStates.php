@@ -1,7 +1,7 @@
 <?php
 
-class ilExcerciseStates {
-
+class ilExcerciseStates
+{
 	public static function getData(
         array $arr_usr_ids,
         int $group_ref_id
