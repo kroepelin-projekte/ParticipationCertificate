@@ -6,8 +6,6 @@ class ilParticipationCertificateMultipleResultGUI
 {
     public const string CMD_SHOW_ALL_RESULTS = 'show_all_results';
 
-    public const string CMD_SHOW_SELECTED_ALL_RESULTS = 'show_selected_all_results';
-
 
     protected ilTabsGUI $tabs;
 
@@ -22,7 +20,7 @@ class ilParticipationCertificateMultipleResultGUI
     /**
      * @var ilParticipationCertificateSingleResultTableGUI[]
      */
-    protected array $tables = array();
+    protected array $tables = [];
 
     /**
      * @var int[]
@@ -81,10 +79,8 @@ class ilParticipationCertificateMultipleResultGUI
     {
         $cmd = $this->ctrl->getCmd(self::CMD_SHOW_ALL_RESULTS);
 
-        switch ($cmd) {
-            case self::CMD_SHOW_ALL_RESULTS:
-                $this->{$cmd}();
-                break;
+        if ($cmd == self::CMD_SHOW_ALL_RESULTS) {
+            $this->{$cmd}();
         }
     }
 
@@ -97,11 +93,7 @@ class ilParticipationCertificateMultipleResultGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
 
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
         $this->tpl->addJavaScript('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/js/participation-certificate.js');
@@ -131,6 +123,10 @@ class ilParticipationCertificateMultipleResultGUI
         }
     }
 
+    /**
+     * @return void
+     * @throws ilCtrlException
+     */
     protected function initHeader(): void
     {
         $this->tpl->setTitle($this->learn_group->getTitle());
@@ -139,16 +135,15 @@ class ilParticipationCertificateMultipleResultGUI
         $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(ilParticipationCertificateResultGUI::class, ilParticipationCertificateResultGUI::CMD_CONTENT));
     }
 
+    /**
+     * @return void
+     * @throws ilCtrlException
+     * @throws ilException
+     */
     protected function initTables(): void
     {
-        global $DIC;
-
-        $renderer = $DIC->ui()->renderer();
-
         $this->ctrl->saveParameterByClass(ilParticipationCertificateMultipleResultGUI::class, 'ref_id');
         foreach ($this->usr_ids as $usr_id) {
-        /*    $this->tables[] = new ilParticipationCertificateMultipleResultTableGUI($this, self::CMD_SHOW_SELECTED_ALL_RESULTS, $usr_id, $this->usr_ids);
-        */
             $result_table = new ilParticipationCertificateSingleResultTableGUI($usr_id);
             $table = $result_table->getTableForRepresentation();
 

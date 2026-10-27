@@ -92,21 +92,39 @@ class ilParticipationCertificateConfig extends ActiveRecord
      */
     protected int $order_by = 0;
 
-    public function getConnectorContainerName(): string
-    {
-        return self::TABLE_NAME;
-    }
-
-    public static function returnDbTableName(): string
-    {
-        return self::TABLE_NAME;
-    }
-
+    /**
+     * @param                  $primary_key
+     * @param arConnector|null $connector
+     */
     public function __construct($primary_key = 0, arConnector $connector = null)
     {
         parent::__construct($primary_key, $connector);
     }
 
+    /**
+     * @return string
+     */
+    public function getConnectorContainerName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public static function returnDbTableName(): string
+    {
+        return self::TABLE_NAME;
+    }
+
+    /**
+     * @param string      $config_key
+     * @param int         $group_ref_id
+     * @param int         $config_type
+     * @param int         $config_value_type
+     * @param string|null $default
+     * @return string|null
+     */
     public static function getConfig(
         string $config_key,
         int $group_ref_id = 0,

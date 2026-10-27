@@ -1,17 +1,10 @@
 <?php
 
-use ILIAS\Data\Factory;
-use ILIAS\Data\DateFormat\DateFormat;
 use ILIAS\UI\Component\Table as I;
 use ILIAS\Data\Range;
 use ILIAS\Data\Order;
-use ILIAS\UI\URLBuilder;
-use ILIAS\Data\URI;
-use ILIAS\UI\URLBuilderToken;
-use ILIAS\UI\Component\Input\Container\Filter\Standard;
 use ILIAS\UI\Component\Table\DataRetrieval;
 use ILIAS\UI\Component\Table\DataRowBuilder;
-use ILIAS\UI\Implementation\Component\Table\Data;
 
 /**
  * Class ilParticipationCertificateSingleResultTableGUI

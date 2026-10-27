@@ -12,39 +12,56 @@ use ILIAS\UI\Component\Table\Data;
 class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 {
 
-    const CMD_CONFIRM_RESET_CONFIG = 'confirm_reset_config';
-    const CMD_RESET_CONFIG = 'resetConfig';
-    const CMD_SHOW_FORM = 'showForm';
-    const CMD_SHOW_FORM_ERR = 'showErrForm';
-    const CMD_ADD_CONFIG = 'addConfig';
-    const CMD_COPY_CONFIG = 'copyConfig';
-    const CMD_CREATE_TEMPLATE_FRON_LOCAL_CONFIG = 'createTemplateFromLocalConfig';
-    const CMD_DELETE_CONFIG = 'deleteConfig';
-    const CMD_SET_ACTIVE = 'setActive';
-    const CMD_SET_INACTIVE = 'setInactive';
-    const CMD_CONFIGURE = 'configure';
+    private const string CMD_CONFIRM_RESET_CONFIG = 'confirm_reset_config';
 
-    const CMD_SAVE = 'save';
+    private const string CMD_RESET_CONFIG = 'resetConfig';
 
-    const CMD_ACTION = 'action';
+    private const string CMD_SHOW_FORM = 'showForm';
 
-    const CMD_SORTING = 'sorting';
+    private const string CMD_SHOW_FORM_ERR = 'showErrForm';
 
-    const CMD_SAVE_ORDER = 'saveOrder';
-    const CMD_CANCEL = 'cancel';
+    private const string CMD_ADD_CONFIG = 'addConfig';
+
+    private const string CMD_COPY_CONFIG = 'copyConfig';
+
+    private const string CMD_DELETE_CONFIG = 'deleteConfig';
+
+    private const string CMD_SET_ACTIVE = 'setActive';
+
+    private const string CMD_SET_INACTIVE = 'setInactive';
+
+    private const string CMD_CONFIGURE = 'configure';
+
+    private const string CMD_SAVE = 'save';
+
+    public const string CMD_ACTION = 'action';
+
+    private const string CMD_SORTING = 'sorting';
+
+    private const string CMD_SAVE_ORDER = 'saveOrder';
+
+    private const string CMD_CANCEL = 'cancel';
+
     protected ilParticipationCertificateConfig $object;
+
     protected ilParticipationCertificatePlugin $pl;
+
     protected ilTemplate|ilGlobalTemplateInterface $tpl;
+
     protected ilCtrl|ilCtrlInterface $ctrl;
+
     protected ilParticipationCertificateConfigSetTableGUI $table;
+
     protected ilTabsGUI $tabs;
+
     protected ilToolbarGUI $ilToolbar;
-    protected ilGroupParticipants $learnGroupParticipants;
-    protected ilObjCourse $courseobject;
+
     protected ilDBInterface $db;
-    public mixed $dropValues;
+
     public string $surname;
+
     public string $lastname;
+
     public string $gender;
 
     private bool $err_helper;
@@ -71,7 +88,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
     /**
      * @throws ilCtrlException
      */
-    function performCommand(string $cmd): void
+    public function performCommand(string $cmd): void
     {
         if ($cmd !== 'configure') {
             $this->tabs->addTab(
@@ -135,6 +152,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $global_configs = new ilParticipationCertificateConfigSets();
         $data = $global_configs->getAllConfigSets();
 
+        $inputFields = [];
         foreach ($data as $configSet) {
             $value = intval($configSet['order_by']) * 10;
             if ($configSet['order_by'] > 0) {
@@ -169,7 +187,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $gl_config = $gl_configs->getDefaultConfig();
         $configs = new ilParticipationCertificateConfigs();
 
-        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs($configs->getGlobalConfigSet($gl_config->getId()));
+        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs(
+            $configs->getGlobalConfigSet($gl_config->getId())
+        );
 
         $this->ctrl->setParameter($this, 'id', $new_config_set->getId());
         $this->ctrl->setParameter($this, 'set_type', ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE);
@@ -192,7 +212,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
         $configs = new ilParticipationCertificateConfigs();
 
-        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs($configs->getObjectConfigSet($grp_ref_id));
+        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs(
+            $configs->getObjectConfigSet($grp_ref_id)
+        );
 
         $this->ctrl->setParameter($this, 'id', $new_config_set->getId());
         $this->ctrl->setParameter($this, 'set_type', ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE);
@@ -204,7 +226,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
      */
     public function copyConfig(): void
     {
-        $entry = $_GET['config_entry'][0];
+        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
 
@@ -214,7 +237,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
         $configs = new ilParticipationCertificateConfigs();
 
-        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs($configs->getGlobalConfigSet($id));
+        $new_config_set = ilParticipationCertificateGlobalConfigSet::createNewFromConfigs(
+            $configs->getGlobalConfigSet($id)
+        );
 
         $this->ctrl->setParameter($this, 'id', $new_config_set->getId());
         $this->ctrl->setParameter($this, 'set_type', ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE);
@@ -239,90 +264,89 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
             $file->delete();
         }
 
-
         //Global Config
         //set global plugin configurations
         $config = ilParticipationCertificateConfig::where(['config_key' => 'udf_firstname'])->first();
 
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigKey('udf_firstname');
-        	$config->setGlobalConfigId(0);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setOrderBy(1);
-        	$config->store();
-        	}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigKey('udf_firstname');
+            $config->setGlobalConfigId(0);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setOrderBy(1);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'udf_lastname'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('udf_lastname');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(2);
-        	$config->store();
-		}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('udf_lastname');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(2);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'udf_gender'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('udf_gender');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(3);
-        	$config->store();
-		}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('udf_gender');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(3);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'keyword'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('keyword');
-        	$config->setConfigValue('Lerngruppe');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(0);
-        	$config->store();
-		}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('keyword');
+            $config->setConfigValue('Lerngruppe');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(0);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'color'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('color');
-        	$config->setConfigValue('fff5ba');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(4);
-        	$config->store();
-		}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('color');
+            $config->setConfigValue('fff5ba');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(4);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'unsugg_color'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('unsugg_color');
-        	$config->setConfigValue('000a35');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(5);
-		$config->store();
-	}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('unsugg_color');
+            $config->setConfigValue('000a35');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(5);
+            $config->store();
+        }
 
         $config = ilParticipationCertificateConfig::where(['config_key' => 'true_name_helper'])->first();
         if (!is_object($config)) {
-            	$config = new ilParticipationCertificateConfig();
-        	$config->setConfigKey('true_name_helper');
-        	$config->setConfigValue('');
-        	$config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-        	$config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-        	$config->setGlobalConfigId(0);
-        	$config->setOrderBy(6);
-		$config->store();
-	}
+            $config = new ilParticipationCertificateConfig();
+            $config->setConfigKey('true_name_helper');
+            $config->setConfigValue('');
+            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
+            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
+            $config->setGlobalConfigId(0);
+            $config->setOrderBy(6);
+            $config->store();
+        }
 
         //Config Template
         require_once "Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ParticipationCertificate/vendor/autoload.php";
@@ -346,7 +370,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
             $config->store();
         }
 
-        $this->tpl->setOnScreenMessage('success',$this->pl->txt('config_reseted'), true);
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('config_reseted'), true);
 
         $DIC->ctrl()->redirect($this, self::CMD_CONFIGURE);
     }
@@ -423,7 +447,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
      */
     public function deleteConfig(): void
     {
-        $entry = $_GET['config_entry'][0];
+        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
 
@@ -439,7 +464,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         foreach ($configs->getGlobalConfigSet($id) as $config) {
             $config->delete();
 
-            switch($config->getConfigKey()) {
+            switch ($config->getConfigKey()) {
                 case 'logo':
                 case 'page1_issuer_signature':
                     $file = ilParticipationCertificateFiles::getFile(
@@ -465,7 +490,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
      */
     public function setActive(): void
     {
-        $entry = $_GET['config_entry'][0];
+        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
 
@@ -481,7 +507,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
      */
     public function setInactive(): void
     {
-        $entry = $_GET['config_entry'][0];
+        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
 
@@ -504,9 +531,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
     {
         global $DIC;
 
-        $form  = $this->sortingForm();
+        $form = $this->sortingForm();
 
-        $form  = $form->withRequest($DIC->http()->request());
+        $form = $form->withRequest($DIC->http()->request());
         $form_data = $form->getData();
 
         $configs = new ilParticipationCertificateGlobalConfigSets();
@@ -520,7 +547,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
      */
     public function showErrForm(): void
     {
-	    self::showForm(true);
+        self::showForm(true);
     }
 
     /**
@@ -534,7 +561,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $set_type = filter_input(INPUT_GET, 'set_type');
 
         if (empty($id) && empty($set_type)) {
-            $entry = $_GET['config_entry'][0];
+            $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+
             $explodedEntry = explode('_', $entry);
             $id = $explodedEntry[0];
             $set_type = $explodedEntry[1];
@@ -678,7 +706,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
                     )->withValue($configValue ?? '');
 
                     break;
-
             }
         }
 
@@ -720,9 +747,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $DIC->ctrl()->setParameter($this, 'id', $global_config_id);
         $DIC->ctrl()->setParameter($this, 'set_type', $set_type);
 
-        $form  = $this->buildForm((int) $global_config_id, (int) $set_type);
+        $form = $this->buildForm((int) $global_config_id, (int) $set_type);
 
-        $form  = $form->withRequest($DIC->http()->request());
+        $form = $form->withRequest($DIC->http()->request());
         $form_data = $form->getData()['config'];
 
         $this->err_helper = false;
@@ -731,8 +758,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         switch ($set_type) {
             case ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE:
                 foreach ($form_data as $key => $item) {
-
-                    if($key !== 'config_title') {
+                    if ($key !== 'config_title') {
                         $this->logger->debug('Get config key: ' . $key);
 
                         $config = ilParticipationCertificateConfig::where(array(
@@ -745,7 +771,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
                     switch ($key) {
                         case 'config_title':
-                            $global_config = ilParticipationCertificateGlobalConfigSet::findOrGetInstance($global_config_id);
+                            $global_config = ilParticipationCertificateGlobalConfigSet::findOrGetInstance(
+                                $global_config_id
+                            );
                             $global_config->setTitle($input);
                             $global_config->store();
 
@@ -891,7 +919,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         return true;
     }
 
-    private function rgbToHex($r, $g, $b) {
+    private function rgbToHex($r, $g, $b)
+    {
         return sprintf("#%02X%02X%02X", $r, $g, $b);
     }
 
@@ -906,7 +935,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
     protected function getUdfDropdownValues(): array
     {
-
         $sql = "SELECT * FROM udf_definition";
 
         $results = $this->db->query($sql);
@@ -934,18 +962,22 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
 
         $toolbarButton = $ui->button()->standard(
             $this->pl->txt('add_config'),
-            $this->ctrl->getLinkTargetByClass(ilParticipationCertificateConfigGUI::class, ilParticipationCertificateConfigGUI::CMD_ADD_CONFIG)
+            $this->ctrl->getLinkTargetByClass(
+                ilParticipationCertificateConfigGUI::class, ilParticipationCertificateConfigGUI::CMD_ADD_CONFIG
+            )
         );
         $this->ilToolbar->addComponent($toolbarButton);
 
         $toolbarButton = $ui->button()->standard(
             $this->pl->txt('reset_config'),
-            $this->ctrl->getLinkTargetByClass(ilParticipationCertificateConfigGUI::class, ilParticipationCertificateConfigGUI::CMD_CONFIRM_RESET_CONFIG)
+            $this->ctrl->getLinkTargetByClass(
+                ilParticipationCertificateConfigGUI::class,
+                ilParticipationCertificateConfigGUI::CMD_CONFIRM_RESET_CONFIG
+            )
         );
         $this->ilToolbar->addComponent($toolbarButton);
 
         $table = $this->initTable();
-
 
         $this->tpl->setContent(
             $r->render($table->withRequest($DIC->http()->request()))
@@ -961,7 +993,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI
         $table = new ilParticipationCertificateConfigSetTableGUI();
 
         return $table->getTableForRepresentation();
-
     }
 
     /**

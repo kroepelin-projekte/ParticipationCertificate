@@ -15,8 +15,6 @@ class ilParticipationCertificateGUI
 
     public const string CMD_CANCEL = 'cancel';
 
-    public const string CMD_LOOP = 'loop';
-
     public const string CMD_CONFIG = 'config';
 
     public const string CMD_CONFIG_RESULT_TABLE = 'configResultTable';
@@ -50,10 +48,6 @@ class ilParticipationCertificateGUI
     public ilCtrl|ilCtrlInterface $ctrl;
 
     public ilTabsGUI $tabs;
-
-    public ilGroupParticipants $learn_group_participants;
-
-    public ilObjGroup $learning_group;
 
     public ilParticipationCertificateConfig $object;
 
@@ -95,6 +89,10 @@ class ilParticipationCertificateGUI
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, ['ref_id', 'group_id']);
     }
 
+    /**
+     * @return void
+     * @throws ilCtrlException
+     */
     public function executeCommand(): void
     {
         $cmd = $this->ctrl->getCmd();
@@ -106,22 +104,7 @@ class ilParticipationCertificateGUI
                 $this->ctrl->forwardCommand($il_participation_certificate_table_gui);
                 break;
             default:
-                switch ($cmd) {
-                    case self::CMD_CONFIG:
-                    case self::CMD_CONFIG_RESULT_TABLE:
-                    case self::CMD_DISPLAY:
-                    case self::CMD_SET_CERT_TEMPLATE:
-                    case self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE:
-                    case self::CMD_SAVE:
-                    case self::CMD_RESULT_TABLE_CONFIG:
-                    case self::CMD_SELF_PRINT:
-                    case self::CMD_SELF_PRINT_SAVE:
-                        $this->{$cmd}();
-                        break;
-                    default:
-                        $this->{$cmd}();
-                        break;
-                }
+                $this->{$cmd}();
         }
     }
 
@@ -133,7 +116,10 @@ class ilParticipationCertificateGUI
         $this->configResultTable();
     }
 
-    public function initHeader(): void
+    /**
+     * @throws ilCtrlException
+     */
+    protected function initHeader(): void
     {
         $this->tpl->setTitle($this->learn_group->getTitle());
         $this->tpl->setDescription($this->learn_group->getDescription());
@@ -142,12 +128,14 @@ class ilParticipationCertificateGUI
         $this->ctrl->saveParameterByClass(ilRepositoryGUI::class, 'ref_id');
 
         $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->group_ref_id);
-        $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(array(
-            ilRepositoryGUI::class
-        )));
+        $this->tabs->setBackTarget(
+            $this->pl->txt('header_btn_back'),
+            $this->ctrl->getLinkTargetByClass([ilRepositoryGUI::class])
+        );
 
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
+
         $this->tabs->addTab(
             ilParticipationCertificateResultGUI::CMD_OVERVIEW,
             $this->pl->txt('header_overview'),
@@ -157,7 +145,11 @@ class ilParticipationCertificateGUI
             )
         );
 
-        $this->tabs->addTab(self::TAB_CONFIG, $this->pl->txt('header_config'), $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONFIG));
+        $this->tabs->addTab(
+            self::TAB_CONFIG,
+            $this->pl->txt('header_config'),
+            $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONFIG)
+        );
         $this->tabs->activateTab(self::TAB_CONFIG);
     }
 
@@ -196,11 +188,7 @@ class ilParticipationCertificateGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();
@@ -232,7 +220,6 @@ class ilParticipationCertificateGUI
 
         $cert_global_configs = new ilParticipationCertificateGlobalConfigSets();
         $options_template = $cert_global_configs->getSelectOptions();
-
 
         $select = $ui->input()->field()
                               ->select('', $options_template)
@@ -283,7 +270,6 @@ class ilParticipationCertificateGUI
         JS;
         });
 
-
         $this->toolbar->addComponent($button_fixed_form);
         $this->toolbar->addComponent($button_editable_form);
     }
@@ -307,10 +293,7 @@ class ilParticipationCertificateGUI
         if (count($arr_config) > 0) {
             $global_config_id = reset($arr_config)->getGlobalConfigId();
         }
-
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
-
-
         $this->initToolbar($global_config_id);
 
         if (!empty($global_config_id) && $global_config_id > 0) {
@@ -571,11 +554,7 @@ class ilParticipationCertificateGUI
     {
         global $DIC;
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();
@@ -729,11 +708,7 @@ class ilParticipationCertificateGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();

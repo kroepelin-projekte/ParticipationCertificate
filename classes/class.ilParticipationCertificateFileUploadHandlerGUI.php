@@ -17,6 +17,7 @@ use ILIAS\ResourceStorage\Stakeholder\ResourceStakeholder;
 class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUploadHandler
 {
     private Services $storage;
+
     /** @var ResourceStakeholder  */
     private $stakeholder;
 

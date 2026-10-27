@@ -12,22 +12,18 @@ class Helper
         global $DIC;
 
         $query = $DIC->http()->wrapper()->query();
+        $refinery = $DIC->refinery();
 
-        $transformation = null;
-        if($type === 'string') {
-            $transformation = $DIC->refinery()->kindlyTo()->string();
-        } elseif($type === 'int') {
-            $transformation = $DIC->refinery()->kindlyTo()->int();
-        }
+        $transformation = match ($type) {
+            'int'          => $refinery->kindlyTo()->int(),
+            'string[]'     => $refinery->to()->listOf($refinery->kindlyTo()->string()),
+            'int[]'        => $refinery->to()->listOf($refinery->kindlyTo()->int()),
+            'dict_string'  => $refinery->to()->dictOf($refinery->kindlyTo()->string()),
+            default        => $refinery->kindlyTo()->string(),
+        };
 
-        if ($transformation === null) {
-            $transformation = $DIC->refinery()->kindlyTo()->string();
-        }
-
-        $parameter = $query->has($param)
+        return $query->has($param)
             ? $query->retrieve($param, $transformation)
             : null;
-
-        return $parameter;
     }
 }
