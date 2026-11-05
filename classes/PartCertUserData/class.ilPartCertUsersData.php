@@ -84,12 +84,12 @@ class ilPartCertUsersData {
 	}
 
     /**
-     * @param string                           $gender
+     * @param string|null                      $gender usr_data.gender
      * @param ilParticipationCertificatePlugin $pl
      * @return string
      */
     public static function returnSalutation(
-        string $gender,
+        ?string $gender,
         ilParticipationCertificatePlugin $pl
     ): string {
 

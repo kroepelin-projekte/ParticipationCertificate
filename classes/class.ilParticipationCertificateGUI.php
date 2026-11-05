@@ -30,6 +30,19 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 
     public const string CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE = 'setOwnCertTextFromTemplate';
 
+    /** Commands executeCommand() may dispatch to. */
+    private const array COMMANDS = [
+        self::CMD_CONFIG,
+        self::CMD_DISPLAY,
+        self::CMD_SAVE,
+        self::CMD_CONFIG_RESULT_TABLE,
+        self::CMD_RESULT_TABLE_CONFIG,
+        self::CMD_SELF_PRINT,
+        self::CMD_SELF_PRINT_SAVE,
+        self::CMD_SET_CERT_TEMPLATE,
+        self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE,
+    ];
+
     public const string TAB_CONFIG = 'config';
 
     public const string TAB_CONFIG_DISPLAY = 'config_display';
@@ -96,7 +109,6 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
         return [
             self::CMD_SET_CERT_TEMPLATE,
             self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE,
-            // form targets: submitted as cmd=post (always token-checked); listed so they can't run via plain GET
             self::CMD_SAVE,
             self::CMD_RESULT_TABLE_CONFIG,
             self::CMD_SELF_PRINT_SAVE,
@@ -117,7 +129,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
      */
     public function executeCommand(): void
     {
-        $cmd = $this->ctrl->getCmd();
+        $cmd = $this->ctrl->getCmd(self::CMD_CONFIG);
         $nextClass = $this->ctrl->getNextClass();
 
         switch ($nextClass) {
@@ -126,6 +138,9 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
                 $this->ctrl->forwardCommand($il_participation_certificate_table_gui);
                 break;
             default:
+                if (!in_array($cmd, self::COMMANDS, true)) {
+                    $cmd = self::CMD_CONFIG;
+                }
                 $this->{$cmd}();
         }
     }

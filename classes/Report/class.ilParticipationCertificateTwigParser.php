@@ -105,7 +105,8 @@ class ilParticipationCertificateTwigParser
         foreach ($user_ids as $key => $usrId) {
             $user_data = new ilPartCertUserData();
 
-            if (!$user_data->checkIfUserDataFilled(
+            // no row at all (e.g. udf_* config missing) counts as missing data, too
+            if (!isset($arr_usr_data[$usrId]) || !$user_data->checkIfUserDataFilled(
                 $arr_usr_data[$usrId]->getPartCertFirstname(),
                 $arr_usr_data[$usrId]->getPartCertLastname()
             )) {

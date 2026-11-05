@@ -122,14 +122,15 @@ class ilLearnObjectSuggResult
     }
 
     /**
-     * @param $average_type
-     * @param $as_string
+     * @param int|string|null $average_type
+     * * @param bool            $as_string
      * @return int|string
      */
     public function getAveragePercentage(
-        int $average_type = self::CALC_TYPE_BY_POINTS,
+        int|string|null $average_type = self::CALC_TYPE_BY_POINTS,
         bool $as_string = false
     ): int|string {
+        $average_type = (int) ($average_type ?? self::CALC_TYPE_BY_POINTS);
 
         switch ($average_type) {
             case self::CALC_TYPE_BY_COMPLETED_OBJECTIVE:

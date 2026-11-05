@@ -233,7 +233,11 @@ class ilParticipationCertificateResultModificationGUI
 
         $section = $ui->input()->field()->section(
             $input_fields,
-            sprintf($this->pl->txt('mod_section'), $name_user)
+            // the KS section label is rendered unescaped; names come from user-editable profile fields
+            sprintf(
+                $this->pl->txt('mod_section'),
+                htmlspecialchars((string) $name_user, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            )
         );
         
         $formAction = $this->ctrl->getFormActionByClass(
@@ -310,7 +314,7 @@ class ilParticipationCertificateResultModificationGUI
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_id);
         $user_data = new ilPartCertUserData();
-        if(!$user_data->checkIfUserDataFilled(
+        if (!isset($arr_usr_data[$usr_id[0]]) || !$user_data->checkIfUserDataFilled(
             $arr_usr_data[$usr_id[0]]->getPartCertFirstname(),
             $arr_usr_data[$usr_id[0]]->getPartCertLastname()
         )) {
