@@ -507,8 +507,9 @@ class ilParticipationCertificateResultGUI
         if (!empty($action)) {
             switch ($action) {
                 case 'print_with_ementorining':
-		    $this->printPdf(true);
-		    break;
+		        $this->printPdf(true);
+		        break;
+
                 case 'print_without_ementorining':
                     $this->printPdf(false);
                     break;
@@ -599,7 +600,8 @@ class ilParticipationCertificateResultGUI
                     $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_permission'));
                 }
             } else {
-                if ($_GET['ementor'] == 'true') {
+                $ementor_url_parameter = Helper::fetchUrlParameter('ementor', 'string');
+                if ($ementor_url_parameter == 'true') {
 			        $ementor = true;
 		         }
                 $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
@@ -819,8 +821,8 @@ class ilParticipationCertificateResultGUI
                 unset($usr_id[$key]);
                 continue;
             }
+
             if(!$user_data->checkIfUserDataFilled(
-                $arr_usr_data[$id]->getPartCertSalutation(),
                 $arr_usr_data[$id]->getPartCertFirstname(),
                 $arr_usr_data[$id]->getPartCertLastname()
             )) {
@@ -840,11 +842,7 @@ class ilParticipationCertificateResultGUI
      */
     private function restrictToCourseMembers(array $user_ids): array
     {
-        $member_ids = array_map('intval', $this->cert_access->getUserIdsOfGroup());
-
-        $user_ids = array_map('intval', $user_ids);
-
-        return array_values(array_unique(array_intersect($user_ids, $member_ids)));
+        return $this->cert_access->filterUserIdsOfGroup($user_ids);
     }
 
     /**

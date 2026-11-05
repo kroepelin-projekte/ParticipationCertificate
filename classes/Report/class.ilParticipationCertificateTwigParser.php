@@ -106,7 +106,6 @@ class ilParticipationCertificateTwigParser
             $user_data = new ilPartCertUserData();
 
             if (!$user_data->checkIfUserDataFilled(
-                $arr_usr_data[$usrId]->getPartCertSalutation(),
                 $arr_usr_data[$usrId]->getPartCertFirstname(),
                 $arr_usr_data[$usrId]->getPartCertLastname()
             )) {
@@ -685,23 +684,19 @@ class ilParticipationCertificateTwigParser
         $processed_text_values = $config_texts;
 
         //Preprocess text values
+        // The texts are editable by course admins, so they must never be compiled as Twig
+        // (that would allow template injection / code execution). Only the known
+        // placeholders are replaced; escaping happens once in certificate.html.
+        $placeholder_values = [
+            'username' => ($user_data[$user_id]->getPartCertSalutation() ?
+                    $user_data[$user_id]->getPartCertSalutation() . ' ' : '') .
+                ($firstname ?? $user_data[$user_id]->getPartCertFirstname()) . ' ' .
+                ($lastname ?? $user_data[$user_id]->getPartCertLastname()),
+            'date' => $date->get(IL_CAL_FKT_DATE, 'd.m.Y')
+        ];
+
         foreach ($config_texts as $key => $value) {
-            $twig = new Twig\Environment(new Twig\Loader\ArrayLoader());
-
-            // Twig use the placeholders {{ }}, but plugins the  [[ ]]
-            $value = $this->preparePlaceholdersForTwig($value);
-
-            $template = $twig->createTemplate((string) $value);
-
-            $peparsed_value = $template->render([
-                'username' => ($user_data[$user_id]->getPartCertSalutation() ?
-                        $user_data[$user_id]->getPartCertSalutation() . ' ' : '') .
-                    ($firstname ?? $user_data[$user_id]->getPartCertFirstname()) . ' ' .
-                    ($lastname ?? $user_data[$user_id]->getPartCertLastname()),
-                'date' => $date->get(IL_CAL_FKT_DATE, 'd.m.Y')
-            ]);
-
-            $processed_text_values[$key] = $peparsed_value;
+            $processed_text_values[$key] = $this->replacePlaceholders((string) $value, $placeholder_values);
         }
 
         //Learning Objective Master Course
@@ -851,12 +846,24 @@ class ilParticipationCertificateTwigParser
      * @param string $value
      * @return array|string|string[]
      */
-    private function preparePlaceholdersForTwig(string $value)
+    /**
+     * Replaces [[name]] (and the old-style {{name}}) placeholders in a stored certificate text.
+     * Known names get their value; any other placeholder expression is removed, as Twig
+     * rendered unknown variables as empty. Nothing is evaluated, and replaced values are
+     * not scanned again, so a value containing "[[...]]" stays literal.
+     *
+     * @param array<string, string> $values
+     */
+    private function replacePlaceholders(string $text, array $values): string
     {
-        $value = str_replace('[[', '{{', $value);
-        $value = str_replace(']]', '}}', $value);
-
-        return $value;
+        return preg_replace_callback(
+            '/\[\[\s*(.*?)\s*\]\]|\{\{\s*(.*?)\s*\}\}/s',
+            static function (array $match) use ($values): string {
+                $name = ($match[1] ?? '') !== '' ? $match[1] : ($match[2] ?? '');
+                return $values[$name] ?? '';
+            },
+            $text
+        ) ?? $text;
     }
 
     /**

@@ -41,6 +41,8 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
 
     private const string CMD_CANCEL = 'cancel';
 
+    private const string CMD_CREATE_TEMPLATE =  'createTemplateFromLocalConfig';
+
     /**
      * Commands that only display data. Core already requires 'read' on the
      * component settings node; every other command additionally requires 'write'.
@@ -115,7 +117,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             self::CMD_SET_ACTIVE,
             self::CMD_SET_INACTIVE,
             self::CMD_RESET_CONFIG,
-            'createTemplateFromLocalConfig',
+            self::CMD_CREATE_TEMPLATE,
+            self::CMD_SAVE,
+            self::CMD_SAVE_ORDER,
         ];
     }
 

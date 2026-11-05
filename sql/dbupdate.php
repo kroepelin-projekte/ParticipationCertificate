@@ -745,24 +745,34 @@ if (!is_object($config)) {
 
 <#42>
 <?php
+/**
+ * ILIAS 11 changed UDF field ids from integers to UUIDs (core User DBUpdateSteps11, step 3)
+ * and keeps the mapping in udf_field_id_map. Rewrite the plugin's udf_* settings accordingly.
+ *
+ */
+if ($this->db->tableExists('udf_field_id_map')) {
+    $udf_field_id_map = [];
+    $result = $this->db->query('SELECT old_field_id, field_id FROM udf_field_id_map');
+    while ($row = $this->db->fetchAssoc($result)) {
+        $udf_field_id_map[(string) $row['old_field_id']] = (string) $row['field_id'];
+    }
 
-$query = "SELECT * FROM udf_field_id_map";
+    $result = $this->db->query(
+        'SELECT id, config_value FROM dhbw_part_cert_conf WHERE '
+        . $this->db->in('config_key', ['udf_firstname', 'udf_lastname', 'udf_gender'], false, 'text')
+    );
+    while ($row = $this->db->fetchAssoc($result)) {
+        $old_field_id = trim((string) $row['config_value']);
 
-$results = $this->db->query($query);
+        if ($old_field_id === '' || !isset($udf_field_id_map[$old_field_id])) {
+            continue;
+        }
 
-$udf_definition_data = [];
-while ($row = $this->db->fetchAssoc($results)) {
-    $udf_definition_data[$row['old_field_id']] = $row['field_id'];
+        $this->db->update(
+            'dhbw_part_cert_conf',
+            ['config_value' => ['text', $udf_field_id_map[$old_field_id]]],
+            ['id' => ['integer', (int) $row['id']]]
+        );
+    }
 }
-
-$fields = ['udf_firstname', 'udf_lastname', 'udf_gender'];
-$configs = [];
-foreach ($fields as $field) {
-    $config =  ilParticipationCertificateConfig::where(['config_key' => $field])
-                      ->first();
-
-    $config->setConfigValue($udf_definition_data[$config->getConfigValue()]);
-    $config->update();
-}
-
 ?>

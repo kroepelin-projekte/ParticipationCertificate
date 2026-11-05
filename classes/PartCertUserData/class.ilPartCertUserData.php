@@ -122,12 +122,11 @@ class ilPartCertUserData {
      * @return bool
      */
     public function checkIfUserDataFilled(
-        string $salutation,
         string $firstname,
         string $lastname
     ): bool {
-        if (empty($salutation) &&
-            empty($firstname) &&
+        if (
+            empty($firstname) ||
             empty($lastname)
         ) {
             return false;

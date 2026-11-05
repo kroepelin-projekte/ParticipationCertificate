@@ -39,23 +39,41 @@ class ilParticipationCertificateSingleResultGUI
         $this->tabs = $DIC->tabs();
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->learn_group = ilObjectFactory::getInstanceByRefId($_GET['ref_id']);
+
+        $ref_id = (int) (Helper::fetchUrlParameter('ref_id', 'string') ?? 0);
+
+        $cert_access = new ilParticipationCertificateAccess($ref_id);
+        if (!$cert_access->hasCurrentUserWriteAccess()) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->redirectToURL('login.php');
+        }
+
+        $usr_id = (int) (Helper::fetchUrlParameter('usr_id', 'string') ?? 0);
+
+        if ($usr_id === 0) {
+            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            if (!empty($config_entry)) {
+                $usr_id = (int) $this->excludeURLParameters($config_entry[0])[0];
+            }
+        }
+
+        // the user must be a member of this course/group, regardless of where the id came from
+        if ($cert_access->filterUserIdsOfGroup([$usr_id]) === []) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->setParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id', $ref_id);
+            $this->ctrl->redirectByClass(
+                [ilUIPluginRouterGUI::class, ilParticipationCertificateResultGUI::class],
+                ilParticipationCertificateResultGUI::CMD_CONTENT
+            );
+        }
+
+        $this->usr_id = $usr_id;
+        $this->usr_ids = $cert_access->getUserIdsOfGroup();
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($ref_id);
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, 'usr_id');
-
-        $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
-        $this->usr_ids = $cert_access->getUserIdsOfGroup();
-
-        $usr_id = Helper::fetchUrlParameter('usr_id', 'string');
-
-        if(empty($usr_id) && !empty($_GET['config_entry'])) {
-            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
-            $urlParameters = $this->excludeURLParameters($config_entry[0]);
-            $usr_id = (int) $urlParameters[0];
-        }
-        $this->usr_id = $usr_id;
     }
 
     /**

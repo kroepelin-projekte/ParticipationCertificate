@@ -78,21 +78,40 @@ class ilParticipationCertificateResultModificationGUI
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-        $this->course_ref_id = $this->fetchUrlParameter('ref_id', FILTER_SANITIZE_NUMBER_INT);
-        $this->learn_group = ilObjectFactory::getInstanceByRefId($_GET['ref_id']);
+        $this->course_ref_id = (int) ($this->fetchUrlParameter('ref_id', FILTER_SANITIZE_NUMBER_INT) ?? 0);
+
+        // applies to every command (display, printPDF, ...), also when called directly via ilUIPluginRouterGUI
+        $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
+        if (!$cert_access->hasCurrentUserWriteAccess()) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->redirectToURL('login.php');
+        }
+
+        $usr_id = (int) (Helper::fetchUrlParameter(self::IDENTIFIER, 'string') ?? 0);
+
+        if ($usr_id === 0) {
+            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            if (!empty($config_entry)) {
+                $usr_id = (int) $this->excludeURLParameters($config_entry[0])[0];
+            }
+        }
+
+        // the user must be a member of this course/group, regardless of where the id came from
+        if ($cert_access->filterUserIdsOfGroup([$usr_id]) === []) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->setParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id', $this->course_ref_id);
+            $this->ctrl->redirectByClass(
+                [ilUIPluginRouterGUI::class, ilParticipationCertificateResultGUI::class],
+                ilParticipationCertificateResultGUI::CMD_CONTENT
+            );
+        }
+        $this->usr_id = $usr_id;
+        $this->usr_ids = $cert_access->getUserIdsOfGroup();
+
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->course_ref_id);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, 'ementor');
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
-        $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
-        $this->usr_ids = $cert_access->getUserIdsOfGroup();
-
-        $usr_id = $_GET[self::IDENTIFIER];
-
-        if(empty($usr_id)) {
-            $url_parameters = $this->excludeURLParameters($_GET['config_entry'][0]);
-            $usr_id = (int) $url_parameters[0];
-        }
-        $this->usr_id = $usr_id;
 
         $course_obj_id = ilObject::_lookupObjectId((int) $this->course_ref_id);
 
@@ -181,12 +200,8 @@ class ilParticipationCertificateResultModificationGUI
     {
         $ui = $this->dic->ui()->factory();
 
-        $usr_id = $_GET[self::IDENTIFIER];
-
-        if(empty($usr_id)) {
-            $url_parameters = $this->excludeURLParameters($_GET['config_entry'][0]);
-            $usr_id = (int) $url_parameters[0];
-        }
+        // checked against the course members in the constructor
+        $usr_id = $this->usr_id;
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
         $name_user = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
@@ -296,7 +311,6 @@ class ilParticipationCertificateResultModificationGUI
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_id);
         $user_data = new ilPartCertUserData();
         if(!$user_data->checkIfUserDataFilled(
-            $arr_usr_data[$usr_id[0]]->getPartCertSalutation(),
             $arr_usr_data[$usr_id[0]]->getPartCertFirstname(),
             $arr_usr_data[$usr_id[0]]->getPartCertLastname()
         )) {

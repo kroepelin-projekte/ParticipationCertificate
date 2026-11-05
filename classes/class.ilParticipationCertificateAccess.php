@@ -108,6 +108,22 @@ class ilParticipationCertificateAccess {
 	}
 
     /**
+     * Keeps only the given user ids that the current user may see in this
+     * course/group, i.e. those returned by getUserIdsOfGroup(). Use this for
+     * every user id taken from the request.
+     *
+     * @param array $user_ids
+     * @return int[]
+     */
+    public function filterUserIdsOfGroup(array $user_ids): array
+    {
+        $member_ids = array_map('intval', $this->getUserIdsOfGroup());
+        $user_ids = array_map('intval', $user_ids);
+
+        return array_values(array_unique(array_intersect($user_ids, $member_ids)));
+    }
+
+    /**
      * @return array
      */
 	public function getUserIdsOfGroup(): array

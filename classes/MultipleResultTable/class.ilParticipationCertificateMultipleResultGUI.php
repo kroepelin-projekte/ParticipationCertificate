@@ -52,10 +52,14 @@ class ilParticipationCertificateMultipleResultGUI
         if ($refId !== null) {
             $this->ref_id = (int) $refId;
         } else {
-            $this->ref_id = (int) $_GET['ref_id'];
+            $this->ref_id = (int) (Helper::fetchUrlParameter('ref_id', 'string') ?? 0);
         }
 
-        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->ref_id);
+        $cert_access = new ilParticipationCertificateAccess($this->ref_id);
+        if (!$cert_access->hasCurrentUserWriteAccess()) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->redirectToURL('login.php');
+        }
 
         if ($userIds !== null) {
             $this->usr_ids = $userIds;
@@ -64,15 +68,35 @@ class ilParticipationCertificateMultipleResultGUI
         }
 
         if (!is_array($this->usr_ids) || count($this->usr_ids) === 0) {
-            $this->tpl->setOnScreenMessage('failure',$this->pl->txt('no_records_selected'), true);
-            $this->ctrl->redirectByClass(ilParticipationCertificateResultGUI::class, ilParticipationCertificateResultGUI::CMD_CONTENT);
-        };
+            $this->redirectToResults($this->pl->txt('no_records_selected'));
+        }
+
+        // only members of this course/group, regardless of where the ids came from
+        $this->usr_ids = $cert_access->filterUserIdsOfGroup($this->usr_ids);
+        if ($this->usr_ids === []) {
+            $this->redirectToResults($DIC->language()->txt('no_permission'));
+        }
+
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->ref_id);
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
 
         $this->show_all_results();
+    }
+
+    /**
+     * @throws ilCtrlException
+     */
+    private function redirectToResults(string $message): void
+    {
+        $this->tpl->setOnScreenMessage('failure', $message, true);
+        $this->ctrl->setParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id', $this->ref_id);
+        $this->ctrl->redirectByClass(
+            [ilUIPluginRouterGUI::class, ilParticipationCertificateResultGUI::class],
+            ilParticipationCertificateResultGUI::CMD_CONTENT
+        );
     }
 
     public function executeCommand(): void

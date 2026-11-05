@@ -96,6 +96,10 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
         return [
             self::CMD_SET_CERT_TEMPLATE,
             self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE,
+            // form targets: submitted as cmd=post (always token-checked); listed so they can't run via plain GET
+            self::CMD_SAVE,
+            self::CMD_RESULT_TABLE_CONFIG,
+            self::CMD_SELF_PRINT_SAVE,
         ];
     }
 
