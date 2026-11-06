@@ -187,7 +187,7 @@ class ilParticipationCertificateConfigSetTableGUI
                                             $template = new ilParticipationCertificateGlobalConfigSet(
                                                 $config_set['object_gl_conf_template_id']
                                             );
-                                            $arr_type[] = $pl->txt('origin_template') . ": " . $template->getTitle();
+                                            $arr_type[] = $pl->txt('origin_template') . ": " . htmlspecialchars((string) $template->getTitle(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
                                             $config_set_type = implode("<br/>", $arr_type);
                                             break;
@@ -219,8 +219,8 @@ class ilParticipationCertificateConfigSetTableGUI
                         'order_by' => $config_set['order_by'],
                         'configset_type' => $config_set['configset_type'],
                         'configset_type_title' => $config_set_type,
-                        'title' => $config_set['title'],
-                        'parent_title' => $config_set['parent_title'],
+                        'title' => htmlspecialchars((string) $config_set['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                        'parent_title' => htmlspecialchars((string) $config_set['parent_title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
                         'obj_ref_id' => $obj_ref_id,
                         'active' => $active,
                         'active_status' => $active_status

@@ -97,13 +97,11 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
             $this->insertNewParticipationCertificateConfigs();
         }
 
-
-        if (version_compare($version_before_update, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '>=')) {
-            return; // file paths already where transferred in database in an older version of the plugin
+        if (version_compare($version_before_update, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '<')) {
+            $this->moveFilesPathInDB();
         }
 
-        $this->moveFilesPathInDB();
-
+        ilParticipationCertificateFiles::migrateLegacyFiles();
     }
 
     /**
@@ -114,7 +112,7 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
         // Get all files and directories in the certifications' path
         $path = CLIENT_WEB_DIR . '/' . self::CERTIFICATIONS_PATH;
-        $items = scandir($path);
+        $items = is_dir($path) ? (scandir($path) ?: []) : [];
 
         // Filter out the current (.) and parent (..) directories, and keep only directories
         $directories = array_filter($items, function ($item) use ($path) {

@@ -776,27 +776,15 @@ class ilParticipationCertificateTwigParser
 
         if ($logo_is_saved_in_resource_storage) {
             if(!empty($processed_text_values['logo'])) {
-                $file = new ilParticipationCertificateFiles();
-                $src = $file->getFileSrcByStorageType(
-                    $processed_text_values['logo'],
-                    $ref_id,
-                    'logo'
-                );
-
-                $logo_path = $src;
+                $logo_path = ilParticipationCertificateFiles::getImageDataUri((string) $processed_text_values['logo']);
             }
 
         }
 
         if ($signature_is_saved_in_resource_storage && !empty($processed_text_values['page1_issuer_signature'])) {
-            $file = new ilParticipationCertificateFiles();
-            $src = $file->getFileSrcByStorageType(
-                $processed_text_values['page1_issuer_signature'],
-                $ref_id,
-                'page1_issuer_signature'
+            $page1_issuer_signature = ilParticipationCertificateFiles::getImageDataUri(
+                (string) $processed_text_values['page1_issuer_signature']
             );
-
-            $page1_issuer_signature = $src;
         }
 
         if (!$self_print) {

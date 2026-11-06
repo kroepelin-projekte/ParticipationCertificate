@@ -499,7 +499,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
             switch ($key) {
                 case 'page1_issuer_signature':
                     $input = end($input);
-                    if (!empty($input)) {
+                    if (!empty($input) && ilParticipationCertificateFiles::findOwnResource((string) $input) !== null) {
                         $file = 'page1_issuer_signature';
                     } else {
                         $input = $config->getConfigValue();
@@ -508,7 +508,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
                 case 'logo':
                     $input = end($input);
 
-                    if (!empty($input)) {
+                    if (!empty($input) && ilParticipationCertificateFiles::findOwnResource((string) $input) !== null) {
                         $file = 'logo';
                     } else {
                         $input = $config->getConfigValue();

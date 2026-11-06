@@ -406,7 +406,7 @@ class ilParticipationCertificateResultGUI
         foreach ($this->columns as $column) {
             $title = strip_tags($column['text']);
             if ($title) {
-                $a_csv->addColumn($title);
+                $a_csv->addColumn($this->neutralizeCsvFormula($title));
             }
         }
         $a_csv->addRow();
@@ -425,10 +425,25 @@ class ilParticipationCertificateResultGUI
                 if (is_array($value)) {
                     $value = implode(', ', $value);
                 }
-                $a_csv->addColumn(html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $a_csv->addColumn($this->neutralizeCsvFormula(
+                    html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                ));
             }
         }
         $a_csv->addRow();
+    }
+
+    /**
+     * CSV/formula injection: spreadsheet apps execute cells starting with = + - @ (or TAB/CR).
+     * Names come from user-editable profile fields, so such text cells get a leading apostrophe.
+     * Plain numbers (e.g. "-5") are left untouched.
+     */
+    private function neutralizeCsvFormula(string $value): string
+    {
+        if ($value !== '' && strpbrk($value[0], "=+-@\t\r") !== false && !is_numeric($value)) {
+            return "'" . $value;
+        }
+        return $value;
     }
 
     /**

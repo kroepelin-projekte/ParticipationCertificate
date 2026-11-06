@@ -266,18 +266,7 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
      */
     private function findOwnResource(string $identifier): ?ResourceIdentification
     {
-        $id = $this->storage->manage()->find($identifier);
-        if ($id === null) {
-            return null;
-        }
-
-        foreach ($this->storage->manage()->getResource($id)->getStakeholders() as $stakeholder) {
-            if ($stakeholder->getId() === $this->stakeholder->getId()) {
-                return $id;
-            }
-        }
-
-        return null;
+        return ilParticipationCertificateFiles::findOwnResource($identifier);
     }
 
     private function isReferencedByConfig(string $identifier): bool

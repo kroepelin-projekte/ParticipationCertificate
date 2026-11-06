@@ -865,9 +865,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                             break;
                         case 'logo':
                             $file = 'logo';
-                            if (!empty($input)) {
-                                $input = end($input);
-                            } else {
+                            $input = !empty($input) ? end($input) : '';
+                            // only plugin-owned resources; a foreign IRSS id posted with the form keeps the old value
+                            if (empty($input) || ilParticipationCertificateFiles::findOwnResource((string) $input) === null) {
                                 $input = $config->getConfigValue();
                             }
 
@@ -899,9 +899,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                             break;
                         case 'page1_issuer_signature':
                             $file = 'page1_issuer_signature';
-                            if (!empty($input)) {
-                                $input = end($input);
-                            } else {
+                            $input = !empty($input) ? end($input) : '';
+                            // only plugin-owned resources; a foreign IRSS id posted with the form keeps the old value
+                            if (empty($input) || ilParticipationCertificateFiles::findOwnResource((string) $input) === null) {
                                 $input = $config->getConfigValue();
                             }
 
@@ -1036,6 +1036,10 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     public function configure(): void
     {
         global $DIC;
+
+        if ($this->hasCurrentUserWriteAccess()) {
+            ilParticipationCertificateFiles::migrateLegacyFiles();
+        }
 
         $r = $DIC->ui()->renderer();
 

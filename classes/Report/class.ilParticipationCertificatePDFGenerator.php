@@ -16,9 +16,7 @@ class ilParticipationCertificatePDFGenerator
 {
     public const string CMD_PDF = 'generatePDF';
 
-
     protected ilTemplate|ilGlobalTemplateInterface $tpl;
-
 
     protected ilCtrlInterface $ctrl;
 
@@ -65,7 +63,8 @@ class ilParticipationCertificatePDFGenerator
 
         $mpdf = new Mpdf([
             'tempDir' => '/tmp/mpdf',
-            'default_font' => 'dejavusans'
+            'default_font' => 'dejavusans',
+            'whitelistStreamWrappers' => ['file'],
         ]);
 
         $css = file_get_contents(
