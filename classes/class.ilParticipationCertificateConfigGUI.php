@@ -39,9 +39,28 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
 
     private const string CMD_SAVE_ORDER = 'saveOrder';
 
-    private const string CMD_CANCEL = 'cancel';
-
     private const string CMD_CREATE_TEMPLATE =  'createTemplateFromLocalConfig';
+
+    private const RETURN_BACK = 'returnBack';
+
+    private const array COMMANDS = [
+        self::CMD_CONFIGURE,
+        self::CMD_SORTING,
+        self::CMD_SHOW_FORM,
+        self::CMD_SHOW_FORM_ERR,
+        self::CMD_CONFIRM_RESET_CONFIG,
+        self::CMD_RESET_CONFIG,
+        self::CMD_ADD_CONFIG,
+        self::CMD_COPY_CONFIG,
+        self::CMD_DELETE_CONFIG,
+        self::CMD_SET_ACTIVE,
+        self::CMD_SET_INACTIVE,
+        self::CMD_CREATE_TEMPLATE,
+        self::CMD_SAVE,
+        self::CMD_SAVE_ORDER,
+        self::CMD_ACTION,
+        self::RETURN_BACK,
+    ];
 
     /**
      * Commands that only display data. Core already requires 'read' on the
@@ -136,6 +155,10 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function performCommand(string $cmd): void
     {
+        if (!in_array($cmd, self::COMMANDS, true)) {
+            $cmd = self::CMD_CONFIGURE;
+        }
+
         if ($this->requiresWriteAccess($cmd) && !$this->hasCurrentUserWriteAccess()) {
             global $DIC;
             $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
@@ -156,26 +179,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             );
         }
 
-        switch ($cmd) {
-            default:
-            case self::CMD_ADD_CONFIG:
-            case self::CMD_RESET_CONFIG:
-            case self::CMD_CONFIRM_RESET_CONFIG;
-            case self::CMD_DELETE_CONFIG:
-            case self::CMD_SET_ACTIVE:
-            case self::CMD_SET_INACTIVE:
-            case self::CMD_COPY_CONFIG:
-            case self::CMD_SHOW_FORM:
-            case self::CMD_SHOW_FORM_ERR:
-            case self::CMD_CONFIGURE:
-            case self::CMD_SAVE:
-            case self::CMD_CANCEL:
-            case self::CMD_SAVE_ORDER:
-            case self::CMD_ACTION:
-            case self::CMD_SORTING:
-                $this->$cmd();
-                break;
-        }
+        $this->{$cmd}();
     }
 
     private function requiresWriteAccess(string $cmd): bool

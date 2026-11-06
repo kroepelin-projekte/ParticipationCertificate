@@ -761,9 +761,9 @@ class ilParticipationCertificateTwigParser
             switch ($count_tests) {
                 case 1:
                     if ($count_passed == 1) {
-                        $iass_states = "<img alt='' src=" . ILIAS_ABSOLUTE_PATH . "/" . $this->pl->getImagePath("passed_s.png") . ">";
+                        $iass_states = $this->buildStatusIconTag('passed_s.png');
                     } else {
-                        $iass_states = "<img alt='' src=" . ILIAS_ABSOLUTE_PATH . "/" . $this->pl->getImagePath("failed_s.png") . ">";
+                        $iass_states = $this->buildStatusIconTag('failed_s.png');
                     }
                     break;
                 default:
@@ -771,7 +771,7 @@ class ilParticipationCertificateTwigParser
                     break;
             }
         } else {
-            $iass_states = "<img alt='' src=" . ILIAS_ABSOLUTE_PATH . "/" . $this->pl->getImagePath("not_attempted_s.png") . ">";
+            $iass_states = $this->buildStatusIconTag('not_attempted_s.png');
         }
 
         if ($logo_is_saved_in_resource_storage) {
@@ -830,11 +830,21 @@ class ilParticipationCertificateTwigParser
     }
 
     /**
-     * Replace the placeholders [[ ]] with the {{ }}
-     *
      * @param string $value
      * @return array|string|string[]
+     *
+     * <img> for a status icon in the PDF (rendered with |raw in certificate.html).
+     * getImagePath() is already an absolute filesystem path (ilPluginInfo::getPath() is based on
+     * ilComponentRepository::PLUGIN_BASE_PATH), so it must not be prefixed with ILIAS_ABSOLUTE_PATH:
+     * mPDF would not find the file and fall back to an http URL, which whitelistStreamWrappers blocks.
      */
+    private function buildStatusIconTag(string $image_name): string
+    {
+        return '<img alt="" src="'
+            . htmlspecialchars($this->pl->getImagePath($image_name), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            . '">';
+    }
+
     /**
      * Replaces [[name]] (and the old-style {{name}}) placeholders in a stored certificate text.
      * Known names get their value; any other placeholder expression is removed, as Twig

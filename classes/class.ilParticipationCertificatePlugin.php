@@ -91,17 +91,20 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
     protected function afterUpdate(): void
     {
         $plugin_version = $this->plugin_info->getCurrentVersion();
-        $version_before_update = $plugin_version->getMajor() . '.' . $plugin_version->getMinor() . '.' . $plugin_version->getPatch();
 
-        if (version_compare($this->getVersion(), self::PLUGIN_VERSION_FOR_INSERTING_NEW_CONFIGS, '=')) {
-            $this->insertNewParticipationCertificateConfigs();
+        if ($plugin_version != null) {
+            $version_before_update = $plugin_version->getMajor() . '.' . $plugin_version->getMinor() . '.' . $plugin_version->getPatch();
+
+            if (version_compare($this->getVersion(), self::PLUGIN_VERSION_FOR_INSERTING_NEW_CONFIGS, '=')) {
+                $this->insertNewParticipationCertificateConfigs();
+            }
+
+            if (version_compare($version_before_update, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '<')) {
+                $this->moveFilesPathInDB();
+            }
+
+            ilParticipationCertificateFiles::migrateLegacyFiles();
         }
-
-        if (version_compare($version_before_update, self::PLUGIN_VERSION_FILES_PATH_MOVED_IN_DB, '<')) {
-            $this->moveFilesPathInDB();
-        }
-
-        ilParticipationCertificateFiles::migrateLegacyFiles();
     }
 
     /**
