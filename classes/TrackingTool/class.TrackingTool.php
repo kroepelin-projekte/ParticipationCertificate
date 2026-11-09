@@ -12,153 +12,155 @@ use JetBrains\PhpStorm\NoReturn;
 class TrackingTool
 {
     /**
-     * @param int  $userId
-     * @param int  $courseRefId
+     * @param int $user_id
+     * @param int $course_ref_id
      * @return string|null
      */
     #[NoReturn]
     public static function getNotRecommendedLearningObjectivesForCertificate(
-        int $userId,
-        int $courseRefId
+        int $user_id,
+        int $course_ref_id
     ): string|null {
-        $learningObjectives = self::getTrackingToolLearningObjectives(
-            $userId,
-            $courseRefId
+        $learning_objectives = self::getTrackingToolLearningObjectives(
+            $user_id,
+            $course_ref_id
         );
 
         $completed = 0;
         $total = 0;
 
-        foreach ($learningObjectives as $learningObjective) {
-            if (!empty($learningObjective['suggested'])) {
+        foreach ($learning_objectives as $learning_objective) {
+            if (!empty($learning_objective['suggested'])) {
                 continue;
             }
 
-            foreach ($learningObjective['courses'] as $learningObjectiveCourse) {
+            if (!empty($learning_objective['courses'])) {
+                foreach ($learning_objective['courses'] as $learning_objectiveCourse) {
 
-                if ($learningObjectiveCourse['test_percentage'] !== null && $learningObjectiveCourse['test_percentage'] >= $learningObjectiveCourse['test_required_percentage']) {
-                    $completed++;
+                    if ($learning_objectiveCourse['test_percentage'] !== null && $learning_objectiveCourse['test_percentage'] >= $learning_objectiveCourse['test_required_percentage']) {
+                        $completed++;
+                    }
+                    $total++;
                 }
-                $total++;
             }
         }
         return $total > 0 ? $completed . '/' . $total : '0/0';
     }
 
     /**
-     * @param int         $userId
+     * @param int         $user_id
      * @param bool        $printIsAsynchronous
-     * @param string|null $refId
+     * @param string|null $ref_id
      * @return array
      */
     public static function getTrackingToolLearningObjectives(
-        int $userId,
-        ?string $refId = null
+        int $user_id,
+        ?string $ref_id = null
     ): array {
-        $trackingLearningObjectives = [];
+        $tracking_learning_objectives = [];
 
-        if (empty($refId)) {
-            return $trackingLearningObjectives;
+        if (empty($ref_id)) {
+            return $tracking_learning_objectives;
         }
 
-        $courseObjId = ilObjCourse::_lookupObjectId($refId);
-        $sorted = self::sortByScore($userId, $courseObjId);
-        $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, [$userId]);
+        $course_obj_id = ilObjCourse::_lookupObjectId($ref_id);
+        $sorted = self::sortByScore($user_id, $course_obj_id);
+        $final_tests_states = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, [$user_id]);
 
-        $requiredPercentages = [];
-        foreach ($finalTestsStates as $key => $finalTestState) {
-            foreach ($finalTestState as $k => $value) {
-                $masterCrsId = $value[0]->getLocftestMasterCrsId();
-                $dataFinalTest = self::getDataFinalTest($courseObjId);
+        $required_percentages = [];
+        foreach ($final_tests_states as $key => $final_test_state) {
+            foreach ($final_test_state as $k => $value) {
+                $master_crs_id = $value[0]->getLocftestMasterCrsId();
+                $data_final_test = self::getDataFinalTest($course_obj_id);
 
                 $tst = null;
-                if (!empty($dataFinalTest['qtest'])) {
-                    $tst = new ilObjTest($dataFinalTest['qtest'], true);
+                if (!empty($data_final_test['qtest'])) {
+                    $tst = new ilObjTest($data_final_test['qtest'], true);
                 }
 
                 if ($tst instanceof ilObjTest) {
                     $schema = $tst->getMarkSchema();
                     foreach ($schema->getMarkSteps() as $mark) {
                         if ($mark->getPassed()) {
-                            $requiredPercentages[$masterCrsId] = (int) $mark->getMinimumLevel();
+                            $required_percentages[$master_crs_id] = (int) $mark->getMinimumLevel();
                             break;
                         }
                     }
                 }
 
-                if (empty($requiredPercentages)) {
-                    $requiredPercentages[$masterCrsId] = 60;
+                if (empty($required_percentages)) {
+                    $required_percentages[$master_crs_id] = 60;
                 }
             }
         }
 
-        $learningObjectives = [];
-        if (count($finalTestsStates)) {
-            $learningObjectives = self::getLearningObjectives($sorted, $finalTestsStates[$userId]);
+        $learning_objectives = [];
+        if (count($final_tests_states)) {
+            $learning_objectives = self::getLearningObjectives($sorted, $final_tests_states[$user_id]);
         }
 
-        if( !empty($finalTestsStates[$userId])) {
-            $trackingToolData = self::getTrackingToolData($finalTestsStates, $userId);
+        if( !empty($final_tests_states[$user_id])) {
+            $tracking_tool_data = self::getTrackingToolData($final_tests_states, $user_id);
 
-            $trackingLearningObjectives = self::storeCoursesInLearningObjectives(
-                $learningObjectives,
-                $trackingToolData,
-                $requiredPercentages
+            $tracking_learning_objectives = self::storeCoursesInLearningObjectives(
+                $learning_objectives,
+                $tracking_tool_data,
+                $required_percentages
             );
         }
-        return $trackingLearningObjectives;
+        return $tracking_learning_objectives;
     }
 
     /**
-     * @param array $finalTestsStates
-     * @param int   $userId
+     * @param array $final_tests_states
+     * @param int   $user_id
      * @return array
      */
-    private static function getTrackingToolData(array $finalTestsStates, int $userId): array
+    private static function getTrackingToolData(array $final_tests_states, int $user_id): array
     {
-        $trackingToolData = [];
+        $tracking_tool_data = [];
         $processed = [];
 
-        foreach ($finalTestsStates[$userId] as $finalTests) {
-            foreach ($finalTests as $key => $value) {
+        foreach ($final_tests_states[$user_id] as $final_tests) {
+            foreach ($final_tests as $key => $value) {
                 /** @var ilLearnObjectFinalTestState $value */
                 if ($value->getLocftestCrsObjId()) {
                     // check if data already exists
-                    $crsObjId = $value->getLocftestCrsObjId();
-                    $crsObjectiveId = $value->getLocftestObjectiveId();
-                    if (isset($processed[$crsObjId])) {
-                        if (isset($processed[$crsObjId][$crsObjectiveId])) {
+                    $crs_obj_id = $value->getLocftestCrsObjId();
+                    $crs_objectiv_id = $value->getLocftestObjectiveId();
+                    if (isset($processed[$crs_obj_id])) {
+                        if (isset($processed[$crs_obj_id][$crs_objectiv_id])) {
                             continue;
                         }
                     }
 
-                    $trackingToolData[$value->getLocftestCrsObjId()][] = [
+                    $tracking_tool_data[$value->getLocftestCrsObjId()][] = [
                         'master_crs_id' => $value->getLocftestMasterCrsId(),
                         'title' => $value->getLocftestObjectiveTitle(),
                         'test_percentage' => $value->getLocftestPercentage(),
                         'test_required_percentage' => $value->getLocftestQplsRequiredPercentage(),
                         'what_is' => 1
                     ];
-                    $processed[$crsObjId][$crsObjectiveId] = $userId;
+                    $processed[$crs_obj_id][$crs_objectiv_id] = $user_id;
                 }
             }
         }
-        return $trackingToolData;
+        return $tracking_tool_data;
     }
 
     /**
-     * @param array $learningObjectives
-     * @param array $trackingToolData
-     * @param array $requiredPercentages
+     * @param array $learning_objectives
+     * @param array $tracking_tool_data
+     * @param array $required_percentages
      * @return array
      */
     private static function storeCoursesInLearningObjectives(
-        array $learningObjectives,
-        array $trackingToolData,
-        array $requiredPercentages
+        array $learning_objectives,
+        array $tracking_tool_data,
+        array $required_percentages
     ): array {
-        foreach ($learningObjectives as $key => $learningObjective) {
-            foreach ($trackingToolData as $k => $data) {
+        foreach ($learning_objectives as $key => $learning_objective) {
+            foreach ($tracking_tool_data as $k => $data) {
 
                 if ($key === $k) {
                     $completed = 0;
@@ -167,32 +169,32 @@ class TrackingTool
                             $completed++;
                         }
                     }
-                    $learningObjectives[$key]['required_percentage'] = $requiredPercentages[$learningObjective['obj_id']];
-                    $learningObjectives[$key]['courses'] = $data;
-                    $learningObjectives[$key]['count_completed_courses'] = $completed;
+                    $learning_objectives[$key]['required_percentage'] = $required_percentages[$learning_objective['obj_id']];
+                    $learning_objectives[$key]['courses'] = $data;
+                    $learning_objectives[$key]['count_completed_courses'] = $completed;
                 }
             }
         }
-        return $learningObjectives;
+        return $learning_objectives;
     }
 
     /**
      * @param array $sorted
-     * @param array $finalTestsStatesUser
+     * @param array $final_tests_states_user
      * @return array
      */
-    private static function getLearningObjectives(array $sorted, array $finalTestsStatesUser): array
+    private static function getLearningObjectives(array $sorted, array $final_tests_states_user): array
     {
-        $learningObjectives = [];
+        $learning_objectives = [];
         foreach ($sorted as $sort_key => $sort_arr) {
 
-            if (array_key_exists($sort_key, $finalTestsStatesUser)) {
-                /** @var ilLearnObjectFinalTestState $finalTestsState */
-                $finalTestsStates_course = $finalTestsStatesUser[$sort_key];
+            if (array_key_exists($sort_key, $final_tests_states_user)) {
+                /** @var ilLearnObjectFinalTestState $final_tests_state */
+                $final_tests_states_course = $final_tests_states_user[$sort_key];
 
-                foreach ($finalTestsStates_course as $finalTestsState) {
-                    $learningObjectives[$finalTestsState->getLocftestCrsObjId()] = array(
-                        'txt' => $finalTestsState->getLocftestLearnObjectiveTitle(),
+                foreach ($final_tests_states_course as $final_tests_state) {
+                    $learning_objectives[$final_tests_state->getLocftestCrsObjId()] = array(
+                        'txt' => $final_tests_state->getLocftestLearnObjectiveTitle(),
                         'obj_id' => $sort_arr['obj_id'],
                         'objective_id' => $sort_arr['objective_id'],
                         'default' => true,
@@ -204,20 +206,19 @@ class TrackingTool
                 }
             }
         }
-
-        return $learningObjectives;
+        return $learning_objectives;
     }
 
     /**
-     * @param int $userId
-     * @param int $courseObjId
+     * @param int $user_id
+     * @param int $course_obj_id
      * @return array
      */
-    private static function sortByScore(int $userId,int $courseObjId): array
+    private static function sortByScore(int $user_id, int $course_obj_id): array
     {
-        $scores = NewLearningObjectiveScores::getData($userId, $courseObjId);
-        $weights = getFineWeights::getData($courseObjId);
-        $suggs = getLearnSuggs::getData($userId, $courseObjId);
+        $scores = NewLearningObjectiveScores::getData($user_id, $course_obj_id);
+        $weights = getFineWeights::getData($course_obj_id);
+        $suggs = getLearnSuggs::getData($user_id, $course_obj_id);
 
         $sorting = [];
 
@@ -239,13 +240,13 @@ class TrackingTool
 
                 if ($score->getObjectiveId() == $sugg->getSuggObjectiveId()) {
 
-                    $weightRough = self::getWeightRough(
+                    $weight_rough = self::getWeightRough(
                         (int) $score->getCourseObjId(),
                         (int) $score->getObjectiveId(),
-                        $userId
+                        $user_id
                     );
 
-                    if ($weightRough > 0) {
+                    if ($weight_rough > 0) {
                         $suggested = true;
                         break;
                     }
@@ -264,15 +265,15 @@ class TrackingTool
     }
 
     /**
-     * @param int $courseId
-     * @param int $learningObjectiveId
-     * @param int $userId
+     * @param int $course_id
+     * @param int $learning_objective_id
+     * @param int $user_id
      * @return int|string
      */
     private static function getWeightRough(
-        int $courseId,
-        int $learningObjectiveId,
-        int $userId
+        int $course_id,
+        int $learning_objective_id,
+        int $user_id
     ) {
         global $DIC;
 
@@ -283,15 +284,15 @@ class TrackingTool
         );
 
 
-        $course = new LearningObjectiveCourse(new ilObjCourse($courseId, false));
-        $learningObjective = $calculation->getLearningObjective($course, $learningObjectiveId);
+        $course = new LearningObjectiveCourse(new ilObjCourse($course_id, false));
+        $learning_objective = $calculation->getLearningObjective($course, $learning_objective_id);
 
-        $user = new User(new ilObjUser($userId));
+        $user = new User(new ilObjUser($user_id));
         $config = new CourseConfigProvider($course);
-        $studyProgramQuery = new StudyProgramQuery($config);
-        $studyProgram = $studyProgramQuery->getByUser($user);
+        $study_program_query = new StudyProgramQuery($config);
+        $study_program = $study_program_query->getByUser($user);
 
-        return $config->getWeightRough($learningObjective, $studyProgram);
+        return $config->getWeightRough($learning_objective, $study_program);
     }
 
     /**
@@ -301,6 +302,7 @@ class TrackingTool
     public static function getDataFinalTest(int $objId): array
     {
         global $DIC;
+
         $ilDB = $DIC->database();
 
         $result = $ilDB->queryF(
@@ -314,7 +316,6 @@ class TrackingTool
         while ($row = $ilDB->fetchAssoc($result)) {
             $data = $row;
         }
-
         return $data;
     }
 }

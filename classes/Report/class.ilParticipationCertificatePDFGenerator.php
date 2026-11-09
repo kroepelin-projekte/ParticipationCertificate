@@ -14,7 +14,7 @@ use JetBrains\PhpStorm\NoReturn;
  */
 class ilParticipationCertificatePDFGenerator
 {
-    const CMD_PDF = 'generatePDF';
+    public const string CMD_PDF = 'generatePDF';
 
     protected ilTemplate|ilGlobalTemplateInterface $tpl;
 
@@ -24,10 +24,10 @@ class ilParticipationCertificatePDFGenerator
 
     protected ilParticipationCertificatePlugin $pl;
 
-
     public function __construct()
     {
         global $DIC, $tempFile, $tempCount;
+
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->ctrl = $DIC->ctrl();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
@@ -38,16 +38,13 @@ class ilParticipationCertificatePDFGenerator
         }
     }
 
-
+    /**
+     * @return void
+     */
     public function executeCommand(): void
     {
-        $cmd = $this->ctrl->getCmd();
-        switch ($cmd) {
-            default:
-                $cmd = $this->ctrl->getCmd(self::CMD_PDF);
-                $this->{$cmd}();
-                break;
-        }
+        $cmd = $this->ctrl->getCmd(self::CMD_PDF);
+        $this->{$cmd}();
     }
 
     /**
@@ -58,15 +55,16 @@ class ilParticipationCertificatePDFGenerator
      */
     #[NoReturn]
     public function generatePDF(
-        array $renderedCertificates,
-        bool $printIsAsynchronous = false
+        array $rendered_certificates,
+        bool $print_is_asynchronous = false
     ): void {
 
         require_once __DIR__ . '/../../vendor/autoload.php';
 
         $mpdf = new Mpdf([
             'tempDir' => '/tmp/mpdf',
-            'default_font' => 'dejavusans'
+            'default_font' => 'dejavusans',
+            'whitelistStreamWrappers' => ['file'],
         ]);
 
         $css = file_get_contents(
@@ -76,7 +74,7 @@ class ilParticipationCertificatePDFGenerator
 
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
 
-        foreach ($renderedCertificates as $index => $rendered) {
+        foreach ($rendered_certificates as $index => $rendered) {
             if ($index > 0) {
                 $mpdf->AddPage();
             }
@@ -84,16 +82,15 @@ class ilParticipationCertificatePDFGenerator
             $mpdf->WriteHTML($rendered, \Mpdf\HTMLParserMode::HTML_BODY);
         }
 
-        if ($printIsAsynchronous) {
-            $pdfString = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        if ($print_is_asynchronous) {
+            $pdf_string = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
             echo json_encode([
                 'success' => true,
-                'pdf_base64' => base64_encode($pdfString)
+                'pdf_base64' => base64_encode($pdf_string)
             ]);
             exit;
         }
-
         $mpdf->Output($this->pl->txt('plugin') . '.pdf', 'D');
         exit;
     }

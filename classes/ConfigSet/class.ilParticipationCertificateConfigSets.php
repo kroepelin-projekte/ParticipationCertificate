@@ -1,9 +1,13 @@
 <?php
-class ilParticipationCertificateConfigSets {
-
+class ilParticipationCertificateConfigSets
+{
 	public function __construct() {
 
 	}
+
+    /**
+     * @return array
+     */
 	public function getAllConfigSets(): array
     {
 		global $DIC;

@@ -4,8 +4,8 @@
  */
 class ilParticipationCertificateMultipleResultGUI
 {
-    const CMD_SHOW_ALL_RESULTS = 'show_all_results';
-    const CMD_SHOW_SELECTED_ALL_RESULTS = 'show_selected_all_results';
+    public const string CMD_SHOW_ALL_RESULTS = 'show_all_results';
+
 
     protected ilTabsGUI $tabs;
 
@@ -18,9 +18,9 @@ class ilParticipationCertificateMultipleResultGUI
     protected ilToolbarGUI $toolbar;
 
     /**
-     * @var ilParticipationCertificateMultipleResultTableGUI[]
+     * @var ilParticipationCertificateSingleResultTableGUI[]
      */
-    protected array $tables = array();
+    protected array $tables = [];
 
     /**
      * @var int[]
@@ -32,7 +32,7 @@ class ilParticipationCertificateMultipleResultGUI
      */
     protected mixed $ref_id;
 
-    protected ilObject|null|ilObjGroup $learnGroup;
+    protected ilObject|null|ilObjGroup $learn_group;
 
     /**
      * @throws ilObjectNotFoundException
@@ -52,10 +52,14 @@ class ilParticipationCertificateMultipleResultGUI
         if ($refId !== null) {
             $this->ref_id = (int) $refId;
         } else {
-            $this->ref_id = (int) $_GET['ref_id'];
+            $this->ref_id = (int) (Helper::fetchUrlParameter('ref_id', 'string') ?? 0);
         }
 
-        $this->learnGroup = ilObjectFactory::getInstanceByRefId($this->ref_id);
+        $cert_access = new ilParticipationCertificateAccess($this->ref_id);
+        if (!$cert_access->hasCurrentUserWriteAccess()) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->redirectToURL('login.php');
+        }
 
         if ($userIds !== null) {
             $this->usr_ids = $userIds;
@@ -64,28 +68,44 @@ class ilParticipationCertificateMultipleResultGUI
         }
 
         if (!is_array($this->usr_ids) || count($this->usr_ids) === 0) {
-            $this->tpl->setOnScreenMessage('failure',$this->pl->txt('no_records_selected'), true);
-            $this->ctrl->redirectByClass(ilParticipationCertificateResultGUI::class, ilParticipationCertificateResultGUI::CMD_CONTENT);
-        };
+            $this->redirectToResults($this->pl->txt('no_records_selected'));
+        }
+
+        // only members of this course/group, regardless of where the ids came from
+        $this->usr_ids = $cert_access->filterUserIdsOfGroup($this->usr_ids);
+        if ($this->usr_ids === []) {
+            $this->redirectToResults($DIC->language()->txt('no_permission'));
+        }
+
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->ref_id);
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
 
-
         $this->show_all_results();
+    }
+
+    /**
+     * @throws ilCtrlException
+     */
+    private function redirectToResults(string $message): void
+    {
+        $this->tpl->setOnScreenMessage('failure', $message, true);
+        $this->ctrl->setParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id', $this->ref_id);
+        $this->ctrl->redirectByClass(
+            [ilUIPluginRouterGUI::class, ilParticipationCertificateResultGUI::class],
+            ilParticipationCertificateResultGUI::CMD_CONTENT
+        );
     }
 
     public function executeCommand(): void
     {
         $cmd = $this->ctrl->getCmd(self::CMD_SHOW_ALL_RESULTS);
 
-        switch ($cmd) {
-            case self::CMD_SHOW_ALL_RESULTS:
-                $this->{$cmd}();
-                break;
+        if ($cmd == self::CMD_SHOW_ALL_RESULTS) {
+            $this->{$cmd}();
         }
-        //}
     }
 
     /**
@@ -93,20 +113,30 @@ class ilParticipationCertificateMultipleResultGUI
      */
     private function show_all_results(): void
     {
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        global $DIC;
+
+        $renderer = $DIC->ui()->renderer();
+
+        $this->tpl->loadStandardTemplate();
 
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
-        $this->initHeader();
+        $this->tpl->addJavaScript('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/js/participation-certificate.js');
 
+        $this->initHeader();
         $this->initTables();
 
         $html = '';
-        foreach ($this->tables as $table) {
-            $html .= $table->getHTML();
+        foreach ($this->tables as $usr_id => $table) {
+            $arr_usr_data = ilPartCertUsersData::getData($this->pl, [$usr_id]);
+            $name_user = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
+            if ($name_user == ' ') {
+                $name_user = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$usr_id]->getPartCertUserName();
+            }
+
+            $html .= '<div class="dhbw_part_cert_res">';
+            $html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for ') . ' ' . htmlspecialchars((string) $name_user, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</h2>';
+            $html .= $renderer->render($table->withRequest($DIC->http()->request()));
+            $html .= '</div>';
         }
 
         $this->tpl->setContent($html);
@@ -117,19 +147,31 @@ class ilParticipationCertificateMultipleResultGUI
         }
     }
 
+    /**
+     * @return void
+     * @throws ilCtrlException
+     */
     protected function initHeader(): void
     {
-        $this->tpl->setTitle($this->learnGroup->getTitle());
-        $this->tpl->setDescription($this->learnGroup->getDescription());
-        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learnGroup->getId()));
+        $this->tpl->setTitle($this->learn_group->getTitle());
+        $this->tpl->setDescription($this->learn_group->getDescription());
+        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learn_group->getId()));
         $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(ilParticipationCertificateResultGUI::class, ilParticipationCertificateResultGUI::CMD_CONTENT));
     }
 
+    /**
+     * @return void
+     * @throws ilCtrlException
+     * @throws ilException
+     */
     protected function initTables(): void
     {
         $this->ctrl->saveParameterByClass(ilParticipationCertificateMultipleResultGUI::class, 'ref_id');
         foreach ($this->usr_ids as $usr_id) {
-            $this->tables[] = new ilParticipationCertificateMultipleResultTableGUI($this, self::CMD_SHOW_SELECTED_ALL_RESULTS, $usr_id, $this->usr_ids);
+            $result_table = new ilParticipationCertificateSingleResultTableGUI($usr_id);
+            $table = $result_table->getTableForRepresentation();
+
+            $this->tables[$usr_id] = $table;
         }
     }
 }

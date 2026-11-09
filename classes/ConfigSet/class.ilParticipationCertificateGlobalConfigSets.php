@@ -1,15 +1,14 @@
 <?php
-class ilParticipationCertificateGlobalConfigSets {
 
+class ilParticipationCertificateGlobalConfigSets
+{
 	public function __construct() {
 
 	}
 
-	public function getAllConfigsAsArray(): array
-    {
-		return ilParticipationCertificateGlobalConfigSet::orderBy('order_by')->getArray();
-	}
-
+    /**
+     * @return ilParticipationCertificateGlobalConfigSet
+     */
 	public function addNewConfig(): ilParticipationCertificateGlobalConfigSet
     {
 			$gl_config = new ilParticipationCertificateGlobalConfigSet();
@@ -18,6 +17,10 @@ class ilParticipationCertificateGlobalConfigSets {
 			return $gl_config;
 	}
 
+    /**
+     * @param int $id
+     * @return ilParticipationCertificateGlobalConfigSet
+     */
 	public function getConfigSetById(int $id): ilParticipationCertificateGlobalConfigSet
     {
 		/**
@@ -27,6 +30,9 @@ class ilParticipationCertificateGlobalConfigSets {
 		return $gl_config;
 	}
 
+    /**
+     * @return ilParticipationCertificateGlobalConfigSet
+     */
 	public function getDefaultConfig(): ilParticipationCertificateGlobalConfigSet
     {
 		/**
@@ -36,6 +42,10 @@ class ilParticipationCertificateGlobalConfigSets {
 		return $gl_config;
 	}
 
+    /**
+     * @param string $config_key
+     * @return bool|string
+     */
 	public function getDefaultConfigSetValue(string $config_key): bool|string
     {
 		$gl_config = $this->getDefaultConfig();
@@ -48,6 +58,10 @@ class ilParticipationCertificateGlobalConfigSets {
 		return false;
 	}
 
+    /**
+     * @param array $arr_order_by
+     * @return void
+     */
 	public function saveAndRearangeOrderBy(array $arr_order_by = array()): void
     {
 		$arr_reserved = [];
@@ -55,8 +69,6 @@ class ilParticipationCertificateGlobalConfigSets {
 		asort($arr_order_by);
 
         foreach($arr_order_by as $id => $order_by) {
-			//$order_by = intval($order) / 10;
-
 			if(in_array($order_by,$arr_reserved)) {
 				$order_by = $order_by + 1;
 			}
@@ -82,6 +94,9 @@ class ilParticipationCertificateGlobalConfigSets {
 
 	}
 
+    /**
+     * @return int
+     */
 	public function getUnreservedOrderByValue(): int
     {
 		/**
@@ -91,9 +106,27 @@ class ilParticipationCertificateGlobalConfigSets {
 		return $config->getOrderBy() + 1;
 	}
 
+	/**
+	 * True if $template_id is an existing, active global template
+	 */
+	public function isActiveTemplate(int $template_id): bool
+	{
+		if ($template_id <= 0) {
+			return false;
+		}
+
+		return ilParticipationCertificateGlobalConfigSet::where([
+			'id' => $template_id,
+			'active' => 1
+		])->hasSets();
+	}
+
+	/**
+	 * @return string[]
+	 * @throws arException
+	 */
 	public function getSelectOptions(): array
     {
-
 		$arr_select_options = [0 => '--'];
 
 		foreach(ilParticipationCertificateGlobalConfigSet::where(['active' => 1])->orderBy('order_by')->get() as $global_config) {
@@ -102,7 +135,6 @@ class ilParticipationCertificateGlobalConfigSets {
 			 */
 			$arr_select_options[$global_config->getId()] = $global_config->getTitle();
 		}
-
 		return $arr_select_options;
 	}
 }

@@ -1,10 +1,13 @@
 <?php
 
-class ilExcerciseStates {
-
-	public static function getData(array $arr_usr_ids, int $group_ref_id): array
-    {
+class ilExcerciseStates
+{
+	public static function getData(
+        array $arr_usr_ids,
+        int $group_ref_id
+    ): array {
 		global $DIC;
+
 		$ilDB = $DIC->database();
 		$result = $ilDB->query(self::getSQL($arr_usr_ids));
 		$exerc_data = array();
@@ -12,7 +15,6 @@ class ilExcerciseStates {
         $items = $DIC->repositoryTree()->getChildIds($group_ref_id);
 
 		while ($row = $ilDB->fetchAssoc($result)) {
-
             if(!in_array($row['exc_ref_id'], $items)) {
                 continue;
             }
@@ -32,11 +34,17 @@ class ilExcerciseStates {
 		return $exerc_data;
 	}
 
-	protected static function getSQL(array $arr_usr_ids = array()): string
+    /**
+     * @param array $arr_usr_ids
+     * @return string
+     */
+	protected static function getSQL(array $arr_usr_ids = []): string
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
-		$select = "SELECT 
+
+        $select = "SELECT 
 					exerc.usr_id as exc_usr_id,
 					exc_obj.title as exc_obj_title,
 					exc_ass.exc_id as exc_obj_id,

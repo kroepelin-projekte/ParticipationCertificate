@@ -2,14 +2,19 @@
 
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Config\CourseConfig;
 
-class getFineWeights {
-
-	public static function getData(int $courseObjId): array
+class getFineWeights
+{
+    /**
+     * @param int $course_obj_id
+     * @return array
+     */
+	public static function getData(int $course_obj_id): array
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
-		$result = $ilDB->query(self::getSQL($courseObjId));
-		$weight = array();
+		$result = $ilDB->query(self::getSQL($course_obj_id));
+		$weight = [];
 		$weights = new getFineWeight();
 
 		while ($row = $ilDB->fetchAssoc($result)) {
@@ -53,18 +58,21 @@ class getFineWeights {
 					break;
 			}
 		}
-
 		return $weight;
 	}
 
-	protected static function getSQL($courseObjId): string
+    /**
+     * @param $course_obj_id
+     * @return string
+     */
+	protected static function getSQL($course_obj_id): string
     {
         global $DIC;
 
         $ilDB = $DIC->database();
 
 		$select = "select * from " . CourseConfig::TABLE_NAME . " 
-		WHERE course_obj_id = " . $ilDB->quote($courseObjId, "integer");
+		WHERE course_obj_id = " . $ilDB->quote($course_obj_id, "integer");
 
 		return $select;
 	}

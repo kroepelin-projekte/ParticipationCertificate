@@ -1,228 +1,333 @@
 <?php
-class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 
-	const IDENTIFIER = 'usr_id';
-	const SUCCESSFUL_PROGRESS_CSS_CLASS = "ilCourseObjectiveProgressBarCompleted";
-	const NON_SUCCESSFUL_PROGRESS_CSS_CLASS = "ilCourseObjectiveProgressBarNeutral";
-	const FAILED_PROGRESS_CSS_CLASS = "ilCourseObjectiveProgressBarFailed";
+use ILIAS\UI\Component\Table as I;
+use ILIAS\Data\Range;
+use ILIAS\Data\Order;
+use ILIAS\UI\Component\Table\DataRetrieval;
+use ILIAS\UI\Component\Table\DataRowBuilder;
 
-	protected ilTabsGUI $tabs;
+/**
+ * Class ilParticipationCertificateSingleResultTableGUI
+ */
+#[AllowDynamicProperties]
+class ilParticipationCertificateSingleResultTableGUI
+{
+    public const string IDENTIFIER = 'usr_id';
 
-	protected ilCtrl $ctrl;
+    protected ilTabsGUI $tabs;
 
-	protected ?object $parent_obj;
+    protected ilCtrl $ctrl;
 
-	protected ilParticipationCertificatePlugin $pl;
+    protected ?object $parent_obj;
 
-	protected array $filter = array();
+    protected ilParticipationCertificatePlugin $pl;
 
-	protected int $usr_id;
+    protected array $filter = [];
 
-	protected array $marks = array();
+    protected int $usr_id;
 
-	protected string $color;
+    protected array $marks = [];
 
-	protected array $usr_ids;
+    protected array $usr_ids;
 
-    private string $unsugg_color;
+    /**
+     * @var ilLearningObjectivesMasterCrs[]
+     */
+    protected array $sugg;
 
-	/**
-	 * @var ilLearningObjectivesMasterCrs[]
-	 */
-	protected array $sugg;
+    private int $course_obj_id;
 
-    private int $courseObjId;
+    private \ILIAS\UI\Factory $ui_factory;
 
     /**
      * @throws ilCtrlException
      * @throws ilException
      */
-    public function __construct(ilParticipationCertificateMultipleResultGUI|ilParticipationCertificateResultGUI|ilParticipationCertificateSingleResultGUI $a_parent_obj, string $a_parent_cmd, int $usr_id) {
-		global $DIC;
-
-		$this->ctrl = $DIC->ctrl();
-		$this->tabs = $DIC->tabs();
-		$this->pl = ilParticipationCertificatePlugin::getInstance();
-
-		$config = ilParticipationCertificateConfig::where(array(
-			'config_key' => 'color',
-			'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-		))->first();
-		$this->color = $config->getConfigValue();
-
-		$unsugg_config = ilParticipationCertificateConfig::where(array(
-			'config_key' => 'unsugg_color',
-			'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-		))->first();
-		if (is_Object($unsugg_config)) { 
-			$this->unsugg_color = $unsugg_config->getConfigValue();
-		} else {
-			$this->unsugg_color = '909090';
-		}
-
-		$this->setPrefix('dhbw_part_cert_res');
-		$this->setFormName('dhbw_part_cert_res');
-		$this->setId('dhbw_part_cert_res');
-
-		$this->setLimit(0);
-		$this->setShowRowsSelector(false);
-
-		$this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, [ 'ref_id', 'group_id' ]);
-		$this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
-
-
-        $this->courseObjId = ilObject::_lookupObjId($_GET['ref_id']);
-
-		$cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
-		$this->usr_ids = $cert_access->getUserIdsOfGroup();
-		$this->usr_id = $usr_id;
-		$this->sugg = getLearnSuggs::getData($usr_id, $this->courseObjId);
-
-		parent::__construct($a_parent_obj, $a_parent_cmd);
-
-		$this->getEnableHeader();
-		$this->setRowTemplate('tpl.default_row_single.html', $this->pl->getDirectory());
-		$this->setFormAction($this->ctrl->getFormAction($a_parent_obj));
-
-		$arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
-		$nameUser = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
-		if ($nameUser == ' ') {
-			$nameUser = $this->pl->txt('loginname') . ' ' . $arr_usr_data[$usr_id]->getPartCertUserName();
-		}
-
-		$this->setTitle($this->pl->txt('result_for ') . ' ' . $nameUser);
-
-		$this->addColumns();
-		$this->parseData();
-	}
-
-	function getSelectableColumns(): array
+    public function __construct(int $usr_id)
     {
-		$cols = array();
+        global $DIC;
 
-		/*$finalTestsStates = ilLearnObjectFinalTestStates::getData([$this->usr_id ]);*/
-        $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->courseObjId, [$this->usr_id ]);
-		$sorted = $this->sortColumns();
-		$i = 0;
+        $this->ui_factory = $DIC->ui()->factory();
+        $this->ctrl = $DIC->ctrl();
+        $this->tabs = $DIC->tabs();
+        $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-		if (count($finalTestsStates)) {
-            foreach ($sorted as $sort_key => $sort_arr) {
-                if (array_key_exists($sort_key, $finalTestsStates[$this->usr_id])) {
-                    /** @var ilLearnObjectFinalTestState $finalTestsState */
+        $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, [ 'ref_id', 'group_id' ]);
+        $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
 
-                    /** @var ilLearnObjectFinalTestState $finalTestsState */
-                    $finalTestsStates_course = $finalTestsStates[$this->usr_id][$sort_key];
+        $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
+        $this->course_obj_id = ilObject::_lookupObjId($ref_id);
 
-                    foreach ($finalTestsStates_course as $finalTestsState) {
-                        $cols[$finalTestsState->getLocftestCrsObjId()] = array(
-                            'txt' => $finalTestsState->getLocftestLearnObjectiveTitle(),
-                            'obj_id' => $sorted[$sort_key]['obj_id'],
-                            'objective_id' => $sorted[$sort_key]['objective_id'],
-                            'default' => true,
-                            'width' => 'auto',
-                        );
-                    }
+        $this->cert_access = new ilParticipationCertificateAccess($ref_id);
+        $this->usr_ids = $this->cert_access->getUserIdsOfGroup();
+        $this->usr_id = $usr_id;
+        $this->sugg = getLearnSuggs::getData($usr_id, $this->course_obj_id);
+    }
 
-                }
+    /**
+     * @throws ilCtrlException
+     */
+    public function getTableForRepresentation(): I\Data
+    {
+        global $DIC;
 
-                $i = $i + 1;
+        $columns_for_representation = $this->getColumsForRepresentation();
+        $columns = $this->getColumns();
 
-                if ($i == 10000) {
-                    break;
+        $data_retrieval = $this->getDataRetrieval($columns);
+
+        $table = $this->ui_factory->table()->data($data_retrieval, '', $columns_for_representation)
+                                  ->withRequest($DIC->http()->request());
+
+        return $table;
+
+    }
+
+    /**
+     * @param array $columns
+     * @return DataRetrieval
+     */
+    private function getDataRetrieval(array $columns): I\DataRetrieval
+    {
+        $data_retrieval = new class (
+            $this->sugg,
+            $columns,
+            $this->getRecords(...)
+        ) implements DataRetrieval {
+
+            public const string SUCCESSFUL_PROGRESS_CSS_CLASS = 'ilCourseObjectiveProgressBarCompleted';
+
+            public const string NON_SUCCESSFUL_PROGRESS_CSS_CLASS = 'ilCourseObjectiveProgressBarNeutral';
+
+            public const string FAILED_PROGRESS_CSS_CLASS = 'ilCourseObjectiveProgressBarFailed';
+
+            private Closure $records;
+
+            private $suggestions;
+
+            private array $columns;
+
+            private string $color;
+
+            private string $unsugg_color;
+
+            /**
+             * @param bool                             $ementoring
+             * @param ilParticipationCertificatePlugin $pl
+             * @param array                            $usr_ids
+             * @param array                            $range
+             * @param mixed                            $order
+             * @param int                              $ref_id
+             * @param Closure                          $records
+             * @param Closure                          $progress_bar_builder
+             * @param string|null                      $firstname
+             * @param string|null                      $lastname
+             */
+            public function __construct(
+                $suggestions,
+                array $columns,
+                Closure $records
+            ) {
+                $this->suggestions = $suggestions;
+                $this->columns = $columns;
+                $this->records = $records;
+
+                $config = ilParticipationCertificateConfig::where(array(
+                    'config_key' => 'color',
+                    'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+                ))->first();
+
+                $this->color = $config->getConfigValue();
+
+                $unsugg_config = ilParticipationCertificateConfig::where(array(
+                    'config_key' => 'unsugg_color',
+                    'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+                ))->first();
+
+                $this->unsugg_color = '909090';
+                if (is_Object($unsugg_config)) {
+                    $this->unsugg_color = $unsugg_config->getConfigValue();
                 }
             }
-        }
 
+            /**
+             * @param DataRowBuilder $row_builder
+             * @param array          $visible_column_ids
+             * @param Range          $range
+             * @param Order          $order
+             * @param mixed          $additional_viewcontrol_data
+             * @param mixed          $filter_data
+             * @param mixed          $additional_parameters
+             * @return Generator
+             */
+            public function getRows(
+                I\DataRowBuilder $row_builder,
+                array $visible_column_ids,
+                Range $range,
+                Order $order,
+                mixed $additional_viewcontrol_data,
+                mixed $filter_data,
+                mixed $additional_parameters
+            ): \Generator {
+                $data = ($this->records)($range, $order);
 
-		return $cols;
-	}
+                foreach ($data as $key => $record) {
+                    $row = [];
 
-	function sortColumns(): array
-    {
-		//First sort scores
-		$scores = NewLearningObjectiveScores::getData($this->usr_id, $this->courseObjId);
-		//if the scores are equal, sort because of the weight value
-		$weights = getFineWeights::getData($this->courseObjId);
-		$newWeights = (array)$weights;
+                    foreach ($visible_column_ids as $column_id) {
+                        $field = str_replace('crs_', '', $column_id);
+                        $value = $record[$field] ?? '';
 
-		$sorting = array();
+                        if (is_array($value)) {
+                            $exploded_value = explode('%', $value[0]  ?? '');
+                            $value = $this->buildProgressBar($exploded_value, $value[1], $value[2]);
+                        } else {
+                            // objective titles are editable by course admins
+                            $value = htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        }
 
-		foreach ($scores as $score) {
+                        $background_color = '#FFFFFF';
+                        if ($column_id !== 'hidden') {
 
-			/**
-			 * @var NewLearningObjectiveScore $score
-			 */
+                            $objective_id = $this->columns[str_replace('crs_', '', $column_id)]['objective_id'];
+                            if ($this->searchForId($objective_id, $this->suggestions)) {
+                                $background_color = '#' . $this->color;
+                            } else {
+                                $background_color = '#' . $this->unsugg_color;
+                            }
+                        }
+                        $row[$column_id] = '<span class="td-span" style="background-color: ' . $background_color . ';' . '">' . $value . '</span>';
+                    }
 
-			if (key_exists('weight_fine_'.$score->getObjectiveId(),$newWeights)) {
-				$fine = $newWeights['weight_fine_'.$score->getObjectiveId()];
-			} else {
-				//fallback
-				$fine = 1;
-			}
+                    yield $row_builder->buildDataRow(
+                        'result_' . $key,
+                        $row
+                    );
+                }
+            }
 
-			$sorting[$score->getObjectiveId()] = [
-				'title' => $score->getTitle(),
-				'score' => $score->getScore(),
-				'obj_id' => $score->getCourseObjId(),
-				'objective_id' => $score->getObjectiveId(),
-				'weight' => $fine
-			];
-		}
+            /**
+             * @param mixed $additional_viewcontrol_data
+             * @param mixed $filter_data
+             * @param mixed $additional_parameters
+             * @return int|null
+             */
+            public function getTotalRowCount(
+                mixed $additional_viewcontrol_data,
+                mixed $filter_data,
+                mixed $additional_parameters
+            ): ?int {
+                return count(($this->records)());
+            }
 
-		return $sorting;
-	}
+            /**
+             * @param          $points
+             * @param int|null $required_percent
+             * @param int|null $tries
+             * @return string
+             */
+            private function buildProgressBar($points, ?int $required_percent, ?int $tries): string
+            {
+                $points = $points[0];
+                $tooltip_id = 'prg_';
 
-	private function addColumns(): void
-    {
+                $maximum_possible_amount_of_points = 100;
+                $current_amount_of_points = (int)$points;
 
-		foreach ($this->getSelectableColumns() as $k => $v) {
-			if ($this->isColumnSelected($k)) {
-				if (isset($v['sort_field'])) {
-					$sort = $v['sort_field'];
-				} else {
-					$sort = '';
-				}
-				$this->addColumn($v['txt'], $sort, $v['width']);
-			}
-		}
-	}
+                if ($maximum_possible_amount_of_points > 0) {
+                    $current_percent = (int)($current_amount_of_points * 100 / $maximum_possible_amount_of_points);
+                } else {
+                    $current_percent = 0;
+                }
 
-	public function parseData(): array
-    {
-        $arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->courseObjId, [$this->usr_id]);
-		$usr_id = $this->usr_id;
-		$rec_array = array();
-        $processed = array();
+                //required to dodge bug in ilContainerObjectiveGUI::renderProgressBar
+                if ($required_percent == 0) {
+                    $required_percent = null;
+                }
 
+                if ($current_percent >= $required_percent) {
+                    $css_class = self::SUCCESSFUL_PROGRESS_CSS_CLASS;
+                } elseif ($tries == NULL) {
+                    $css_class = self::NON_SUCCESSFUL_PROGRESS_CSS_CLASS;
+                } else {
+                    $css_class = self::FAILED_PROGRESS_CSS_CLASS;
 
-		if (count($arr_FinalTestsStates)) {
+                    if ($current_percent === 0) {
+                        $css_class .= ' percent-0';
+                    }
+                }
+
+                if (is_float($required_percent)) {
+                    $required_percent = (int) round($required_percent);
+                }
+
+                return \ilContainerObjectiveGUI::renderProgressBar(
+                    $current_percent,
+                    $required_percent,
+                    $css_class,
+                    '',
+                    NULL,
+                    $tooltip_id,
+                    ''
+                );
+            }
+
+            private function searchForId(int $id, array $array): bool
+            {
+                foreach ($array as $key => $val) {
+                    if ($val->getSuggObjectiveId() == $id) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        };
+        return $data_retrieval;
+    }
+
+    /**
+     * @param Range|null $range
+     * @param Order|null $order
+     * @return array
+     */
+    public function getRecords(
+        ?Range $range = null,
+        ?Order $order = null
+    ): array {
+        $arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->course_obj_id, [$this->usr_id]);
+        $usr_id = $this->usr_id;
+        $rec_array = [];
+        $processed = [];
+
+        if (count($arr_FinalTestsStates)) {
 
             $row_key = [];
-			//build_row_key_s
-			foreach ($arr_FinalTestsStates[$usr_id] as $rec) {
-				/**
-				 * @var ilLearnObjectFinalTestState $rec;
-				 */
-				$row_key[$rec[0]->getLocftestCrsObjId()] = 0;
-			}
+            //build_row_key_s
+            foreach ($arr_FinalTestsStates[$usr_id] as $rec) {
+                /**
+                 * @var ilLearnObjectFinalTestState $rec;
+                 */
+                $row_key[$rec[0]->getLocftestCrsObjId()] = 0;
+            }
 
-			foreach ($arr_FinalTestsStates[$usr_id] as $rec_final_tests) {
-				/**
-				 * @var ilLearnObjectFinalTestState $rec_final_test;
-				 */
+            foreach ($arr_FinalTestsStates[$usr_id] as $rec_final_tests) {
+                /**
+                 * @var ilLearnObjectFinalTestState $rec_final_test;
+                 */
 
-				foreach($rec_final_tests as $key => $value) {
+                foreach($rec_final_tests as $key => $value) {
                     $locfTestCrsObjId = $value->getLocftestCrsObjId();
 
                     if ($locfTestCrsObjId) {
-						// check if data already exists
-						$crs_obj_id = $locfTestCrsObjId;
-						$crs_objective_id = $value->getLocftestObjectiveId();
-						if (isset($processed[$crs_obj_id])) {
-							if (isset($processed[$crs_obj_id][$crs_objective_id])) {
-								continue;
-							}
-						}
+                        // check if data already exists
+                        $crs_obj_id = $locfTestCrsObjId;
+                        $crs_objective_id = $value->getLocftestObjectiveId();
+                        if (isset($processed[$crs_obj_id])) {
+                            if (isset($processed[$crs_obj_id][$crs_objective_id])) {
+                                continue;
+                            }
+                        }
 
                         $rec_array[$row_key[$locfTestCrsObjId]][$locfTestCrsObjId] = $value->getLocftestObjectiveTitle();
 
@@ -234,105 +339,116 @@ class ilParticipationCertificateSingleResultTableGUI extends ilTable2GUI {
 
                         $row_key[$locfTestCrsObjId] += 1;
 
-						$processed[$crs_obj_id][$crs_objective_id] = $usr_id;
+                        $processed[$crs_obj_id][$crs_objective_id] = $usr_id;
                     }
                 }
-			}
-		}
-
-        $this->setData($rec_array);
-
-		return $rec_array;
-	}
-
-	protected function buildProgressBar($points, ?int $required_percent, ?int $tries): string
-    {
-		$points = $points[0];
-		$tooltip_id = "prg_";
-
-		$maximum_possible_amount_of_points = 100;
-		$current_amount_of_points = (int)$points;
-
-		if ($maximum_possible_amount_of_points > 0) {
-            $current_percent = (int)($current_amount_of_points * 100 / $maximum_possible_amount_of_points);
-		} else {
-			$current_percent = 0;
-		}
-
-		//required to dodge bug in ilContainerObjectiveGUI::renderProgressBar
-        if ($required_percent == 0) {
-            $required_percent = null;
-        }
-
-		if ($current_percent >= $required_percent) {
-			$css_class = self::SUCCESSFUL_PROGRESS_CSS_CLASS;
-		} elseif ($tries == NULL) {
-			$css_class = self::NON_SUCCESSFUL_PROGRESS_CSS_CLASS;
-		} else {
-			$css_class = self::FAILED_PROGRESS_CSS_CLASS;
-
-            if ($current_percent === 0) {
-                $css_class .= ' percent-0';
             }
-		}
+        }
+        return $rec_array;
+    }
 
-        if (is_float($required_percent)) {
-            $required_percent = (int) round($required_percent);
+    /**
+     * @return array
+     */
+    public function getColumsForRepresentation(): array
+    {
+        $write_access = $this->cert_access->hasCurrentUserWriteAccess();
+
+        $factory = $this->ui_factory;
+
+        $columns = $this->getColumns();
+
+        $cols = [];
+        $cols['hidden'] = $factory->table()->column()
+                                     ->text('')
+                                     ->withIsOptional(false)
+                                     ->withIsSortable(false);
+
+        foreach($columns as $obj_id => $column) {
+            $cols['crs_' . $obj_id] = $factory->table()->column()
+                                            ->text(htmlspecialchars((string) $column['txt'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'))
+                                            ->withIsOptional(true)
+                                            ->withIsSortable(0);
+
         }
 
-		return \ilContainerObjectiveGUI::renderProgressBar(
-            $current_percent,
-            $required_percent,
-            $css_class,
-            '',
-            NULL,
-            $tooltip_id,
-            ''
-        );
-	}
+        return $cols;
+    }
 
-	public function fillRow(array $a_set): void
+    /**
+     * @return array
+     */
+    public function getColumns(): array
     {
+        $cols = [];
 
-		foreach ($this->getSelectableColumns() as $k => $v) {
+        $finalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($this->course_obj_id, [$this->usr_id ]);
+        $sorted = $this->sortScores();
+        $i = 0;
 
-			if ($this->isColumnSelected($k)) {
-				if (isset($a_set[$k])) {
-					$this->tpl->setCurrentBlock('td');
-					if (is_array($a_set[$k])) {
+        if (count($finalTestsStates)) {
+            foreach ($sorted as $sort_key => $sort_arr) {
+                if (array_key_exists($sort_key, $finalTestsStates[$this->usr_id])) {
+                    /** @var ilLearnObjectFinalTestState $finalTestsState */
 
-						$this->tpl->setVariable('COURSE', $this->buildProgressBar(explode('%', $a_set[$k][0]  ?? ''), $a_set[$k][1], $a_set[$k][2]));
-					} else {
-						$this->tpl->setVariable('COURSE', $a_set[$k]);
-					}
-					if ($this->searchForId($v['objective_id'], $this->sugg)) {
-						$this->tpl->setVariable('COLOR', $this->color);
-					} else {
-						$this->tpl->setVariable('COLOR', $this->unsugg_color);
-					}
-					$this->tpl->parseCurrentBlock();
-				} else {
-					$this->tpl->setCurrentBlock('td');
-					$this->tpl->setVariable('COURSE', '&nbsp;');
-					if ($this->searchForId($v['objective_id'], $this->sugg)) {
-						$this->tpl->setVariable('COLOR', $this->color);
-					} else {
-						$this->tpl->setVariable('COLOR', $this->unsugg_color);
-					}
-					$this->tpl->parseCurrentBlock();
-				}
-			}
-		}
-	}
+                    /** @var ilLearnObjectFinalTestState $finalTestsState */
+                    $finalTestsStates_course = $finalTestsStates[$this->usr_id][$sort_key];
 
-	function searchForId(int $id, array $array): bool
+                    foreach ($finalTestsStates_course as $finalTestsState) {
+                        $cols[$finalTestsState->getLocftestCrsObjId()] = [
+                            'txt' => $finalTestsState->getLocftestLearnObjectiveTitle(),
+                            'obj_id' => $sort_arr['obj_id'],
+                            'objective_id' => $sort_arr['objective_id'],
+                            'default' => true,
+                            'width' => 'auto',
+                        ];
+                    }
+
+                }
+
+                $i = $i + 1;
+
+                if ($i == 10000) {
+                    break;
+                }
+            }
+        }
+        return $cols;
+    }
+
+    /**
+     * @return array
+     */
+    private function sortScores(): array
     {
-		foreach ($array as $key => $val) {
-			if ($val->getSuggObjectiveId() == $id) {
-				return true;
-			}
-		}
+        //First sort scores
+        $scores = NewLearningObjectiveScores::getData($this->usr_id, $this->course_obj_id);
+        //if the scores are equal, sort because of the weight value
+        $weights = getFineWeights::getData($this->course_obj_id);
+        $newWeights = $weights;
 
-		return false;
-	}
+        $sorting = [];
+
+        foreach ($scores as $score) {
+
+            /**
+             * @var NewLearningObjectiveScore $score
+             */
+            if (key_exists('weight_fine_'.$score->getObjectiveId(),$newWeights)) {
+                $fine = $newWeights['weight_fine_'.$score->getObjectiveId()];
+            } else {
+                //fallback
+                $fine = 1;
+            }
+
+            $sorting[$score->getObjectiveId()] = [
+                'title' => $score->getTitle(),
+                'score' => $score->getScore(),
+                'obj_id' => $score->getCourseObjId(),
+                'objective_id' => $score->getObjectiveId(),
+                'weight' => $fine
+            ];
+        }
+        return $sorting;
+    }
 }

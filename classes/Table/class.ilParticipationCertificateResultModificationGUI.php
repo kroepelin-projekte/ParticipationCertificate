@@ -9,17 +9,28 @@
 class ilParticipationCertificateResultModificationGUI
 {
 
-    const CMD_DISPLAY = 'display';
-    const IDENTIFIER = 'usr_id';
+    public const string CMD_DISPLAY = 'display';
+
+    public const string IDENTIFIER = 'usr_id';
+
     public ilTabsGUI $tabs;
+
     protected ilTemplate|ilGlobalTemplateInterface $tpl;
+
     protected ilCtrl|ilCtrlInterface $ctrl;
+
     protected ilParticipationCertificatePlugin $pl;
+
     protected ilToolbarGUI $toolbar;
-    protected int $courseRefId;
-    protected ?ilObject $learnGroup;
+
+    protected int $course_ref_id;
+
+    protected ?ilObject $learn_group;
+
     protected array $usr_ids;
+
     protected mixed $usr_id;
+
     /**
      * @var ilPartCertUserData[]
      */
@@ -67,30 +78,49 @@ class ilParticipationCertificateResultModificationGUI
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-        $this->courseRefId = $this->fetchUrlParameter('ref_id', FILTER_SANITIZE_NUMBER_INT);
-        $this->learnGroup = ilObjectFactory::getInstanceByRefId($_GET['ref_id']);
+        $this->course_ref_id = (int) ($this->fetchUrlParameter('ref_id', FILTER_SANITIZE_NUMBER_INT) ?? 0);
+
+        // applies to every command (display, printPDF, ...), also when called directly via ilUIPluginRouterGUI
+        $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
+        if (!$cert_access->hasCurrentUserWriteAccess()) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->redirectToURL('login.php');
+        }
+
+        $usr_id = (int) (Helper::fetchUrlParameter(self::IDENTIFIER, 'string') ?? 0);
+
+        if ($usr_id === 0) {
+            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            if (!empty($config_entry)) {
+                $usr_id = (int) $this->excludeURLParameters($config_entry[0])[0];
+            }
+        }
+
+        // the user must be a member of this course/group, regardless of where the id came from
+        if ($cert_access->filterUserIdsOfGroup([$usr_id]) === []) {
+            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+            $this->ctrl->setParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id', $this->course_ref_id);
+            $this->ctrl->redirectByClass(
+                [ilUIPluginRouterGUI::class, ilParticipationCertificateResultGUI::class],
+                ilParticipationCertificateResultGUI::CMD_CONTENT
+            );
+        }
+        $this->usr_id = $usr_id;
+        $this->usr_ids = $cert_access->getUserIdsOfGroup();
+
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->course_ref_id);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, 'ementor');
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
-        $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
-        $this->usr_ids = $cert_access->getUserIdsOfGroup();
 
-        $usr_id = $_GET[self::IDENTIFIER];
-
-        if(empty($usr_id)) {
-            $urlParameters = $this->excludeURLParameters($_GET['config_entry'][0]);
-            $usr_id = (int) $urlParameters[0];
-        }
-        $this->usr_id = $usr_id;
-
-        $courseObjId = ilObject::_lookupObjectId((int) $this->courseRefId);
+        $course_obj_id = ilObject::_lookupObjectId((int) $this->course_ref_id);
 
         $this->arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
         $this->arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
-        $this->arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($courseObjId, $this->usr_ids);
+        $this->arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
         $this->arr_iass_states = ilIassStates::getData($this->usr_ids);
         $this->arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $_GET['ref_id']);
-        $this->arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($courseObjId, $this->usr_ids);
+        $this->arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $this->usr_ids);
         $this->array_obj_ids = $this->arr_FinalTestsStates;
 
         $this->ctrl->setParameterByClass(ilParticipationCertificateResultModificationGUI::class, 'edited', true);
@@ -124,7 +154,7 @@ class ilParticipationCertificateResultModificationGUI
     {
         global $DIC;
 
-        $cert_access = new ilParticipationCertificateAccess($this->courseRefId);
+        $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
         if ($cert_access->hasCurrentUserWriteAccess()) {
             $renderer = $this->dic->ui()->renderer();
             $this->tpl->loadStandardTemplate();
@@ -132,10 +162,10 @@ class ilParticipationCertificateResultModificationGUI
 
             $form = $this->initForm();
 
-            $printButtonText = $this->pl->txt('print');
-            $printButtonTextJs = json_encode($printButtonText);
+            $print_button_text = $this->pl->txt('print');
+            $print_button_text_js = json_encode($print_button_text);
             $DIC->ui()->mainTemplate()->addOnLoadCode(<<<JS
-              $('#ilContentContainer #il_center_col form .il-standard-form-cmd button.btn').text($printButtonTextJs)
+              $('#ilContentContainer #il_center_col form .il-standard-form-cmd button.btn').text($print_button_text_js)
             JS);
 
             $this->tpl->setContent($renderer->render($form));
@@ -152,9 +182,9 @@ class ilParticipationCertificateResultModificationGUI
 
     public function initHeader(): void
     {
-        $this->tpl->setTitle($this->learnGroup->getTitle());
-        $this->tpl->setDescription($this->learnGroup->getDescription());
-        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learnGroup->getId()));
+        $this->tpl->setTitle($this->learn_group->getTitle());
+        $this->tpl->setDescription($this->learn_group->getDescription());
+        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learn_group->getId()));
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
         $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(array(
@@ -170,44 +200,44 @@ class ilParticipationCertificateResultModificationGUI
     {
         $ui = $this->dic->ui()->factory();
 
-        $usr_id = $_GET[self::IDENTIFIER];
-
-        if(empty($usr_id)) {
-            $urlParameters = $this->excludeURLParameters($_GET['config_entry'][0]);
-            $usr_id = (int) $urlParameters[0];
-        }
+        // checked against the course members in the constructor
+        $usr_id = $this->usr_id;
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
         $name_user = $arr_usr_data[$usr_id]->getPartCertFirstname() . ' ' . $arr_usr_data[$usr_id]->getPartCertLastname();
 
         $form_data = $this->getFormData();
 
-        $inputFields['initial'] = $ui->input()->field()->text(
+        $input_fields['initial'] = $ui->input()->field()->text(
             $this->pl->txt('mod_initial')
         )->withValue((string) $form_data['initial'] ?? '');
 
-        $inputFields['mod_resultstest'] = $ui->input()->field()->text(
+        $input_fields['mod_resultstest'] = $ui->input()->field()->text(
             $this->pl->txt('mod_resultstest')
         )->withValue((string) $form_data['resultstest'] ?? '');
 
-        $inputFields['conf'] = $ui->input()->field()->text(
+        $input_fields['conf'] = $ui->input()->field()->text(
             $this->pl->txt('mod_conf')
         )->withValue((string) $form_data['conf'] ?? '');
 
-        $inputFields['homework'] = $ui->input()->field()->text(
+        $input_fields['homework'] = $ui->input()->field()->text(
             $this->pl->txt('mod_homework')
         )->withValue((string) $form_data['homework'] ?? '');
 
         if ($form_data['ementoring']) {
-            $inputFields['ementoring'] = $ui->input()->field()->checkbox(
+            $input_fields['ementoring'] = $ui->input()->field()->checkbox(
                 $this->pl->txt('add_ementoring'),
                 $this->pl->txt('add_ementoring_additional')
             )->withValue(true);
         }
 
         $section = $ui->input()->field()->section(
-            $inputFields,
-            sprintf($this->pl->txt('mod_section'), $name_user)
+            $input_fields,
+            // the KS section label is rendered unescaped; names come from user-editable profile fields
+            sprintf(
+                $this->pl->txt('mod_section'),
+                htmlspecialchars((string) $name_user, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            )
         );
         
         $formAction = $this->ctrl->getFormActionByClass(
@@ -251,14 +281,12 @@ class ilParticipationCertificateResultModificationGUI
             $array['homework'] = 0;
         }
 
-        $ementor = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->courseRefId);
+        $ementor = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->course_ref_id);
         if ($ementor === NULL) {
-            $ementor = true;
+            $array['ementoring'] = true;
         } else {
-            $ementor = boolval($ementor);
+            $array['ementoring'] = boolval($ementor);
         }
-        $array['ementoring'] = $ementor;
-        
         return $array;
     }
 
@@ -286,26 +314,25 @@ class ilParticipationCertificateResultModificationGUI
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_id);
         $user_data = new ilPartCertUserData();
-        if(!$user_data->checkIfUserDataFilled(
-            $arr_usr_data[$usr_id[0]]->getPartCertSalutation(),
+        if (!isset($arr_usr_data[$usr_id[0]]) || !$user_data->checkIfUserDataFilled(
             $arr_usr_data[$usr_id[0]]->getPartCertFirstname(),
             $arr_usr_data[$usr_id[0]]->getPartCertLastname()
         )) {
             $this->redirectWithError(self::CMD_DISPLAY, $this->pl->txt('user_data_missing'));
         }
 
-        $twigParser = new ilParticipationCertificateTwigParser(
-            $this->courseRefId,
+        $twig_parser = new ilParticipationCertificateTwigParser(
+            $this->course_ref_id,
             $usr_id,
             boolval($data['ementoring'] ?? ''),
             $edited,
             $array
         );
 
-        $twigParser->parseData(
+        $twig_parser->parseData(
             false,
             false,
-            $this->courseRefId
+            $this->course_ref_id
         );
     }
 

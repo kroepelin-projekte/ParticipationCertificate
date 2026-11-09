@@ -1,7 +1,6 @@
 <?php
 
 use ILIAS\UI\Component\Input\Container\Form\Standard;
-use ILIAS\Data\Factory;
 
 /**
  * Class ilParticipationCertificateGUI
@@ -9,41 +8,52 @@ use ILIAS\Data\Factory;
  * @ilCtrl_isCalledBy ilParticipationCertificateGUI: ilUIPluginRouterGUI
  * @ilCtrl_Calls      ilParticipationCertificateGUI: ilParticipationCertificateResultGUI
  */
-class ilParticipationCertificateGUI
+class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 {
-    public const CMD_SAVE = 'save';
+    public const string CMD_SAVE = 'save';
 
-    public const CMD_CANCEL = 'cancel';
+    public const string CMD_CANCEL = 'cancel';
 
-    public const CMD_LOOP = 'loop';
+    public const string CMD_CONFIG = 'config';
 
-    public const CMD_CONFIG = 'config';
+    public const string CMD_CONFIG_RESULT_TABLE = 'configResultTable';
 
-    public const CMD_CONFIG_RESULT_TABLE = 'configResultTable';
+    public const string CMD_RESULT_TABLE_CONFIG = 'saveResultTableConfig';
 
-    public const CMD_RESULT_TABLE_CONFIG = 'saveResultTableConfig';
+    public const string CMD_SELF_PRINT = 'selfPrint';
 
-    public const CMD_SELF_PRINT = 'selfPrint';
+    public const string CMD_SELF_PRINT_SAVE = 'saveSelfPrint';
 
-    public const CMD_SELF_PRINT_SAVE = 'saveSelfPrint';
+    public const string CMD_DISPLAY = 'display';
 
-    public const CMD_DISPLAY = 'display';
+    public const string CMD_SET_CERT_TEMPLATE = 'setCertTemplate';
 
-    public const CMD_SET_CERT_TEMPLATE = 'setCertTemplate';
+    public const string CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE = 'setOwnCertTextFromTemplate';
 
-    public const CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE = 'setOwnCertTextFromTemplate';
+    /** Commands executeCommand() may dispatch to. */
+    private const array COMMANDS = [
+        self::CMD_CONFIG,
+        self::CMD_DISPLAY,
+        self::CMD_SAVE,
+        self::CMD_CONFIG_RESULT_TABLE,
+        self::CMD_RESULT_TABLE_CONFIG,
+        self::CMD_SELF_PRINT,
+        self::CMD_SELF_PRINT_SAVE,
+        self::CMD_SET_CERT_TEMPLATE,
+        self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE,
+    ];
 
-    public const TAB_CONFIG = 'config';
+    public const string TAB_CONFIG = 'config';
 
-    public const TAB_CONFIG_DISPLAY = 'config_display';
+    public const string TAB_CONFIG_DISPLAY = 'config_display';
 
-    public const TAB_CONFIG_RESULT_TABLE = 'config_result_table';
+    public const string TAB_CONFIG_RESULT_TABLE = 'config_result_table';
 
-    public const TAB_CONFIG_SELF_PRINT = 'config_self_print';
+    public const string TAB_CONFIG_SELF_PRINT = 'config_self_print';
 
-    private string $objecttype;
+    private string $object_type;
 
-    private ?ilObject $learnGroup;
+    private ?ilObject $learn_group;
 
     public ilTemplate|ilGlobalTemplateInterface $tpl;
 
@@ -51,15 +61,11 @@ class ilParticipationCertificateGUI
 
     public ilTabsGUI $tabs;
 
-    public ilGroupParticipants $learnGroupParticipants;
-
-    public ilObjGroup $learningGroup;
-
     public ilParticipationCertificateConfig $object;
 
     public ilToolbarGUI $toolbar;
 
-    public int $groupRefId;
+    public int $group_ref_id;
 
     protected ilParticipationCertificatePlugin $pl;
 
@@ -78,51 +84,82 @@ class ilParticipationCertificateGUI
         $this->ctrl = $DIC->ctrl();
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->tabs = $DIC->tabs();
-        //$this->objectDefinition = $DIC["objDefinition"];
-        $this->groupRefId = (int) $_GET['ref_id'];
+        $this->group_ref_id = (int) $_GET['ref_id'];
         $this->lng = $DIC->language();
         $this->logger = $DIC->logger()->root();
 
         //Access
-        $cert_access = new ilParticipationCertificateAccess($this->groupRefId);
+        $cert_access = new ilParticipationCertificateAccess($this->group_ref_id);
         if (!$cert_access->hasCurrentUserAdminAccess()) {
             $this->tpl->setOnScreenMessage('failure', $this->lng->txt('no_permission'), true);
             $DIC->ctrl()->redirectToURL('login.php');
         }
-        $this->objecttype = ilObject::_lookupType($this->groupRefId, true);
+        $this->object_type = ilObject::_lookupType($this->group_ref_id, true);
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->learnGroup = ilObjectFactory::getInstanceByRefId($this->groupRefId);
+        $this->learn_group = ilObjectFactory::getInstanceByRefId($this->group_ref_id);
+
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, ['ref_id', 'group_id']);
     }
 
+    /**
+     * @return array|string[]
+     */
+    public function getUnsafeGetCommands(): array
+    {
+        return [
+            self::CMD_SET_CERT_TEMPLATE,
+            self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE,
+            self::CMD_SAVE,
+            self::CMD_RESULT_TABLE_CONFIG,
+            self::CMD_SELF_PRINT_SAVE,
+        ];
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getSafePostCommands(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return void
+     * @throws ilCtrlException
+     */
     public function executeCommand(): void
     {
-        $cmd = $this->ctrl->getCmd();
+        $cmd = $this->ctrl->getCmd(self::CMD_CONFIG);
         $nextClass = $this->ctrl->getNextClass();
 
         switch ($nextClass) {
             case strtolower(ilParticipationCertificateResultGUI::class):
-                $ilParticipationCertificateTableGUI = new ilParticipationCertificateResultGUI();
-                $this->ctrl->forwardCommand($ilParticipationCertificateTableGUI);
+                $il_participation_certificate_table_gui = new ilParticipationCertificateResultGUI();
+                $this->ctrl->forwardCommand($il_participation_certificate_table_gui);
                 break;
             default:
-                switch ($cmd) {
-                    case self::CMD_CONFIG:
-                    case self::CMD_CONFIG_RESULT_TABLE:
-                    case self::CMD_DISPLAY:
-                    case self::CMD_SET_CERT_TEMPLATE:
-                    case self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE:
-                    case self::CMD_SAVE:
-                    case self::CMD_RESULT_TABLE_CONFIG:
-                    case self::CMD_SELF_PRINT:
-                    case self::CMD_SELF_PRINT_SAVE:
-                        $this->{$cmd}();
-                        break;
-                    default:
-                        $this->{$cmd}();
-                        break;
+                if (!in_array($cmd, self::COMMANDS, true)) {
+                    $cmd = self::CMD_CONFIG;
                 }
+                // state-changing commands only if the CSRF token was checked for this class
+                if (in_array($cmd, $this->getUnsafeGetCommands(), true) && !$this->isTokenCheckedForThisClass()) {
+                    $cmd = self::CMD_CONFIG;
+                }
+                $this->{$cmd}();
         }
+    }
+
+    /**
+     * ilCtrl checks the CSRF token of an unsafe command against the request's cmdClass. A request
+     * without cmdClass (only baseClass + cmdNode) is checked against the base class instead
+     * (ilCtrlContext::getCmdClass() falls back to it), which does not declare our unsafe commands, so
+     * no token is required while routing still reaches this class. Commands from
+     * getUnsafeGetCommands() therefore only run if the request explicitly targets this class, i.e.
+     * the token was really verified for it.
+     */
+    private function isTokenCheckedForThisClass(): bool
+    {
+        return $this->ctrl->getCmdClass() === strtolower(self::class);
     }
 
     /**
@@ -133,22 +170,26 @@ class ilParticipationCertificateGUI
         $this->configResultTable();
     }
 
-    public function initHeader(): void
+    /**
+     * @throws ilCtrlException
+     */
+    protected function initHeader(): void
     {
-        $this->tpl->setTitle($this->learnGroup->getTitle());
-        $this->tpl->setDescription($this->learnGroup->getDescription());
-        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learnGroup->getId()));
+        $this->tpl->setTitle($this->learn_group->getTitle());
+        $this->tpl->setDescription($this->learn_group->getDescription());
+        $this->tpl->setTitleIcon(ilObject::_getIcon($this->learn_group->getId()));
 
         $this->ctrl->saveParameterByClass(ilRepositoryGUI::class, 'ref_id');
 
-        $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->groupRefId);
-        $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(array(
-            ilRepositoryGUI::class//,
-            //ilObjGroupGUI::class
-        )));
+        $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->group_ref_id);
+        $this->tabs->setBackTarget(
+            $this->pl->txt('header_btn_back'),
+            $this->ctrl->getLinkTargetByClass([ilRepositoryGUI::class])
+        );
 
 
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
+
         $this->tabs->addTab(
             ilParticipationCertificateResultGUI::CMD_OVERVIEW,
             $this->pl->txt('header_overview'),
@@ -158,8 +199,11 @@ class ilParticipationCertificateGUI
             )
         );
 
-        //$this->tabs->addTab(ilParticipationCertificateResultGUI::CMD_OVERVIEW,$this->pl->txt('header_overview'),$this->ctrl->getLinkTargetByClass(ilParticipationCertificateResultGUI::class,ilParticipationCertificateResultGUI::CMD_CONTENT));
-        $this->tabs->addTab(self::TAB_CONFIG, $this->pl->txt('header_config'), $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONFIG));
+        $this->tabs->addTab(
+            self::TAB_CONFIG,
+            $this->pl->txt('header_config'),
+            $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONFIG)
+        );
         $this->tabs->activateTab(self::TAB_CONFIG);
     }
 
@@ -168,9 +212,23 @@ class ilParticipationCertificateGUI
      */
     protected function initConfTabs(): void
     {
-        $this->tabs->addSubTab(self::TAB_CONFIG_RESULT_TABLE, $this->pl->txt('config_result_table'), $this->ctrl->getLinkTarget($this, self::CMD_CONFIG_RESULT_TABLE));
-        $this->tabs->addSubTab(self::TAB_CONFIG_SELF_PRINT, $this->pl->txt('period_self_print'), $this->ctrl->getLinkTarget($this, self::CMD_SELF_PRINT));
-        $this->tabs->addSubTab(self::TAB_CONFIG_DISPLAY, $this->pl->txt('plugin'), $this->ctrl->getLinkTarget($this, self::CMD_DISPLAY));
+        $this->tabs->addSubTab(
+            self::TAB_CONFIG_RESULT_TABLE,
+            $this->pl->txt('config_result_table'),
+            $this->ctrl->getLinkTarget($this, self::CMD_CONFIG_RESULT_TABLE)
+        );
+
+        $this->tabs->addSubTab(
+            self::TAB_CONFIG_SELF_PRINT,
+            $this->pl->txt('period_self_print'),
+            $this->ctrl->getLinkTarget($this, self::CMD_SELF_PRINT)
+        );
+
+        $this->tabs->addSubTab(
+            self::TAB_CONFIG_DISPLAY,
+            $this->pl->txt('plugin'),
+            $this->ctrl->getLinkTarget($this, self::CMD_DISPLAY)
+        );
     }
 
     /**
@@ -184,11 +242,7 @@ class ilParticipationCertificateGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();
@@ -221,7 +275,6 @@ class ilParticipationCertificateGUI
         $cert_global_configs = new ilParticipationCertificateGlobalConfigSets();
         $options_template = $cert_global_configs->getSelectOptions();
 
-
         $select = $ui->input()->field()
                               ->select('', $options_template)
                               ->withValue($globalConfigId ?? 0);
@@ -250,7 +303,6 @@ class ilParticipationCertificateGUI
         });
         ;
 
-
         $button_editable_form = $ui->button()->standard(
             $this->pl->txt('btn_modify'),
             $DIC->ctrl()->getLinkTarget($this, self::CMD_SET_OWN_CERT_TEXT_FROM_TEMPLATE) . '&template_id=__TEMPLATE__'
@@ -272,7 +324,6 @@ class ilParticipationCertificateGUI
         JS;
         });
 
-
         $this->toolbar->addComponent($button_fixed_form);
         $this->toolbar->addComponent($button_editable_form);
     }
@@ -284,22 +335,20 @@ class ilParticipationCertificateGUI
     public function initForm(): Standard
     {
         global $DIC;
+
         $ui = $DIC->ui()->factory();
 
-        $inputFields = [];
+        $input_fields = [];
 
         $cert_configs = new ilParticipationCertificateConfigs();
-        $arr_config = $cert_configs->getObjConfigSetIfNoneCreateDefaultAndCreateNewObjConfigValues($this->groupRefId);
+        $arr_config = $cert_configs->getObjConfigSetIfNoneCreateDefaultAndCreateNewObjConfigValues($this->group_ref_id);
 
         $global_config_sets = new ilParticipationCertificateGlobalConfigSets();
         $global_config_id = null;
         if (count($arr_config) > 0) {
             $global_config_id = reset($arr_config)->getGlobalConfigId();
         }
-
         $this->tpl->addCss('./' . ilParticipationCertificatePlugin::PLUGIN_DIRECTORY . '/templates/css/participation-certificate.css');
-
-
         $this->initToolbar($global_config_id);
 
         if (!empty($global_config_id) && $global_config_id > 0) {
@@ -319,19 +368,19 @@ class ilParticipationCertificateGUI
             switch ($key) {
                 case 'logo':
                     if ($disabled) {
-                        $configId = $global_config_id;
+                        $config_id = $global_config_id;
                     } else {
-                        $configId = $this->groupRefId;
+                        $config_id = $this->group_ref_id;
                     }
 
                     $file = new ilParticipationCertificateFiles();
                     $src = $file->getFileSrcByStorageType(
                         $config->getConfigValue(),
-                        $configId,
+                        $config_id,
                         'logo'
                     );
 
-                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
+                    $input_fields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('logo'),
                         'Maximum upload size: 1024.0 MB. Allowed file types: .png' . "<br>\n" .
@@ -344,19 +393,19 @@ class ilParticipationCertificateGUI
                 case 'page1_issuer_signature':
 
                     if ($disabled) {
-                        $configId = $global_config_id;
+                        $config_id = $global_config_id;
                     } else {
-                        $configId = $this->groupRefId;
+                        $config_id = $this->group_ref_id;
                     }
 
                     $file = new ilParticipationCertificateFiles();
                     $src = $file->getFileSrcByStorageType(
                         $config->getConfigValue(),
-                        $configId,
+                        $config_id,
                         'page1_issuer_signature'
                     );
 
-                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
+                    $input_fields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('page1_issuer_signature'),
                         'Maximum upload size: 1024.0 MB. Allowed file types: .png' . "<br>\n" .
@@ -367,25 +416,25 @@ class ilParticipationCertificateGUI
                     break;
 
                 default:
-                    $configValue = $config->getConfigValue();
+                    $config_value = $config->getConfigValue();
 
-                    $configValue = $this->replacePlaceholdersFromOldVersion($configValue);
+                    $config_value = $this->replacePlaceholdersFromOldVersion($config_value);
                     if ($disabled) {
-                        $inputFields[$config->getConfigKey()] = $ui->input()->field()->textarea(
+                        $input_fields[$config->getConfigKey()] = $ui->input()->field()->textarea(
                             $config->getConfigKey()
-                        )->withValue($configValue ?? '')
+                        )->withValue($config_value ?? '')
                          ->withDisabled(true);
                     } else {
-                        $inputFields[$config->getConfigKey()] = $ui->input()->field()->textarea(
+                        $input_fields[$config->getConfigKey()] = $ui->input()->field()->textarea(
                             $config->getConfigKey()
-                        )->withValue($configValue ?? '');
+                        )->withValue($config_value ?? '');
                     }
                     break;
             }
         }
 
         $section = $ui->input()->field()->section(
-            $inputFields,
+            $input_fields,
             $this->pl->txt('config_plugin'),
             $this->pl->txt("placeholders") . ' <br>
 		[[username]]: Anrede Vorname Nachname <br>
@@ -393,17 +442,17 @@ class ilParticipationCertificateGUI
 		'
         );
 
-        $formAction = $DIC->ctrl()->getFormActionByClass(
+        $form_action = $DIC->ctrl()->getFormActionByClass(
             self::class,
             self::CMD_SAVE
         );
 
         $form = $ui->input()->container()->form()->standard(
-            $formAction,
+            $form_action,
             ['config' => $section]
         );
 
-        if ($this->objecttype === 'grp') {
+        if ($this->object_type === 'grp') {
             $this->ctrl->saveParameterByClass(ilObjGroup::class, 'ref_id');
         } else {
             $this->ctrl->saveParameterByClass(ilObjCourse::class, 'ref_id');
@@ -412,13 +461,13 @@ class ilParticipationCertificateGUI
     }
 
     /**
-     * @param string $configValue
+     * @param string $config_value
      * @return array|string|string[]
      */
-    private function replacePlaceholdersFromOldVersion(string $configValue)
+    private function replacePlaceholdersFromOldVersion(string $config_value)
     {
-        $configValue = str_replace('{{', '[[', $configValue);
-        return str_replace('}}', ']]', $configValue);
+        $config_value = str_replace('{{', '[[', $config_value);
+        return str_replace('}}', ']]', $config_value);
     }
 
     /**
@@ -449,13 +498,13 @@ class ilParticipationCertificateGUI
              */
             $config = ilParticipationCertificateConfig::where(array(
                 'config_key' => $key,
-                'group_ref_id' => $this->groupRefId,
+                'group_ref_id' => $this->group_ref_id,
                 'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT
             ))->first();
 
             if (!is_object($config)) {
                 $config = new ilParticipationCertificateConfig();
-                $config->setGroupRefId($this->groupRefId);
+                $config->setGroupRefId($this->group_ref_id);
                 $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP);
                 $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_CERT_TEXT);
                 $config->setConfigKey($key);
@@ -467,7 +516,7 @@ class ilParticipationCertificateGUI
             switch ($key) {
                 case 'page1_issuer_signature':
                     $input = end($input);
-                    if (!empty($input)) {
+                    if (!empty($input) && ilParticipationCertificateFiles::findOwnResource((string) $input) !== null) {
                         $file = 'page1_issuer_signature';
                     } else {
                         $input = $config->getConfigValue();
@@ -476,7 +525,7 @@ class ilParticipationCertificateGUI
                 case 'logo':
                     $input = end($input);
 
-                    if (!empty($input)) {
+                    if (!empty($input) && ilParticipationCertificateFiles::findOwnResource((string) $input) !== null) {
                         $file = 'logo';
                     } else {
                         $input = $config->getConfigValue();
@@ -495,7 +544,7 @@ class ilParticipationCertificateGUI
 
                 if ($file === 'logo' || $file === 'page1_issuer_signature') {
                     ilParticipationCertificateFiles::setFile(
-                        $this->groupRefId,
+                        $this->group_ref_id,
                         $file,
                         true
                     );
@@ -526,14 +575,12 @@ class ilParticipationCertificateGUI
      */
     public function setCertTemplate(): void
     {
-        $globalTemplateId = (int) $_GET['template_id'];
+        $global_template_id = $this->fetchActiveTemplateIdOrRedirect();
 
         $cert_configs = new ilParticipationCertificateConfigs();
-        if ($globalTemplateId != 0) {
-            $cert_configs->setObjToUseCertTemplate($this->groupRefId, $globalTemplateId);
-            $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
+        $cert_configs->setObjToUseCertTemplate($this->group_ref_id, $global_template_id);
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
 
-        }
         $this->ctrl->redirect($this, self::CMD_DISPLAY);
     }
 
@@ -542,14 +589,30 @@ class ilParticipationCertificateGUI
      */
     public function setOwnCertTextFromTemplate(): void
     {
-        $globalTemplateId = (int) $_GET['template_id'];
+        $global_template_id = $this->fetchActiveTemplateIdOrRedirect();
 
-        if ($globalTemplateId != 0) {
-            $cert_configs = new ilParticipationCertificateConfigs();
-            $cert_configs->setOwnCertConfigFromTemplate($this->groupRefId, $globalTemplateId);
-            $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
-        }
+        $cert_configs = new ilParticipationCertificateConfigs();
+        $cert_configs->setOwnCertConfigFromTemplate($this->group_ref_id, $global_template_id);
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
+
         $this->ctrl->redirect($this, self::CMD_DISPLAY);
+    }
+
+    /**
+     * Reads template_id from the request and accepts it only if it is an active global template
+     *
+     * @throws ilCtrlException
+     */
+    private function fetchActiveTemplateIdOrRedirect(): int
+    {
+        $global_template_id = (int) (Helper::fetchUrlParameter('template_id', 'string') ?? 0);
+
+        if (!(new ilParticipationCertificateGlobalConfigSets())->isActiveTemplate($global_template_id)) {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('template_not_available'), true);
+            $this->ctrl->redirect($this, self::CMD_DISPLAY);
+        }
+
+        return $global_template_id;
     }
 
     /**
@@ -560,11 +623,7 @@ class ilParticipationCertificateGUI
     {
         global $DIC;
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();
@@ -592,65 +651,65 @@ class ilParticipationCertificateGUI
 
         $ui = $DIC->ui()->factory();
 
-        $periodStart = ilParticipationCertificateConfig::getConfig('period_start', $this->groupRefId);
-        $startDate = !empty($periodStart) ? DateTimeImmutable::createFromFormat('d.m.Y', $periodStart) : null;
+        $period_start = ilParticipationCertificateConfig::getConfig('period_start', $this->group_ref_id);
+        $start_date = !empty($period_start) ? DateTimeImmutable::createFromFormat('d.m.Y', $period_start) : null;
 
-        $periodEnd = ilParticipationCertificateConfig::getConfig('period_end', $this->groupRefId);
-        $endDate = !empty($periodEnd) ? DateTimeImmutable::createFromFormat('d.m.Y', $periodEnd) : null;
+        $period_end = ilParticipationCertificateConfig::getConfig('period_end', $this->group_ref_id);
+        $end_date = !empty($period_end) ? DateTimeImmutable::createFromFormat('d.m.Y', $period_end) : null;
 
-        $durationInput = $ui->input()->field()->duration($this->pl->txt('period'));
+        $duration_input = $ui->input()->field()->duration($this->pl->txt('period'));
         $user = $DIC->user();
-        if (!empty($startDate) && !empty($endDate)) {
-            $period = $durationInput
+        if (!empty($start_date) && !empty($end_date)) {
+            $period = $duration_input
                 ->withTimezone($user->getTimeZone())
                 ->withUseTime(false)
                 ->withLabels($this->pl->txt('start'), $this->pl->txt('end'))
                 ->withFormat($user->getDateFormat())
-                ->withValue([$startDate, $endDate]);
+                ->withValue([$start_date, $end_date]);
         } else {
-            $period = $durationInput
+            $period = $duration_input
                 ->withTimezone($user->getTimeZone())
                 ->withUseTime(false)
                 ->withLabels($this->pl->txt('start'), $this->pl->txt('end'))
                 ->withFormat($user->getDateFormat());
         }
 
-        $inputFields['period'] = $period;
+        $input_fields['period'] = $period;
 
-        $calculationType = ilParticipationCertificateConfig::getConfig(
+        $calculation_type = ilParticipationCertificateConfig::getConfig(
             'calculation_type_processing_state_suggested_objectives',
-            $this->groupRefId
+            $this->group_ref_id
         ) ? ilParticipationCertificateConfig::getConfig(
             'calculation_type_processing_state_suggested_objectives',
-            $this->groupRefId
+            $this->group_ref_id
         ) : ilLearnObjectSuggResult::CALC_TYPE_BY_POINTS;
 
         $radio = $ui->input()->field()->radio($this->pl->txt('calculation_type_processing_state_suggested_objectives'))
                     ->withOption(ilLearnObjectSuggResult::CALC_TYPE_BY_POINTS, $this->pl->txt('calculation_by_points'))
                     ->withOption(ilLearnObjectSuggResult::CALC_TYPE_BY_COMPLETED_OBJECTIVE, $this->pl->txt('calculation_by_completed_learning_objective'))
                     ->withOption(ilLearnObjectSuggResult::CALC_TYPE_HIGHEST_VALUE, $this->pl->txt('calculation_by_highest_value'))
-                    ->withValue($calculationType);
+                    ->withValue($calculation_type);
 
-        $inputFields['calculation_type'] = $radio;
+        $input_fields['calculation_type'] = $radio;
 
 
-        $ementoringSetting = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->groupRefId);
-        if ($ementoringSetting === null) {
-            $ementoringSetting = true;
+        $ementoring_setting = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->group_ref_id);
+        if ($ementoring_setting === null) {
+            $ementoring_setting = true;
         } else {
-            $ementoringSetting = boolval($ementoringSetting);
+            $ementoring_setting = boolval($ementoring_setting);
         }
 
         $checkbox = $ui->input()->field()->checkbox($this->pl->txt('enable_ementoring'))
-                             ->withValue($ementoringSetting);
+                             ->withValue($ementoring_setting);
 
-        $inputFields['ementoring'] = $checkbox;
+        $input_fields['ementoring'] = $checkbox;
 
         $section = $ui->input()->field()->section(
-            $inputFields,
+            $input_fields,
             'Resultate für'
         );
-        $formAction = $this->ctrl->getFormActionByClass(
+        $form_action = $this->ctrl->getFormActionByClass(
             self::class,
             self::CMD_RESULT_TABLE_CONFIG,
             $this->pl->txt('save')
@@ -658,7 +717,7 @@ class ilParticipationCertificateGUI
 
         //Step 2: Define the form and attach the section.
         $form = $ui->input()->container()->form()->standard(
-            $formAction,
+            $form_action,
             ['config' => $section]
         );
         return $form;
@@ -691,17 +750,17 @@ class ilParticipationCertificateGUI
         $period = $form_data['period'];
         $ementoring = $form_data['ementoring'];
 
-        $periodStart = !empty($period['start']) ? $period['start']->format('d.m.Y') : null;
-        $periodEnd = !empty($period['end']) ? $period['end']->format('d.m.Y') : null;
+        $period_start = !empty($period['start']) ? $period['start']->format('d.m.Y') : null;
+        $period_end = !empty($period['end']) ? $period['end']->format('d.m.Y') : null;
 
-        ilParticipationCertificateConfig::setConfig('period_start', $periodStart, $this->groupRefId);
-        ilParticipationCertificateConfig::setConfig('period_end', $periodEnd, $this->groupRefId);
-        ilParticipationCertificateConfig::setConfig('enable_ementoring', $ementoring, $this->groupRefId);
+        ilParticipationCertificateConfig::setConfig('period_start', $period_start, $this->group_ref_id);
+        ilParticipationCertificateConfig::setConfig('period_end', $period_end, $this->group_ref_id);
+        ilParticipationCertificateConfig::setConfig('enable_ementoring', $ementoring, $this->group_ref_id);
 
         ilParticipationCertificateConfig::setConfig(
             'calculation_type_processing_state_suggested_objectives',
             $form_data['calculation_type'],
-            $this->groupRefId
+            $this->group_ref_id
         );
 
         $this->tpl->setOnScreenMessage('success', $this->pl->txt('successFormSave'), true);
@@ -718,11 +777,7 @@ class ilParticipationCertificateGUI
 
         $renderer = $DIC->ui()->renderer();
 
-        if (method_exists($this->tpl, 'loadStandardTemplate')) {
-            $this->tpl->loadStandardTemplate();
-        } else {
-            $this->tpl->getStandardTemplate();
-        }
+        $this->tpl->loadStandardTemplate();
         $this->initHeader();
 
         $this->initConfTabs();
@@ -748,37 +803,37 @@ class ilParticipationCertificateGUI
 
         $ui = $DIC->ui()->factory();
 
-        $periodStart = ilParticipationCertificateConfig::getConfig('self_print_start', $this->groupRefId);
-        $startDate = !empty($periodStart) ? DateTimeImmutable::createFromFormat('d.m.Y', $periodStart) : null;
+        $period_start = ilParticipationCertificateConfig::getConfig('self_print_start', $this->group_ref_id);
+        $start_date = !empty($period_start) ? DateTimeImmutable::createFromFormat('d.m.Y', $period_start) : null;
 
-        $periodEnd = ilParticipationCertificateConfig::getConfig('self_print_end', $this->groupRefId);
-        $endDate = !empty($periodEnd) ? DateTimeImmutable::createFromFormat('d.m.Y', $periodEnd) : null;
+        $period_end = ilParticipationCertificateConfig::getConfig('self_print_end', $this->group_ref_id);
+        $end_date = !empty($period_end) ? DateTimeImmutable::createFromFormat('d.m.Y', $period_end) : null;
 
-        $durationInput = $ui->input()->field()->duration($this->pl->txt('period'));
+        $duration_input = $ui->input()->field()->duration($this->pl->txt('period'));
 
         $user = $DIC->user();
 
-        if (!empty($startDate) && !empty($endDate)) {
-            $period = $durationInput
+        if (!empty($start_date) && !empty($end_date)) {
+            $period = $duration_input
                 ->withTimezone($user->getTimeZone())
                 ->withUseTime(false)
                 ->withLabels($this->pl->txt('start'), $this->pl->txt('end'))
                 ->withFormat($user->getDateFormat())
-                ->withMinValue($startDate)
-                ->withMaxValue($endDate)
-                ->withValue([$startDate, $endDate]);
+                ->withMinValue($start_date)
+                ->withMaxValue($end_date)
+                ->withValue([$start_date, $end_date]);
         } else {
-            $period = $durationInput
+            $period = $duration_input
                 ->withTimezone($user->getTimeZone())
                 ->withUseTime(false)
                 ->withLabels($this->pl->txt('start'), $this->pl->txt('end'))
                 ->withFormat($user->getDateFormat());
         }
 
-        $selfPrintIsEnabled = boolval(ilParticipationCertificateConfig::getConfig('enable_self_print', $this->groupRefId));
+        $self_print_is_enabled = boolval(ilParticipationCertificateConfig::getConfig('enable_self_print', $this->group_ref_id));
 
-        if (!$selfPrintIsEnabled) {
-            $inputFields['enable-self-printing'] = $ui->input()->field()->optionalGroup(
+        if (!$self_print_is_enabled) {
+            $input_fields['enable-self-printing'] = $ui->input()->field()->optionalGroup(
                 [
                     'period' => $period
                 ],
@@ -786,7 +841,7 @@ class ilParticipationCertificateGUI
             )->withValue(null);
 
         } else {
-            $inputFields['enable-self-printing'] = $ui->input()->field()->optionalGroup(
+            $input_fields['enable-self-printing'] = $ui->input()->field()->optionalGroup(
                 [
                     'period' => $period
                 ],
@@ -795,17 +850,17 @@ class ilParticipationCertificateGUI
         }
 
         $section = $ui->input()->field()->section(
-            $inputFields,
+            $input_fields,
             $this->pl->txt('period_self_print')
         );
-        $formAction = $this->ctrl->getFormActionByClass(
+        $form_action = $this->ctrl->getFormActionByClass(
             self::class,
             self::CMD_SELF_PRINT_SAVE,
             $this->pl->txt('save')
         );
 
         $form = $ui->input()->container()->form()->standard(
-            $formAction,
+            $form_action,
             ['config' => $section]
         );
         return $form;
@@ -825,7 +880,7 @@ class ilParticipationCertificateGUI
         $form = $this->initSelfPrintForm();
 
         $form = $form->withRequest($DIC->http()->request());
-        $formData = $form->getData();
+        $form_data = $form->getData();
 
         if ($form->getError()) {
             $this->tpl->setOnScreenMessage(ilGlobalTemplateInterface::MESSAGE_TYPE_FAILURE, $form->getError());
@@ -834,35 +889,35 @@ class ilParticipationCertificateGUI
         }
 
         $enable = 0;
-        if (!empty($formData['config']['enable-self-printing'])) {
+        if (!empty($form_data['config']['enable-self-printing'])) {
             $enable = 1;
         }
-        ilParticipationCertificateConfig::setConfig('enable_self_print', $enable, $this->groupRefId);
+        ilParticipationCertificateConfig::setConfig('enable_self_print', $enable, $this->group_ref_id);
 
-        if (!empty($formData['config']['enable-self-printing']['period']['start'])) {
-            $startTimestamp = $formData['config']['enable-self-printing']['period']['start']->getTimestamp();
+        if (!empty($form_data['config']['enable-self-printing']['period']['start'])) {
+            $start_timestamp = $form_data['config']['enable-self-printing']['period']['start']->getTimestamp();
         }
 
-        if (!empty($formData['config']['enable-self-printing']['period']['end'])) {
-            $endTimestamp = $formData['config']['enable-self-printing']['period']['end']->getTimestamp();
+        if (!empty($form_data['config']['enable-self-printing']['period']['end'])) {
+            $end_timestamp = $form_data['config']['enable-self-printing']['period']['end']->getTimestamp();
         }
 
-        $startDate = null;
-        if (!empty($startTimestamp)) {
-            $startDate = new DateTimeImmutable('@' . $startTimestamp);
-            $startDate = $startDate->setTimezone(new DateTimeZone($DIC->user()->getTimeZone()));
-            $startDate = $startDate->format('d.m.Y');
+        $start_date = null;
+        if (!empty($start_timestamp)) {
+            $start_date = new DateTimeImmutable('@' . $start_timestamp);
+            $start_date = $start_date->setTimezone(new DateTimeZone($DIC->user()->getTimeZone()));
+            $start_date = $start_date->format('d.m.Y');
         }
 
-        $endDate = null;
-        if (!empty($endTimestamp)) {
-            $endDate = new DateTimeImmutable('@' . $endTimestamp);
-            $endDate = $endDate->setTimezone(new DateTimeZone($DIC->user()->getTimeZone()));
-            $endDate = $endDate->format('d.m.Y');
+        $end_date = null;
+        if (!empty($end_timestamp)) {
+            $end_date = new DateTimeImmutable('@' . $end_timestamp);
+            $end_date = $end_date->setTimezone(new DateTimeZone($DIC->user()->getTimeZone()));
+            $end_date = $end_date->format('d.m.Y');
         }
 
-        ilParticipationCertificateConfig::setConfig('self_print_start', $startDate, $this->groupRefId);
-        ilParticipationCertificateConfig::setConfig('self_print_end', $endDate, $this->groupRefId);
+        ilParticipationCertificateConfig::setConfig('self_print_start', $start_date, $this->group_ref_id);
+        ilParticipationCertificateConfig::setConfig('self_print_end', $end_date, $this->group_ref_id);
 
         $this->tpl->setOnScreenMessage('success', $this->pl->txt('successFormSave'), true);
         $this->ctrl->redirect($this, self::CMD_SELF_PRINT);

@@ -1,8 +1,11 @@
 <?php
 class LearnObjectivesSuggCoursesQuery {
 
-	const DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_sugg_courses';
+    public const string DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_sugg_courses';
 
+    /**
+     * @return string
+     */
 	public function getSQL(): string
     {
 		return "SELECT sugg.user_id, real_sugg_crs.target_obj_id, sugg.objective_id from crs_objectives
@@ -13,17 +16,19 @@ class LearnObjectivesSuggCoursesQuery {
 				inner join container_reference as real_sugg_crs on real_sugg_crs.obj_id = objective_crsr.obj_id";
 	}
 
+    /**
+     * @param string $table_name
+     * @return void
+     */
 	public function createTemporaryTable(string $table_name =  self::DEFAULT_TMP_TABLE_NAME): void
     {
 		global $DIC;
 		$ilDB = $DIC->database();
 
         $table_name = $this->sanitizeTableName($table_name);
-
         $ilDB->query("DROP TEMPORARY TABLE IF EXISTS $table_name");
-
 		$sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX usc (user_id, target_obj_id, objective_id)) (".$this->getSQL().")";
-		//echo $sql."; ";
+
 		$ilDB->query($sql);
 	}
 

@@ -5,12 +5,12 @@ use ILIAS\Container\InternalDomainService;
 class ParticipationCertificateHelper
 {
     /**
-     * @param int $courseRefId
+     * @param int $course_ref_id
      * @return int|null
      * @throws ilDatabaseException
      * @throws ilObjectNotFoundException
      */
-    public static function getGroupRefId(int $courseRefId): ?int
+    public static function getGroupRefId(int $course_ref_id): ?int
     {
         global $DIC;
 
@@ -18,24 +18,24 @@ class ParticipationCertificateHelper
                       ->internal()
                       ->domain();
 
-        $containerRefId = $DIC->repositoryTree()->getParentId($courseRefId);
+        $container_ref_id = $DIC->repositoryTree()->getParentId($course_ref_id);
 
-        return self::getGroupOfContainer($containerRefId, $domain);
+        return self::getGroupOfContainer($container_ref_id, $domain);
     }
 
     /**
-     * @param int $groupRefId
+     * @param int $group_ref_id
      * @return array
      */
-    public static function getSessions(int $groupRefId): array
+    public static function getSessions(int $group_ref_id): array
     {
         global $DIC;
 
-        return $DIC->repositoryTree()->getChildsByType($groupRefId, 'sess');
+        return $DIC->repositoryTree()->getChildsByType($group_ref_id, 'sess');
     }
 
     /**
-     * @param int                   $containerRefId
+     * @param int                   $container_ref_id
      * @param InternalDomainService $domain
      * @return int|null
      * @throws ilDatabaseException
@@ -43,10 +43,10 @@ class ParticipationCertificateHelper
      */
 
     private static function getGroupOfContainer(
-        int $containerRefId,
+        int $container_ref_id,
         InternalDomainService $domain
     ): int|null {
-        $containerObjectFactory = \ilObjectFactory::getInstanceByRefId($containerRefId);
+        $containerObjectFactory = \ilObjectFactory::getInstanceByRefId($container_ref_id);
 
         $itemPresentation = $domain
             ->content()
@@ -57,57 +57,16 @@ class ParticipationCertificateHelper
             );
 
         $items = $itemPresentation->getAllRefIds();
-        $groupRefId = null;
-        foreach ($items as $key => $itemRefId) {
-            $itemObject = \ilObjectFactory::getInstanceByRefId($itemRefId);
+        $group_ref_id = null;
+        foreach ($items as $key => $item_ref_id) {
+            $itemObject = \ilObjectFactory::getInstanceByRefId($item_ref_id);
 
             if ($itemObject->getType() === 'grp') {
-                $groupRefId = (int) $itemRefId;
+                $group_ref_id = (int) $item_ref_id;
 
                 break;
             }
         }
-        return $groupRefId;
-    }
-
-    /**
-     * @param int                   $containerRefId
-     * @param InternalDomainService $domain
-     * @return int|null
-     * @throws ilDatabaseException
-     * @throws ilObjectNotFoundException
-     */
-
-    private static function getSessionsOfContainer(
-        int $containerRefId,
-        InternalDomainService $domain
-    ): int|null {
-        $containerObjectFactory = \ilObjectFactory::getInstanceByRefId($containerRefId);
-
-        $itemPresentation = $domain
-            ->content()
-            ->itemPresentation(
-                $containerObjectFactory, // TODO replace it with container ???
-                null,
-                false
-            );
-
-        $items = $itemPresentation->getAllRefIds();
-
-        $sessionRefIds = null;
-        foreach ($items as $key => $itemRefId) {
-            $itemObject = \ilObjectFactory::getInstanceByRefId($itemRefId);
-
-
-            if ($itemObject->getType() === 'grp') {
-                $sessionRefIds = (int) $itemRefId;
-
-                //break;
-            } else{
-                dd($itemObject->getType());
-
-            }
-        }
-        return $sessionRefIds;
+        return $group_ref_id;
     }
 }

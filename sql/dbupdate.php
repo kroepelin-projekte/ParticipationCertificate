@@ -710,7 +710,7 @@ $ilDB->createSequence('dhbw_part_cert_files');
 $config = ilParticipationCertificateConfig::where(array('config_key' => 'page1_box1_row1'))->get();
 
 if (!is_object($config)) {
-    $data = [];
+    $udf_definition_data = [];
     foreach($config as $con) {
         $configLastOrderBy = ilParticipationCertificateConfig::where([
                 'global_config_id' => $con->getGlobalConfigId()
@@ -718,7 +718,7 @@ if (!is_object($config)) {
 
         $orderBy = $configLastOrderBy->getOrderBy() + 1;
 
-        $data[] = [
+        $udf_definition_data[] = [
             'config-type' => $con->getConfigType(),
             'config-value-type' => $con->getConfigValueType(),
             'config-key' => 'page1_box1_row1_alternative',
@@ -729,7 +729,7 @@ if (!is_object($config)) {
         ];
     }
 
-    foreach($data as $config) {
+    foreach($udf_definition_data as $config) {
         $part_conf = new ilParticipationCertificateConfig();
         $part_conf->setConfigType($config['config-type']);
         $part_conf->setConfigValueType($config['config-value-type']);
@@ -739,6 +739,40 @@ if (!is_object($config)) {
         $part_conf->setGlobalConfigId($config['global-config-id']);
         $part_conf->setOrderBy($config['order-by']);
         $part_conf->store();
+    }
+}
+?>
+
+<#42>
+<?php
+/**
+ * ILIAS 11 changed UDF field ids from integers to UUIDs (core User DBUpdateSteps11, step 3)
+ * and keeps the mapping in udf_field_id_map. Rewrite the plugin's udf_* settings accordingly.
+ *
+ */
+if ($this->db->tableExists('udf_field_id_map')) {
+    $udf_field_id_map = [];
+    $result = $this->db->query('SELECT old_field_id, field_id FROM udf_field_id_map');
+    while ($row = $this->db->fetchAssoc($result)) {
+        $udf_field_id_map[(string) $row['old_field_id']] = (string) $row['field_id'];
+    }
+
+    $result = $this->db->query(
+        'SELECT id, config_value FROM dhbw_part_cert_conf WHERE '
+        . $this->db->in('config_key', ['udf_firstname', 'udf_lastname', 'udf_gender'], false, 'text')
+    );
+    while ($row = $this->db->fetchAssoc($result)) {
+        $old_field_id = trim((string) $row['config_value']);
+
+        if ($old_field_id === '' || !isset($udf_field_id_map[$old_field_id])) {
+            continue;
+        }
+
+        $this->db->update(
+            'dhbw_part_cert_conf',
+            ['config_value' => ['text', $udf_field_id_map[$old_field_id]]],
+            ['id' => ['integer', (int) $row['id']]]
+        );
     }
 }
 ?>

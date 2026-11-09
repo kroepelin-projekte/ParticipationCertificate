@@ -5,108 +5,148 @@
  *
  * @ilCtrl_Calls ilParticipationCertificateUIHookGUI: ilParticipationCertificateGUI
  */
-class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI {
+class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
+{
+    private const string TAB_CERTIFICATES = 'certificates';
 
-	const TAB_CERTIFICATES = "certificates";
-	protected ilCtrl|ilCtrlInterface $ctrl;
-	protected ilParticipationCertificatePlugin $pl;
-	protected int $groupRefId;
-	protected ?ilObject $learnGroup;
-	protected string $learnGroupTitle;
-	protected array $keywords;
+    protected ilCtrl|ilCtrlInterface $ctrl;
 
-    private string $objecttype;
+    protected ilParticipationCertificatePlugin $pl;
 
+    protected int $group_ref_id;
 
-	public function __construct() {
-		global $DIC;
+    protected ?ilObject $learn_group;
+
+    protected string $learn_group_title;
+
+    protected array $keywords;
+
+    private string $object_type;
+
+    /**
+     * @throws ilDatabaseException
+     * @throws ilObjectNotFoundException
+     */
+    public function __construct()
+    {
+        global $DIC;
 
         $this->keywords = [];
-		if($DIC->offsetExists('tpl')) {
-			$this->ctrl = $DIC->ctrl();
-			$this->pl = ilParticipationCertificatePlugin::getInstance();
-			if (isset($_GET['ref_id'])) {
-				$this->groupRefId = (int)$_GET['ref_id'];
-			} else {
-				$this->groupRefId = 0;
-			}
-			$this->objecttype = ilObject::_lookupType($this->groupRefId, true);
+        if ($DIC->offsetExists('tpl')) {
+            $this->ctrl = $DIC->ctrl();
+            $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-		if ($this->groupRefId === 0 || ( $this->objecttype !== 'crs' and $this->objecttype !== 'grp')) {
+            $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
+
+            if (isset($ref_id)) {
+                $this->group_ref_id = (int) $ref_id;
+            } else {
+                $this->group_ref_id = 0;
+            }
+            $this->object_type = ilObject::_lookupType($this->group_ref_id, true);
+
+            if ($this->group_ref_id === 0 || ($this->object_type !== 'crs' and $this->object_type !== 'grp')) {
                 return;
             }
-            $this->learnGroup = ilObjectFactory::getInstanceByRefId($this->groupRefId);
-            $this->learnGroupTitle = $this->learnGroup->getTitle();
-            
-			$config = ilParticipationCertificateConfig::where(array(
-					'config_key' => 'keyword',
-					'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-					'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER,
-					"group_ref_id" => 0
-			))->first();
+            $this->learn_group = ilObjectFactory::getInstanceByRefId($this->group_ref_id);
+            $this->learn_group_title = $this->learn_group->getTitle();
 
+            $config = ilParticipationCertificateConfig::where(array(
+                'config_key' => 'keyword',
+                'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+                'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER,
+                'group_ref_id' => 0
+            ))->first();
 
+            if (is_object($config)) {
+                $this->keywords = self::parseKeywords((string) $config->getConfigValue());
+            }
+        }
+    }
 
-			if(is_object($config)) {
-				$this->keywords = explode(",",$config->getConfigValue());
-			}
-		}
+    /**
+     * Modify GUI objects, before they generate output
+     * @throws ilCtrlException
+     */
+    public function modifyGUI(
+        string $a_comp,
+        string $a_part,
+        array $a_par = []
+    ): void {
+        if ($a_part == 'tabs' && $this->checkGroup()) {
+            $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
 
-	}
+            if ($cert_access->hasCurrentUserWriteAccess()) {
+                /**
+                 * @var ilTabsGUI $tabs
+                 */
+                $tabs = $a_par['tabs'];
+                $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
+                $tabs->addTab(
+                    self::TAB_CERTIFICATES,
+                    $this->pl->txt('plugin'),
+                    $this->ctrl->getLinkTargetByClass(
+                        [
+                            ilUIPluginRouterGUI::class,
+                            ilParticipationCertificateResultGUI::class
+                        ],
+                        ilParticipationCertificateResultGUI::CMD_CONTENT
+                    )
+                );
+            }
+        }
+    }
 
+    /**
+     * check if tab should be displayed, only displayed in groups!
+     */
+    public function checkGroup(): bool
+    {
+        foreach ($this->ctrl->getCallHistory() as $gui_classes_array) {
+            if (($this->object_type === 'crs') && key_exists(
+                    'cmdClass', $gui_classes_array
+                ) && ($gui_classes_array['cmdClass'] == ilObjCourseGUI::class)) {
+                if ($this->titleMatchesKeyword($this->learn_group_title)) {
+                    return true;
+                }
+            }
+            if (($this->object_type === 'grp') && key_exists(
+                    'cmdClass', $gui_classes_array
+                ) && ($gui_classes_array['cmdClass'] == ilObjGroupGUI::class)) {
+                if ($this->titleMatchesKeyword($this->learn_group_title)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	/**
-	 * Modify GUI objects, before they generate output
-	 * @throws ilCtrlException
-	 */
-	function modifyGUI(string $a_comp, string $a_part, array $a_par = array()): void
-	{
-		if ($a_part == 'tabs' && $this->checkGroup()) {
+    /**
+     * Comma-separated keyword config -> list of trimmed, non-empty keywords.
+     * '' or ' , ' must give [] (not ['']): an empty needle matches every title.
+     *
+     * @return string[]
+     */
+    public static function parseKeywords(string $config_value): array
+    {
+        return array_values(array_filter(
+            array_map('trim', explode(',', $config_value)),
+            static fn(string $keyword): bool => $keyword !== ''
+        ));
+    }
 
-			$cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
+    /**
+     * Case-insensitive (multibyte-safe) match of the object title against the configured keywords.
+     * No keywords configured means no match, i.e. the tab is shown nowhere.
+     */
+    private function titleMatchesKeyword(string $title): bool
+    {
+        foreach ($this->keywords as $keyword) {
+            if (mb_stripos($title, $keyword) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-			if ($cert_access->hasCurrentUserWriteAccess()) {
-				/**
-				 * @var ilTabsGUI $tabs
-				 */
-				$tabs = $a_par["tabs"];
-				$this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
-				$tabs->addTab(self::TAB_CERTIFICATES, $this->pl->txt('plugin'), $this->ctrl->getLinkTargetByClass(array(
-					ilUIPluginRouterGUI::class,
-					ilParticipationCertificateResultGUI::class
-				), ilParticipationCertificateResultGUI::CMD_CONTENT));
-			}
-		}
-	}
-
-
-	/**
-	 * check if tab should be displayed, only displayed in groups!
-	 */
-	function checkGroup(): bool
-	{
-		foreach ($this->ctrl->getCallHistory() as $GUIClassesArray) {
-			if (($this->objecttype === 'crs') && key_exists('cmdClass', $GUIClassesArray) && ($GUIClassesArray['cmdClass'] == ilObjCourseGUI::class)) {
-				if ($this->strposa($this->learnGroupTitle, $this->keywords) !== false) {
-					return true;
-				}
-			}
-			if (($this->objecttype === 'grp') && key_exists('cmdClass',$GUIClassesArray) &&  ($GUIClassesArray['cmdClass'] == ilObjGroupGUI::class)) {
-				if ($this->strposa($this->learnGroupTitle, $this->keywords) !== false) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private function strposa($haystack, $needles=array(), int $offset=0): mixed {
-		$chr = array();
-		foreach($needles as $needle) {
-			$res = strpos($haystack, $needle, $offset);
-			if ($res !== false) $chr[$needle] = $res;
-		}
-		if(empty($chr)) return false;
-		return min($chr);
-	}
 }

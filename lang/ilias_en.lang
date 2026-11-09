@@ -34,6 +34,7 @@ upload_header #:# Upload Your PDF Header
 save#:#Save
 udf_lastname#:#Custom Field Last Name
 udf_firstname#:#Custom Field First Name
+udf_gender#:#Custom Field Gender
 config_plugin#:#Configuration Certificate of Participation
 mod_initial#:#Initial Test Completed (Yes(1)/No(0))
 mod_resultstest#:#Result Qualifying Tests (Percentage)
@@ -118,3 +119,7 @@ individual_assessments#:#Video Conferences
 sessions#:#Sessions
 not_suggested_courses#:#Not suggested courses
 not_suggested_learning_modules#:#Not suggested learning modules
+upload_invalid_file_type#:#Only PNG or JPEG images are allowed.
+upload_file_too_large#:#The file is too large. Maximum upload size: 2 MB.
+template_not_available#:#The selected template does not exist or is not active. Nothing was changed.
+keyword_required#:#Please enter at least one keyword (several keywords separated by commas).

@@ -8,9 +8,10 @@ use ILIAS\Data\Order;
 use ILIAS\UI\URLBuilder;
 use ILIAS\Data\URI;
 use ILIAS\UI\URLBuilderToken;
+use ILIAS\UI\Component\Table\DataRetrieval;
+use ILIAS\UI\Component\Table\DataRowBuilder;
 
-
-class ilParticipationCertificateConfigSetTableGUI implements I\DataRetrieval
+class ilParticipationCertificateConfigSetTableGUI
 {
     protected Factory $df;
     protected DateFormat $current_user_date_format;
@@ -42,69 +43,203 @@ class ilParticipationCertificateConfigSetTableGUI implements I\DataRetrieval
      */
     public function getTableForRepresentation(): I\Data
     {
+        global $DIC;
+
         $actions = $this->getActions();
 
-        return $this->ui_factory->table()->data(
-            '',
-            $this->getColumsForRepresentation(),
-            $this
-        )->withActions($actions);
+        $data_retrieval = $this->getDataRetrieval();
+
+        $columns = $this->getColumsForRepresentation();
+
+        $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
+             ->withActions($actions)
+             ->withRequest($DIC->http()->request());
+
+        return $table;
     }
 
-    public function getRows(
-        I\DataRowBuilder $row_builder,
-        array $visible_column_ids,
-        Range $range,
-        Order $order,
-        ?array $filter_data,
-        ?array $additional_parameters
-    ): \Generator {
-        $data = $this->doSelect($order, $range);
+    /**
+     * @return DataRetrieval
+     */
+    private function getDataRetrieval(): I\DataRetrieval
+    {
+        $data_retrieval = new class () implements DataRetrieval {
 
-        foreach ($data as $idx => $record) {
-            switch ($record['configset_type']) {
-                case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL:
-                    yield $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type']. '_' . $record['obj_ref_id'], $record)
-                                      ->withDisabledAction('copy')
-                                      ->withDisabledAction('delete')
-                                      ->withDisabledAction('activate')
-                                      ->withDisabledAction('deactivate')
-                                      ->withDisabledAction('go_to')
-                                      ->withDisabledAction('create_template');;
-                    break;
-                case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE:
+            /**
+             * @param DataRowBuilder $row_builder
+             * @param array          $visible_column_ids
+             * @param Range          $range
+             * @param Order          $order
+             * @param mixed          $additional_viewcontrol_data
+             * @param mixed          $filter_data
+             * @param mixed          $additional_parameters
+             * @return Generator
+             */
+            public function getRows(
+                I\DataRowBuilder $row_builder,
+                array $visible_column_ids,
+                Range $range,
+                Order $order,
+                mixed $additional_viewcontrol_data,
+                mixed $filter_data,
+                mixed $additional_parameters
+            ): \Generator {
 
-                    $buildRow = $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type']. '_' . $record['obj_ref_id'], $record)
-                        ->withDisabledAction('go_to')
-                        ->withDisabledAction('create_template');
+                $records = $this->getRecords($range, $order);
 
-                    if ($record['order_by'] == 1) {
+                foreach ($records as $idx => $record) {
+                    switch ($record['configset_type']) {
+                        case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL:
+                            yield $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type']. '_' . $record['obj_ref_id'], $record)
+                                              ->withDisabledAction('copy')
+                                              ->withDisabledAction('delete')
+                                              ->withDisabledAction('activate')
+                                              ->withDisabledAction('deactivate')
+                                              ->withDisabledAction('go_to')
+                                              ->withDisabledAction('create_template');;
+                            break;
+                        case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE:
 
-                        $buildRow = $buildRow->withDisabledAction('delete')
-                                       ->withDisabledAction('activate')
-                                       ->withDisabledAction('deactivate');
+                            $build_row = $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type']. '_' . $record['obj_ref_id'], $record)
+                                                     ->withDisabledAction('go_to')
+                                                     ->withDisabledAction('create_template');
+
+                            if ($record['order_by'] == 1) {
+
+                                $build_row = $build_row->withDisabledAction('delete')
+                                                       ->withDisabledAction('activate')
+                                                       ->withDisabledAction('deactivate');
+                            }
+
+                            if ($record['active_status']) {
+                                yield $build_row->withDisabledAction('activate');
+                            } else {
+                                yield $build_row->withDisabledAction('deactivate');
+                            }
+
+                            break;
+                        case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP:
+                            yield $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type'] . '_' . $record['obj_ref_id'], $record)
+                                              ->withDisabledAction('edit')
+                                              ->withDisabledAction('copy')
+                                              ->withDisabledAction('delete')
+                                              ->withDisabledAction('activate')
+                                              ->withDisabledAction('deactivate');
+
+                            break;
                     }
-
-                    if ($record['active_status']) {
-                        yield $buildRow->withDisabledAction('activate');
-                    } else {
-                        yield $buildRow->withDisabledAction('deactivate');
-                    }
-
-                    break;
-                case  ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP:
-                    yield $row_builder->buildDataRow($record['config_id'] . '_' . $record['config_type'] . '_' . $record['obj_ref_id'], $record)
-                                      ->withDisabledAction('edit')
-                                      ->withDisabledAction('copy')
-                                      ->withDisabledAction('delete')
-                                      ->withDisabledAction('activate')
-                                      ->withDisabledAction('deactivate');
-
-                    break;
+                }
             }
-        }
+
+            /**
+             * @param mixed $additional_viewcontrol_data
+             * @param mixed $filter_data
+             * @param mixed $additional_parameters
+             * @return int|null
+             */
+            public function getTotalRowCount(
+                mixed $additional_viewcontrol_data,
+                mixed $filter_data,
+                mixed $additional_parameters
+            ): ?int {
+                return count($this->getRecords());
+            }
+
+            /**
+             * @param Range|null $range
+             * @param Order|null $order
+             * @return array
+             */
+            protected function getRecords(?Range $range = null, ?Order $order = null): array
+            {
+                $pl = ilParticipationCertificatePlugin::getInstance();
+
+                $global_configs = new ilParticipationCertificateConfigSets();
+                $data = $global_configs->getAllConfigSets();
+
+                $tableData = [];
+
+                foreach ($data as $config_set) {
+                    $active = 'inactive';
+                    $active_status = false;
+                    $config_set_type = '';
+                    $config_id = $config_set['conf_id'];
+                    $config_type = $config_set['configset_type'];
+                    $arr_type = [];
+                    $obj_ref_id = $config_set['obj_ref_id'];
+
+                    foreach ($config_set as $key => $value) {
+                        switch ($key) {
+                            case 'configset_type':
+                                if ($config_set[$key] > 0) {
+                                    switch ($config_set['configset_type']) {
+                                        case ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP:
+                                            if (!ilParticipationCertificateGlobalConfigSet::find(
+                                                $config_set['object_gl_conf_template_id']
+                                            )) {
+                                                $config_set_type = '';
+                                                break;
+                                            }
+                                            $arr_type[] = $pl->txt('configset_type_' . $config_set['configset_type']);
+                                            $arr_type[] = $pl->txt(
+                                                'object_config_type_' . $config_set['object_config_type']
+                                            );
+                                            $template = new ilParticipationCertificateGlobalConfigSet(
+                                                $config_set['object_gl_conf_template_id']
+                                            );
+                                            $arr_type[] = $pl->txt('origin_template') . ": " . htmlspecialchars((string) $template->getTitle(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+                                            $config_set_type = implode("<br/>", $arr_type);
+                                            break;
+                                        default:
+                                            $config_set_type = $pl->txt('configset_type_' . $config_set['configset_type']);
+                                            break;
+                                    }
+                                } else {
+                                    $config_set_type = '';
+                                }
+
+                                break;
+
+                            case 'active':
+                                if ((int)$config_set[$key] === 1) {
+                                    $active = 'active';
+                                    $active_status = true;
+                                }
+                                break;
+                            default:
+
+                                break;
+                        }
+                    }
+
+                    $tmp = [
+                        'config_id' => $config_id,
+                        'config_type' => $config_type,
+                        'order_by' => $config_set['order_by'],
+                        'configset_type' => $config_set['configset_type'],
+                        'configset_type_title' => $config_set_type,
+                        'title' => htmlspecialchars((string) $config_set['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                        'parent_title' => htmlspecialchars((string) $config_set['parent_title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                        'obj_ref_id' => $obj_ref_id,
+                        'active' => $active,
+                        'active_status' => $active_status
+                    ];
+
+                    $tableData[] = $tmp;
+                }
+
+                return $tableData;
+            }
+        };
+
+        return $data_retrieval;
     }
 
+    /**
+     * @param $pl
+     * @return array
+     */
     private function getSelectableColumns(): array
     {
         $cols = array();
@@ -116,134 +251,26 @@ class ilParticipationCertificateConfigSetTableGUI implements I\DataRetrieval
         return $cols;
     }
 
-    public function getTotalRowCount(
-        ?array $filter_data,
-        ?array $additional_parameters
-    ): ?int {
-        return count($this->records());
-    }
-
     /**
-     * @param Order $order
-     * @param Range $range
-     * @return array
-     */
-    protected function doSelect(Order $order, Range $range): array
-    {
-        $sql_order_part = $order->join('ORDER BY', fn(...$o) => implode(' ', $o));
-        $sql_range_part = sprintf('LIMIT %2$s OFFSET %1$s', ...$range->unpack());
-        return array_map(
-            fn($rec) => array_merge($rec, ['sql_order' => $sql_order_part, 'sql_range' => $sql_range_part]),
-            $this->records()
-        );
-    }
-
-    /**
+     * @param $pl
      * @return array
      */
     protected function getColumsForRepresentation(): array
     {
         $columns = $this->getSelectableColumns();
 
-        $f = $this->ui_factory;
+        $ui_factory = $this->ui_factory;
 
         return  [
-            'configset_type_title' => $f->table()->column()->text($columns['configset_type']['txt'])
-                          ->withIsSortable(false),
-            'title' => $f->table()->column()->text($columns['title']['txt'])
-                         ->withIsSortable(false),
-            'parent_title' => $f->table()->column()->text($columns['parent_title']['txt'])
-                         ->withIsSortable(false),
-            'active' => $f->table()->column()->text($columns['active']['txt'])
-                         ->withIsSortable(false),
+            'configset_type_title' => $ui_factory->table()->column()->text($columns['configset_type']['txt'])
+                                                 ->withIsSortable(false),
+            'title' => $ui_factory->table()->column()->text($columns['title']['txt'])
+                                  ->withIsSortable(false),
+            'parent_title' => $ui_factory->table()->column()->text($columns['parent_title']['txt'])
+                                         ->withIsSortable(false),
+            'active' => $ui_factory->table()->column()->text($columns['active']['txt'])
+                                   ->withIsSortable(false),
         ];
-    }
-
-    /**
-     * @return array
-     */
-    protected function records(): array
-    {
-        global $DIC;
-
-        $global_configs = new ilParticipationCertificateConfigSets();
-        $data = $global_configs->getAllConfigSets();
-
-        $tableData = [];
-
-        $selectableColumns = $this->getSelectableColumns();
-
-        foreach ($data as $configSet) {
-            $active = 'inactive';
-            $activeStatus = false;
-            $configSetType = '';
-            $configId = $configSet['conf_id'];
-            $configType = $configSet['configset_type'];
-            $arr_type = [];
-            $objRefId = $configSet['obj_ref_id'];
-
-            foreach ($configSet as $key => $value) {
-                switch ($key) {
-                    case 'configset_type':
-                        if ($configSet[$key] > 0) {
-                            switch ($configSet['configset_type']) {
-                                case ilParticipationCertificateConfig::CONFIG_SET_TYPE_GROUP:
-                                    if (!ilParticipationCertificateGlobalConfigSet::find(
-                                        $configSet['object_gl_conf_template_id']
-                                    )) {
-                                        $configSetType = '';
-                                        break;
-                                    }
-                                    $arr_type[] = $this->pl->txt('configset_type_' . $configSet['configset_type']);
-                                    $arr_type[] = $this->pl->txt(
-                                        'object_config_type_' . $configSet['object_config_type']
-                                    );
-                                    $template = new ilParticipationCertificateGlobalConfigSet(
-                                        $configSet['object_gl_conf_template_id']
-                                    );
-                                    $arr_type[] = $this->pl->txt('origin_template') . ": " . $template->getTitle();
-
-                                    $configSetType = implode("<br/>", $arr_type);
-                                    break;
-                                default:
-                                    $configSetType = $this->pl->txt('configset_type_' . $configSet['configset_type']);
-                                    break;
-                            }
-                        } else {
-                            $configSetType = '';
-                        }
-
-                        break;
-
-                    case 'active':
-                        if ((int)$configSet[$key] === 1) {
-                            $active = 'active';
-                            $activeStatus = true;
-                        }
-                        break;
-                    default:
-
-                        break;
-                }
-            }
-
-            $tmp = [
-                'config_id' => $configId,
-                'config_type' => $configType,
-                'order_by' => $configSet['order_by'],
-                'configset_type' => $configSet['configset_type'],
-                'configset_type_title' => $configSetType,
-                'title' => $configSet['title'],
-                'parent_title' => $configSet['parent_title'],
-                'obj_ref_id' => $objRefId,
-                'active' => $active,
-                'active_status' => $activeStatus
-            ];
-
-            $tableData[] = $tmp;
-        }
-
-        return $tableData;
     }
 
     /**
@@ -253,9 +280,10 @@ class ilParticipationCertificateConfigSetTableGUI implements I\DataRetrieval
     {
         global $DIC;
 
-        $f = $DIC->ui()->factory();
-        $uri = $this->buildURI(ilParticipationCertificateConfigGUI::CMD_ACTION);
+        $factory = $DIC->ui()->factory();
+        $uri = $this->buildURI();
         $url_builder = new URLBuilder($uri);
+
         [$url_builder, $this->action_parameter_token, $this->row_id_token] =
             $url_builder->acquireParameters(
                 ['config'],
@@ -264,65 +292,61 @@ class ilParticipationCertificateConfigSetTableGUI implements I\DataRetrieval
             );
 
         $actions = [
-            'edit' => $f->table()->action()->single(
+            'edit' => $factory->table()->action()->single(
                 $this->pl->txt('edit'),
                 $url_builder->withParameter($this->action_parameter_token, 'edit'),
                 $this->row_id_token
             ),
-            'copy' => $f->table()->action()->single(
+            'copy' => $factory->table()->action()->single(
                 $this->pl->txt('copy'),
                 $url_builder->withParameter($this->action_parameter_token, 'copy'),
                 $this->row_id_token
             ),
             'delete' =>
-                $f->table()->action()->single(
+                $factory->table()->action()->single(
                     $this->pl->txt('delete'),
                     $url_builder->withParameter($this->action_parameter_token, 'delete'),
                     $this->row_id_token
                 ),
             'activate' =>
-                $f->table()->action()->single(
+                $factory->table()->action()->single(
                     $this->pl->txt('set_active'),
                     $url_builder->withParameter($this->action_parameter_token, 'activate'),
                     $this->row_id_token
                 ),
             'deactivate' =>
-                $f->table()->action()->single(
+                $factory->table()->action()->single(
                     $this->pl->txt('set_inactive'),
                     $url_builder->withParameter($this->action_parameter_token, 'deactivate'),
                     $this->row_id_token
                 ),
             'create_template' =>
-                $f->table()->action()->single(
+                $factory->table()->action()->single(
                     $this->pl->txt('create_template'),
                     $url_builder->withParameter($this->action_parameter_token, 'create-template'),
                     $this->row_id_token
                 ),
             'go_to' =>
-                $f->table()->action()->single(
+                $factory->table()->action()->single(
                     $this->pl->txt('go_to_object'),
                     $url_builder->withParameter($this->action_parameter_token, 'go-to'),
                     $this->row_id_token
                 )
         ];
-
         return $actions;
     }
 
     /**
-     * @param string $command
      * @return URI
      * @throws ilCtrlException
      */
-    private function buildURI(
-        string $command
-    ): URI {
+    private function buildURI(): URI {
         global $DIC;
 
         return new URI(
             ILIAS_HTTP_PATH . '/' . $DIC->ctrl()->getLinkTargetByClass(
                 \ilParticipationCertificateConfigGUI::class,
-                $command
+                ilParticipationCertificateConfigGUI::CMD_ACTION
             )
         );
     }
