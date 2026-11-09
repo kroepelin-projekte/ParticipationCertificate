@@ -59,7 +59,7 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             ))->first();
 
             if (is_object($config)) {
-                $this->keywords = explode(',', $config->getConfigValue());
+                $this->keywords = self::parseKeywords((string) $config->getConfigValue());
             }
         }
     }
@@ -106,14 +106,14 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             if (($this->object_type === 'crs') && key_exists(
                     'cmdClass', $gui_classes_array
                 ) && ($gui_classes_array['cmdClass'] == ilObjCourseGUI::class)) {
-                if ($this->strposa($this->learn_group_title, $this->keywords) !== false) {
+                if ($this->titleMatchesKeyword($this->learn_group_title)) {
                     return true;
                 }
             }
             if (($this->object_type === 'grp') && key_exists(
                     'cmdClass', $gui_classes_array
                 ) && ($gui_classes_array['cmdClass'] == ilObjGroupGUI::class)) {
-                if ($this->strposa($this->learn_group_title, $this->keywords) !== false) {
+                if ($this->titleMatchesKeyword($this->learn_group_title)) {
                     return true;
                 }
             }
@@ -122,19 +122,31 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
     }
 
     /**
-     * @param     $haystack
-     * @param     $needles
-     * @param int $offset
-     * @return mixed
+     * Comma-separated keyword config -> list of trimmed, non-empty keywords.
+     * '' or ' , ' must give [] (not ['']): an empty needle matches every title.
+     *
+     * @return string[]
      */
-    private function strposa($haystack, $needles = array(), int $offset = 0): mixed
+    public static function parseKeywords(string $config_value): array
     {
-        $chr = [];
-        foreach ($needles as $needle) {
-            $res = strpos($haystack, $needle, $offset);
-            if ($res !== false) $chr[$needle] = $res;
-        }
-        if (empty($chr)) return false;
-        return min($chr);
+        return array_values(array_filter(
+            array_map('trim', explode(',', $config_value)),
+            static fn(string $keyword): bool => $keyword !== ''
+        ));
     }
+
+    /**
+     * Case-insensitive (multibyte-safe) match of the object title against the configured keywords.
+     * No keywords configured means no match, i.e. the tab is shown nowhere.
+     */
+    private function titleMatchesKeyword(string $title): bool
+    {
+        foreach ($this->keywords as $keyword) {
+            if (mb_stripos($title, $keyword) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

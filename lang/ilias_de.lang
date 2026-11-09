@@ -34,6 +34,7 @@ upload_header #:# Laden Sie Ihren PDF Header hoch
 save#:#Speichern
 udf_lastname#:#Benutzerdefiniertes Feld Nachname
 udf_firstname#:#Benutzerdefiniertes Feld Vorname
+udf_gender#:#Benutzerdefiniertes Feld Anrede
 config_plugin#:#Konfiguration Teilnahmebescheinigung
 mod_initial#:#Einstiegstest abgeschlossen (Ja(1)/Nein(0) )
 mod_resultstest#:#Resultat qualifizierende Tests (Prozentwert)
@@ -120,3 +121,5 @@ not_suggested_courses#:#Nicht empfohlene-Kurse
 not_suggested_learning_modules#:#Nicht empfohlene-Lernmodule
 upload_invalid_file_type#:#Es sind nur PNG- oder JPEG-Bilder erlaubt.
 upload_file_too_large#:#Die Datei ist zu groß. Maximale Uploadgröße: 2 MB.
+template_not_available#:#Die gewählte Vorlage existiert nicht oder ist nicht aktiv. Es wurde nichts geändert.
+keyword_required#:#Bitte mindestens ein Schlüsselwort eingeben (mehrere durch Kommas getrennt).

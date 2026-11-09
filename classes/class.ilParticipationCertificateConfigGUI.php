@@ -159,6 +159,11 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             $cmd = self::CMD_CONFIGURE;
         }
 
+        // state-changing commands only if the CSRF token was checked for this class
+        if (in_array($cmd, $this->getUnsafeGetCommands(), true) && !$this->isTokenCheckedForThisClass()) {
+            $cmd = self::CMD_CONFIGURE;
+        }
+
         if ($this->requiresWriteAccess($cmd) && !$this->hasCurrentUserWriteAccess()) {
             global $DIC;
             $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
@@ -180,6 +185,19 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         }
 
         $this->{$cmd}();
+    }
+
+    /**
+     * ilCtrl checks the CSRF token of an unsafe command against the request's cmdClass. A request
+     * without cmdClass (only baseClass + cmdNode) is checked against the base class instead
+     * (ilCtrlContext::getCmdClass() falls back to it), which does not declare our unsafe commands, so
+     * no token is required while routing still reaches this class. Commands from
+     * getUnsafeGetCommands() therefore only run if the request explicitly targets this class, i.e.
+     * the token was really verified for it.
+     */
+    private function isTokenCheckedForThisClass(): bool
+    {
+        return $this->ctrl->getCmdClass() === strtolower(self::class);
     }
 
     private function requiresWriteAccess(string $cmd): bool
@@ -730,9 +748,17 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     break;
 
                 case 'keyword':
+                    // required: without a keyword the certificate tab would appear nowhere
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->text(
                         $this->pl->txt('keyword')
-                    )->withValue($config->getConfigValue() ?? '');
+                    )->withValue($config->getConfigValue() ?? '')
+                     ->withRequired(true)
+                     ->withAdditionalTransformation(
+                         $DIC->refinery()->custom()->constraint(
+                             static fn($value): bool => ilParticipationCertificateUIHookGUI::parseKeywords((string) $value) !== [],
+                             $this->pl->txt('keyword_required')
+                         )
+                     );
 
                     break;
 
@@ -837,7 +863,13 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         $form = $this->buildForm((int) $global_config_id, (int) $set_type);
 
         $form = $form->withRequest($DIC->http()->request());
-        $form_data = $form->getData()['config'];
+        $form_data = $form->getData()['config'] ?? null;
+
+        // validation failed (e.g. no keyword): show the form again with its error messages
+        if ($form_data === null) {
+            $this->tpl->setContent($DIC->ui()->renderer()->render($form));
+            return false;
+        }
 
         $this->err_helper = false;
 

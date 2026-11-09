@@ -141,8 +141,25 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
                 if (!in_array($cmd, self::COMMANDS, true)) {
                     $cmd = self::CMD_CONFIG;
                 }
+                // state-changing commands only if the CSRF token was checked for this class
+                if (in_array($cmd, $this->getUnsafeGetCommands(), true) && !$this->isTokenCheckedForThisClass()) {
+                    $cmd = self::CMD_CONFIG;
+                }
                 $this->{$cmd}();
         }
+    }
+
+    /**
+     * ilCtrl checks the CSRF token of an unsafe command against the request's cmdClass. A request
+     * without cmdClass (only baseClass + cmdNode) is checked against the base class instead
+     * (ilCtrlContext::getCmdClass() falls back to it), which does not declare our unsafe commands, so
+     * no token is required while routing still reaches this class. Commands from
+     * getUnsafeGetCommands() therefore only run if the request explicitly targets this class, i.e.
+     * the token was really verified for it.
+     */
+    private function isTokenCheckedForThisClass(): bool
+    {
+        return $this->ctrl->getCmdClass() === strtolower(self::class);
     }
 
     /**
@@ -558,14 +575,12 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
      */
     public function setCertTemplate(): void
     {
-        $global_template_id = (int) $_GET['template_id'];
+        $global_template_id = $this->fetchActiveTemplateIdOrRedirect();
 
         $cert_configs = new ilParticipationCertificateConfigs();
-        if ($global_template_id != 0) {
-            $cert_configs->setObjToUseCertTemplate($this->group_ref_id, $global_template_id);
-            $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
+        $cert_configs->setObjToUseCertTemplate($this->group_ref_id, $global_template_id);
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
 
-        }
         $this->ctrl->redirect($this, self::CMD_DISPLAY);
     }
 
@@ -574,14 +589,30 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
      */
     public function setOwnCertTextFromTemplate(): void
     {
-        $global_template_id = (int) $_GET['template_id'];
+        $global_template_id = $this->fetchActiveTemplateIdOrRedirect();
 
-        if ($global_template_id != 0) {
-            $cert_configs = new ilParticipationCertificateConfigs();
-            $cert_configs->setOwnCertConfigFromTemplate($this->group_ref_id, $global_template_id);
-            $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
-        }
+        $cert_configs = new ilParticipationCertificateConfigs();
+        $cert_configs->setOwnCertConfigFromTemplate($this->group_ref_id, $global_template_id);
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('successForm'), true);
+
         $this->ctrl->redirect($this, self::CMD_DISPLAY);
+    }
+
+    /**
+     * Reads template_id from the request and accepts it only if it is an active global template
+     *
+     * @throws ilCtrlException
+     */
+    private function fetchActiveTemplateIdOrRedirect(): int
+    {
+        $global_template_id = (int) (Helper::fetchUrlParameter('template_id', 'string') ?? 0);
+
+        if (!(new ilParticipationCertificateGlobalConfigSets())->isActiveTemplate($global_template_id)) {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('template_not_available'), true);
+            $this->ctrl->redirect($this, self::CMD_DISPLAY);
+        }
+
+        return $global_template_id;
     }
 
     /**

@@ -106,10 +106,25 @@ class ilParticipationCertificateGlobalConfigSets
 		return $config->getOrderBy() + 1;
 	}
 
-    /**
-     * @return string[]
-     * @throws arException
-     */
+	/**
+	 * True if $template_id is an existing, active global template
+	 */
+	public function isActiveTemplate(int $template_id): bool
+	{
+		if ($template_id <= 0) {
+			return false;
+		}
+
+		return ilParticipationCertificateGlobalConfigSet::where([
+			'id' => $template_id,
+			'active' => 1
+		])->hasSets();
+	}
+
+	/**
+	 * @return string[]
+	 * @throws arException
+	 */
 	public function getSelectOptions(): array
     {
 		$arr_select_options = [0 => '--'];

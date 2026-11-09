@@ -177,6 +177,10 @@ class ilParticipationCertificateConfigs {
      */
 	public function setObjToUseCertTemplate(int $obj_ref_id, int $global_template_id): void
     {
+		if (!(new ilParticipationCertificateGlobalConfigSets())->isActiveTemplate($global_template_id)) {
+			throw new InvalidArgumentException('Unknown or inactive certificate template: ' . $global_template_id);
+		}
+
 		$this->deleteObjConfigSet($obj_ref_id);
 		/**
 		 * @var ilParticipationCertificateObjectConfigSet $part_cert_config
@@ -227,6 +231,10 @@ class ilParticipationCertificateConfigs {
      */
 	public function setOwnCertConfigFromTemplate(int $obj_ref_id, int $global_template_id): void
     {
+		if (!(new ilParticipationCertificateGlobalConfigSets())->isActiveTemplate($global_template_id)) {
+			throw new InvalidArgumentException('Unknown or inactive certificate template: ' . $global_template_id);
+		}
+
 		$part_cert_config = ilParticipationCertificateObjectConfigSet::where([ 'obj_ref_id' => $obj_ref_id ])->first();
 		if (!is_object($part_cert_config)) {
 			$part_cert_config = new ilParticipationCertificateObjectConfigSet();
