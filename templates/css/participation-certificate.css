@@ -40,3 +40,7 @@
     padding: 9px;
     wisth: 100%;
 }
+
+.il-filter input[type="text"]  {
+    min-height: 36px;
+}
