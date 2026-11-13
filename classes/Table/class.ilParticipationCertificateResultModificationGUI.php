@@ -87,10 +87,10 @@ class ilParticipationCertificateResultModificationGUI
             $this->ctrl->redirectToURL('login.php');
         }
 
-        $usr_id = (int) (Helper::fetchUrlParameter(self::IDENTIFIER, 'string') ?? 0);
+        $usr_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter(self::IDENTIFIER, 'string') ?? 0);
 
         if ($usr_id === 0) {
-            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
             if (!empty($config_entry)) {
                 $usr_id = (int) $this->excludeURLParameters($config_entry[0])[0];
             }
@@ -119,7 +119,9 @@ class ilParticipationCertificateResultModificationGUI
         $this->arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
         $this->arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
         $this->arr_iass_states = ilIassStates::getData($this->usr_ids);
-        $this->arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $_GET['ref_id']);
+        $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
+
+        $this->arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $ref_id);
         $this->arr_FinalTestsStates = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $this->usr_ids);
         $this->array_obj_ids = $this->arr_FinalTestsStates;
 
@@ -266,7 +268,9 @@ class ilParticipationCertificateResultModificationGUI
             $array['initial'] = 0;
         }
         if (key_exists($this->usr_id, $this->arr_learn_reached_percentages) && is_object($this->arr_learn_reached_percentages[$this->usr_id])) {
-            $array['resultstest'] = $this->arr_learn_reached_percentages[$this->usr_id]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $_GET['ref_id']));
+            $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
+
+            $array['resultstest'] = $this->arr_learn_reached_percentages[$this->usr_id]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $ref_id));
         } else {
             $array['resultstest'] = 0;
         }
@@ -308,8 +312,9 @@ class ilParticipationCertificateResultModificationGUI
             $data['conf'],
             $data['homework']
         ];
-        
-        $edited = $_GET['edited'];
+
+        $edited = (bool) ilParticipationCertificateHelper::fetchUrlParameter('edited', 'string');
+
         $usr_id[] = $this->usr_id;
 
         $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_id);

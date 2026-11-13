@@ -44,13 +44,13 @@ class ilLearnObjectFinalTestStates
     }
 
     /**
-     * @param array $userIds
+     * @param array $user_ids
      * @param int   $course_obj_id
      * @return string
      */
     protected static function getSQLByMasterCourseObjId(
         int $course_obj_id,
-        array $userIds = []
+        array $user_ids = []
     ): string {
         global $DIC;
 
@@ -99,11 +99,11 @@ class ilLearnObjectFinalTestStates
                     
                     INNER JOIN (SELECT * from ".LearnObjectivesFinalTestsQuery::DEFAULT_TMP_TABLE_NAME.") as final_tests on final_tests.crs_id = learn_objective_crs.learn_objective_crs_obj_id
                     
-                    INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $userIds, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
+                    INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $user_ids, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
                     
                     LEFT JOIN loc_user_results
                         ON loc_user_results.course_id = final_tests.crs_id
-                        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
+                        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $user_ids, false, 'integer')."
                         AND loc_user_results.objective_id = final_tests.crs_objective_id
                         AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
                         

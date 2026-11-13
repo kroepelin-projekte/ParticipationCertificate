@@ -67,6 +67,7 @@ config_type#:#Configuration Type
 title#:#Label
 parent_title#:#Title of Parent Object
 active#:#Active
+inactive#:#Inactive
 edit#:#Edit
 config_title#:#Label
 order_by#:#Sort By

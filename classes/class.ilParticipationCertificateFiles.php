@@ -217,7 +217,7 @@ class ilParticipationCertificateFiles extends ActiveRecord
             return null;
         }
 
-        $own_stakeholder_id = (new Stakeholder())->getId();
+        $own_stakeholder_id = (new ilParticipationCertificateStakeholder())->getId();
         foreach ($manager->getResource($id)->getStakeholders() as $stakeholder) {
             if ($stakeholder->getId() === $own_stakeholder_id) {
                 return $id;
@@ -286,7 +286,7 @@ class ilParticipationCertificateFiles extends ActiveRecord
                 }
                 $rid = $DIC->resourceStorage()->manage()->stream(
                     \ILIAS\Filesystem\Stream\Streams::ofResource($handle),
-                    new Stakeholder(),
+                    new ilParticipationCertificateStakeholder(),
                     $file_name
                 )->serialize();
 

@@ -40,7 +40,7 @@ class ilParticipationCertificateSingleResultGUI
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-        $ref_id = (int) (Helper::fetchUrlParameter('ref_id', 'string') ?? 0);
+        $ref_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string') ?? 0);
 
         $cert_access = new ilParticipationCertificateAccess($ref_id);
         if (!$cert_access->hasCurrentUserWriteAccess()) {
@@ -48,10 +48,10 @@ class ilParticipationCertificateSingleResultGUI
             $this->ctrl->redirectToURL('login.php');
         }
 
-        $usr_id = (int) (Helper::fetchUrlParameter('usr_id', 'string') ?? 0);
+        $usr_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('usr_id', 'string') ?? 0);
 
         if ($usr_id === 0) {
-            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
             if (!empty($config_entry)) {
                 $usr_id = (int) $this->excludeURLParameters($config_entry[0])[0];
             }

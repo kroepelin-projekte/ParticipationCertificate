@@ -78,14 +78,14 @@ class ilParticipationCertificateResultTableGUI
         $this->ctrl = $DIC->ctrl();
         $this->tabs = $DIC->tabs();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->ref_id = $_GET['ref_id'];
+        $this->ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
 
-        $this->cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
+        $this->cert_access = new ilParticipationCertificateAccess($this->ref_id);
         $this->usr_ids = $this->cert_access->getUserIdsOfGroup();
         $this->range = [ null, null ];
         $this->order = null;
 
-        $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $_GET['ref_id']);
+        $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->ref_id);
         if ($ementoring === NULL) {
             $ementoring = true;
         } else {
@@ -715,8 +715,8 @@ class ilParticipationCertificateResultTableGUI
 
         $ui = $DIC->ui()->factory();
 
-        $input_firstname = $ui->input()->field()->text('Firstname');
-        $input_lastname = $ui->input()->field()->text('Lastname');
+        $input_firstname = $ui->input()->field()->text($this->pl->txt('firstname'));
+        $input_lastname = $ui->input()->field()->text($this->pl->txt('lastname'));
 
         $action = $DIC->ctrl()->getLinkTargetByClass(
             ilParticipationCertificateResultGUI::class,

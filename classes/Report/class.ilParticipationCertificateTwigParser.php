@@ -135,6 +135,9 @@ class ilParticipationCertificateTwigParser
         $participant_data = $test_data->getParticipant($test_active_id);
         $attempt_data = $participant_data?->getPass($test_tries - 1);
 
+        if ($attempt_data == null)  {
+            return 0.0;
+        }
         $reached_points = $attempt_data->getReachedPoints();
         $max_points = $attempt_data->getMaxPoints();
 

@@ -84,7 +84,8 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
         $this->ctrl = $DIC->ctrl();
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->tabs = $DIC->tabs();
-        $this->group_ref_id = (int) $_GET['ref_id'];
+        $this->group_ref_id = (int) ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
+
         $this->lng = $DIC->language();
         $this->logger = $DIC->logger()->root();
 
@@ -605,7 +606,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
      */
     private function fetchActiveTemplateIdOrRedirect(): int
     {
-        $global_template_id = (int) (Helper::fetchUrlParameter('template_id', 'string') ?? 0);
+        $global_template_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('template_id', 'string') ?? 0);
 
         if (!(new ilParticipationCertificateGlobalConfigSets())->isActiveTemplate($global_template_id)) {
             $this->tpl->setOnScreenMessage('failure', $this->pl->txt('template_not_available'), true);

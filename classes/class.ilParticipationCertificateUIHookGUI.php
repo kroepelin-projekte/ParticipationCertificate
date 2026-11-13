@@ -36,7 +36,7 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             $this->ctrl = $DIC->ctrl();
             $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-            $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
+            $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
 
             if (isset($ref_id)) {
                 $this->group_ref_id = (int) $ref_id;
@@ -74,7 +74,8 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
         array $a_par = []
     ): void {
         if ($a_part == 'tabs' && $this->checkGroup()) {
-            $cert_access = new ilParticipationCertificateAccess($_GET['ref_id']);
+            $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
+            $cert_access = new ilParticipationCertificateAccess($ref_id);
 
             if ($cert_access->hasCurrentUserWriteAccess()) {
                 /**

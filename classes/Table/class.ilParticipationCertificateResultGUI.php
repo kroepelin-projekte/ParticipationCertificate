@@ -58,7 +58,7 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
+        $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
         $this->toolbar = $DIC->toolbar();
         $this->tabs = $DIC->tabs();
         $this->ctrl = $DIC->ctrl();
@@ -164,12 +164,12 @@ class ilParticipationCertificateResultGUI
                 $this->toolbar->addComponent($toolbar_button);
             }
 
-            $filter_firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
+            $filter_firstname = ilParticipationCertificateHelper::fetchUrlParameter('filter_firstname', 'string');
             if (!empty($filter_firstname)) {
                 $this->ctrl->setParameter($this, 'filter_firstname', $filter_firstname);
             }
 
-            $filter_lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
+            $filter_lastname = ilParticipationCertificateHelper::fetchUrlParameter('filter_lastname', 'string');
             if (!empty($filter_lastname)) {
                 $this->ctrl->setParameter($this, 'filter_lastname', $filter_lastname);
             }
@@ -229,14 +229,14 @@ class ilParticipationCertificateResultGUI
 
         $filter_firstname = '';
         $is_filter_active = false;
-        $firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
+        $firstname = ilParticipationCertificateHelper::fetchUrlParameter('filter_firstname', 'string');
         if (!empty($firstname)) {
             $filter_firstname = $firstname;
             $is_filter_active = true;
         }
 
         $filter_lastname = '';
-        $lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
+        $lastname = ilParticipationCertificateHelper::fetchUrlParameter('filter_lastname', 'string');
         if (!empty($lastname)) {
             $filter_lastname = $lastname;
             $is_filter_active = true;
@@ -283,14 +283,14 @@ class ilParticipationCertificateResultGUI
 
         $filter_firstname = '';
         $is_filter_active = false;
-        $firstname = Helper::fetchUrlParameter('filter_firstname', 'string');
+        $firstname = ilParticipationCertificateHelper::fetchUrlParameter('filter_firstname', 'string');
         if (!empty($firstname)) {
             $filter_firstname = $firstname;
             $is_filter_active = true;
         }
 
         $filter_lastname = '';
-        $lastname = Helper::fetchUrlParameter('filter_lastname', 'string');
+        $lastname = ilParticipationCertificateHelper::fetchUrlParameter('filter_lastname', 'string');
         if (!empty($lastname)) {
             $filter_lastname = $lastname;
             $is_filter_active = true;
@@ -456,8 +456,9 @@ class ilParticipationCertificateResultGUI
         $this->tpl->setTitle($course_object->getTitle());
         $this->tpl->setDescription($course_object->getDescription());
         $this->tpl->setTitleIcon(ilObject::_getIcon($course_object->getId()));
+        $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
 
-        $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', (int)$_GET['ref_id']);
+        $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', (int) $ref_id);
         $this->tabs->setBackTarget($this->pl->txt('header_btn_back'), $this->ctrl->getLinkTargetByClass(array(
             ilRepositoryGUI::class
         )));
@@ -517,7 +518,7 @@ class ilParticipationCertificateResultGUI
      */
     public function action(): void
     {
-        $action = Helper::fetchUrlParameter('config_action', 'string');
+        $action = ilParticipationCertificateHelper::fetchUrlParameter('config_action', 'string');
 
         if (!empty($action)) {
             switch ($action) {
@@ -530,8 +531,11 @@ class ilParticipationCertificateResultGUI
                     break;
 
                 case 'show_all_results':
-                    if (!empty($_GET['config_entry'])) {
-                        $usrId = explode('_', $_GET['config_entry'][0])[0];
+                    $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
+
+                    if (!empty($config_entry)) {
+                        $usrId = explode('_', $config_entry[0])[0];
+
                         if ($this->restrictToCourseMembers([$usrId]) === []) {
                             $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_permission'));
                         }
@@ -544,7 +548,7 @@ class ilParticipationCertificateResultGUI
                 case 'show_selected_all_results':
                     $user_ids = [];
 
-                    $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
+                    $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
                     if (!empty($config_entries)) {
                         if ($config_entries[0] === 'ALL_OBJECTS') {
@@ -604,7 +608,7 @@ class ilParticipationCertificateResultGUI
             $ementor = false;
             $usr_id = [];
 
-            $config_entry = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (!empty($config_entry)) {
                 $url_parameters = $this->excludeURLParameters($config_entry[0]);
@@ -615,7 +619,7 @@ class ilParticipationCertificateResultGUI
                     $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_permission'));
                 }
             } else {
-                $ementor_url_parameter = Helper::fetchUrlParameter('ementor', 'string');
+                $ementor_url_parameter = ilParticipationCertificateHelper::fetchUrlParameter('ementor', 'string');
                 if ($ementor_url_parameter == 'true') {
 			        $ementor = true;
 		         }
@@ -670,7 +674,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
@@ -733,7 +737,7 @@ class ilParticipationCertificateResultGUI
         global $DIC;
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $config_entries = Helper::fetchUrlParameter('config_entry', 'string[]');
+            $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
                 $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);

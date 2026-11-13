@@ -54,11 +54,11 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
         parent::__construct();
         global $DIC;
         $this->storage = $DIC->resourceStorage();
-        $this->stakeholder = new Stakeholder();
+        $this->stakeholder = new ilParticipationCertificateStakeholder();
         $this->logger = $DIC->logger()->root();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
         $this->lng = $DIC->language();
-        $this->ref_id = $ref_id ?? Helper::fetchUrlParameter('ref_id', 'int');
+        $this->ref_id = $ref_id ?? ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'int');
     }
 
     /**

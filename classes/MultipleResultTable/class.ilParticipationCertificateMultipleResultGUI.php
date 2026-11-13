@@ -52,7 +52,7 @@ class ilParticipationCertificateMultipleResultGUI
         if ($refId !== null) {
             $this->ref_id = (int) $refId;
         } else {
-            $this->ref_id = (int) (Helper::fetchUrlParameter('ref_id', 'string') ?? 0);
+            $this->ref_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string') ?? 0);
         }
 
         $cert_access = new ilParticipationCertificateAccess($this->ref_id);

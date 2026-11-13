@@ -55,7 +55,7 @@ class ilParticipationCertificateSingleResultTableGUI
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, [ 'ref_id', 'group_id' ]);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'usr_id');
 
-        $ref_id = Helper::fetchUrlParameter('ref_id', 'string');
+        $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
         $this->course_obj_id = ilObject::_lookupObjId($ref_id);
 
         $this->cert_access = new ilParticipationCertificateAccess($ref_id);

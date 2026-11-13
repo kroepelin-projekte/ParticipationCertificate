@@ -1,6 +1,6 @@
 <?php
 
-class Helper
+class ilParticipationCertificateHelper
 {
     /**
      * @param string $param

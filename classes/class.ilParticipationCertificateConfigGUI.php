@@ -203,7 +203,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     private function requiresWriteAccess(string $cmd): bool
     {
         if ($cmd === self::CMD_ACTION) {
-            $action = Helper::fetchUrlParameter('config_action', 'string');
+            $action = ilParticipationCertificateHelper::fetchUrlParameter('config_action', 'string');
             return !in_array($action, self::READ_ONLY_ACTIONS, true);
         }
 
@@ -307,7 +307,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function createTemplateFromLocalConfig(): void
     {
-        $entry = $_GET['config_entry'][0];
+        $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
+
+        $entry = $config_entry[0];
         $explodedEntry = explode('_', $entry);
         $grp_ref_id = $explodedEntry[2];
 
@@ -331,7 +333,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function copyConfig(): void
     {
-        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+        $entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]')[0];
 
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
@@ -507,7 +509,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     {
         global $DIC;
 
-        $action = $_GET['config_action'];
+        $action = ilParticipationCertificateHelper::fetchUrlParameter('config_action', 'string');
 
         if (!empty($action)) {
             switch ($action) {
@@ -536,7 +538,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     break;
 
                 case 'go-to':
-                    $entry = $_GET['config_entry'][0];
+                    $config_entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
+                    $entry = $config_entry[0];
+
                     $explodedEntry = explode('_', $entry);
                     $objRefId = $explodedEntry[2];
                     $DIC->ctrl()->redirectToURL(ilLink::_getStaticLink($objRefId));
@@ -552,7 +556,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function deleteConfig(): void
     {
-        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+        $entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]')[0];
 
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
@@ -595,7 +599,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function setActive(): void
     {
-        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+        $entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]')[0];
 
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
@@ -612,7 +616,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
      */
     public function setInactive(): void
     {
-        $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+        $entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]')[0];
 
         $explodedEntry = explode('_', $entry);
         $id = $explodedEntry[0];
@@ -666,7 +670,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         $set_type = filter_input(INPUT_GET, 'set_type');
 
         if (empty($id) && empty($set_type)) {
-            $entry = Helper::fetchUrlParameter('config_entry', 'string[]')[0];
+            $entry = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]')[0];
 
             $explodedEntry = explode('_', $entry);
             $id = $explodedEntry[0];
@@ -773,7 +777,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('logo'),
-                        'Maximum upload size: 1024.0 MB. Allowed file types: .png' . "<br>\n" .
+                        'Maximum upload size: 2 MB. Allowed file types: .png' . "<br>\n" .
                         '<img src="' . $src . '">'
                     )->withAcceptedMimeTypes([
                         'image/png'
@@ -793,7 +797,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('page1_issuer_signature'),
-                        'Maximum upload size: 1024.0 MB. Allowed file types: .png' . "<br>\n" .
+                        'Maximum upload size: 2 MB. Allowed file types: .png' . "<br>\n" .
                         '<img src="' . $src . '">'
                     )->withAcceptedMimeTypes([
                         'image/png'

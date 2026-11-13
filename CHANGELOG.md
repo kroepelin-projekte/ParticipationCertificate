@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.0]
+### Updated
+* Plugin für release_11 updated
+
 ## [2.1.0]
 ### Removed
 * Option to print certificates in courses for users

@@ -160,7 +160,7 @@ class ilParticipationCertificateConfigSetTableGUI
                 $tableData = [];
 
                 foreach ($data as $config_set) {
-                    $active = 'inactive';
+                    $active = $pl->txt('inactive');
                     $active_status = false;
                     $config_set_type = '';
                     $config_id = $config_set['conf_id'];
@@ -203,7 +203,7 @@ class ilParticipationCertificateConfigSetTableGUI
 
                             case 'active':
                                 if ((int)$config_set[$key] === 1) {
-                                    $active = 'active';
+                                    $active = $pl->txt('active');
                                     $active_status = true;
                                 }
                                 break;
