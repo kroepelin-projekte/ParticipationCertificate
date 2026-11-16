@@ -39,12 +39,11 @@ class ilParticipationCertificatePDFGenerator
     }
 
     /**
-     * @return void
+     * This class is no request target: generatePDF() needs the rendered
+     * certificates and is only called directly. Commands from the request are ignored.
      */
     public function executeCommand(): void
     {
-        $cmd = $this->ctrl->getCmd(self::CMD_PDF);
-        $this->{$cmd}();
     }
 
     /**

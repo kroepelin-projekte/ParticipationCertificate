@@ -11,6 +11,17 @@ class ilParticipationCertificateResultModificationGUI
 
     public const string CMD_DISPLAY = 'display';
 
+    public const string CMD_PRINT_PDF = 'printpdf';
+
+    /**
+     * Commands that may be called via the request (exact case).
+     * Everything else falls back to CMD_DISPLAY.
+     */
+    private const array COMMANDS = [
+        self::CMD_DISPLAY,
+        self::CMD_PRINT_PDF,
+    ];
+
     public const string IDENTIFIER = 'usr_id';
 
     public ilTabsGUI $tabs;
@@ -143,6 +154,9 @@ class ilParticipationCertificateResultModificationGUI
                 break;
             default:
                 $cmd = $this->ctrl->getCmd(self::CMD_DISPLAY);
+                if (!in_array($cmd, self::COMMANDS, true)) {
+                    $cmd = self::CMD_DISPLAY;
+                }
                 $this->{$cmd}();
                 break;
         }
@@ -244,7 +258,7 @@ class ilParticipationCertificateResultModificationGUI
         
         $formAction = $this->ctrl->getFormActionByClass(
             self::class,
-            ilParticipationCertificateResultGUI::CMD_PRINT_PDF,
+            self::CMD_PRINT_PDF,
             $this->pl->txt('list_print')
         );
 

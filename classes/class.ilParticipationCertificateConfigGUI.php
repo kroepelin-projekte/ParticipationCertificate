@@ -645,6 +645,9 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         $form = $form->withRequest($DIC->http()->request());
         $form_data = $form->getData();
 
+        if (empty($form_data)) {
+            $this->ctrl->redirect($this, self::CMD_SORTING);
+        }
         $configs = new ilParticipationCertificateGlobalConfigSets();
         $configs->saveAndRearangeOrderBy($form_data['config']);
         $this->ctrl->redirect($this, self::CMD_SORTING);

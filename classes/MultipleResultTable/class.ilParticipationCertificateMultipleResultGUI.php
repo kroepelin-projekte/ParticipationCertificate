@@ -103,7 +103,7 @@ class ilParticipationCertificateMultipleResultGUI
     {
         $cmd = $this->ctrl->getCmd(self::CMD_SHOW_ALL_RESULTS);
 
-        if ($cmd == self::CMD_SHOW_ALL_RESULTS) {
+        if ($cmd === self::CMD_SHOW_ALL_RESULTS) {
             $this->{$cmd}();
         }
     }

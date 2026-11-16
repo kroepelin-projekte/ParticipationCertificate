@@ -482,7 +482,6 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 
         $form = $this->initForm();
         $form = $form->withRequest($DIC->http()->request());
-        $form_data = $form->getData()['config'];
 
         if ($form->getError()) {
             $this->logger->debug('Form validation error');
@@ -491,6 +490,8 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
             $this->selfPrint();
             return false;
         }
+        $form_data = $form->getData()['config'];
+
 
         foreach ($form_data as $key => $item) {
             $file = null;

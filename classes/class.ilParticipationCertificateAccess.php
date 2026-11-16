@@ -60,8 +60,33 @@ class ilParticipationCertificateAccess {
             return true;
         }
 
-		// if user has data, check if selfprint is active (changed to a new function)
+		$usr_id = $this->usr->getId();
+		if ($usr_id <= 0 || $usr_id === ANONYMOUS_USER_ID) {
+			return false;
+		}
+
+		if (!$this->hasCurrentUserReadAccess()) {
+			return false;
+		}
+
+		if (!$this->isCurrentUserMember()) {
+			return false;
+		}
+
 		return ($this->isSelfPrintEnabled());
+	}
+
+	/**
+	 * True if the current user has the member role in this course/group
+	 */
+	public function isCurrentUserMember(): bool
+	{
+		$type = ilObject::_lookupType($this->group_ref_id, true);
+		if ($type !== 'crs' && $type !== 'grp') {
+			return false;
+		}
+
+		return ilParticipants::getInstance($this->group_ref_id)->isMember($this->usr->getId());
 	}
 
 	/**

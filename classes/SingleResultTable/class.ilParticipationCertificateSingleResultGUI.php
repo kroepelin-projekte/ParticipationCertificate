@@ -9,6 +9,14 @@ class ilParticipationCertificateSingleResultGUI
 
     public const string IDENTIFIER = 'usr_id';
 
+    /**
+     * Commands that may be called via the request (exact case).
+     * Everything else falls back to CMD_DISPLAY.
+     */
+    private const array COMMANDS = [
+        self::CMD_DISPLAY,
+    ];
+
     public ilTabsGUI $tabs;
 
     protected ilTemplate|ilGlobalTemplateInterface $tpl;
@@ -81,9 +89,10 @@ class ilParticipationCertificateSingleResultGUI
      */
     public function executeCommand(): void
     {
-        $next_class = $this->ctrl->getNextClass();
-
         $cmd = $this->ctrl->getCmd(self::CMD_DISPLAY);
+        if (!in_array($cmd, self::COMMANDS, true)) {
+            $cmd = self::CMD_DISPLAY;
+        }
         $this->{$cmd}();
     }
 

@@ -27,6 +27,26 @@ class ilParticipationCertificateResultGUI
 
     public const string CMD_EXPORT_CSV = 'exportCSV';
 
+    public const string CMD_ACTION = 'action';
+
+    public const string CMD_APPLY_FILTER = 'applyFilter';
+
+    public const string CMD_RESET_FILTER = 'resetFilter';
+
+    /**
+     * Commands that may be called via the request (exact case).
+     * Everything else falls back to CMD_CONTENT.
+     */
+    private const array COMMANDS = [
+        self::CMD_CONTENT,
+        self::CMD_ACTION,
+        self::CMD_PRINT_PDF,
+        self::CMD_EXPORT_EXCEL,
+        self::CMD_EXPORT_CSV,
+        self::CMD_APPLY_FILTER,
+        self::CMD_RESET_FILTER,
+    ];
+
     /**
      * @var array|array[]
      */
@@ -114,6 +134,9 @@ class ilParticipationCertificateResultGUI
                         $this->ctrl->forwardCommand(new ilParticipationCertificateMultipleResultGUI());
                         break;
                     default:
+                        if (!in_array($cmd, self::COMMANDS, true)) {
+                            $cmd = self::CMD_CONTENT;
+                        }
                         $this->{$cmd}();
                         break;
                 }

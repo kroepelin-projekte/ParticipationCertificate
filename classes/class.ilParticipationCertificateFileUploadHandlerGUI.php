@@ -22,7 +22,7 @@ use ILIAS\ResourceStorage\Stakeholder\ResourceStakeholder;
  *
  * @ilCtrl_isCalledBy ilParticipationCertificateFileUploadHandlerGUI: ilUIPluginRouterGUI, ilRepositoryGUI
  */
-class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUploadHandler
+class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUploadHandler implements ilCtrlSecurityInterface
 {
     private const int MAX_FILE_SIZE = 2 * 1024 * 1024;
 
@@ -62,10 +62,43 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
     }
 
     /**
-     * Rejects every command if the current user has no write permission on the bound ref_id.
+     * upload and remove change data: ilCtrl adds the CSRF token to their URLs
+     * (getUploadURL/getFileRemovalURL) and checks it on the request.
+     */
+    public function getUnsafeGetCommands(): array
+    {
+        return [
+            self::CMD_UPLOAD,
+            self::CMD_REMOVE,
+        ];
+    }
+
+    public function getSafePostCommands(): array
+    {
+        return [];
+    }
+
+    /**
+     * Rejects every command if the current user has no write permission on the bound ref_id,
+     * and unsafe commands whose CSRF token was not checked for this class.
      */
     public function executeCommand(): void
     {
+        $cmd = $this->ctrl->getCmd();
+
+        if (in_array($cmd, $this->getUnsafeGetCommands(), true) && !$this->isTokenCheckedForThisClass()) {
+            $this->logger->warning(
+                'Participation certificate upload handler: CSRF check failed for cmd "' . $cmd . '"'
+            );
+            $this->sendJson(new BasicHandlerResult(
+                $this->getFileIdentifierParameterName(),
+                HandlerResult::STATUS_FAILED,
+                '',
+                $this->lng->txt('no_permission')
+            ));
+            return;
+        }
+
         if (!$this->hasCurrentUserAccess()) {
             $this->logger->warning(
                 'Participation certificate upload handler: access denied for cmd "' . $this->ctrl->getCmd() . '"'
@@ -223,6 +256,15 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
         }
 
         return $infos;
+    }
+
+    /**
+     * ilCtrl only checks the CSRF token against the cmdClass of the request. If the
+     * request has no cmdClass (only cmdNode), the token is checked for the base class.
+     */
+    private function isTokenCheckedForThisClass(): bool
+    {
+        return $this->ctrl->getCmdClass() === strtolower(self::class);
     }
 
     /**

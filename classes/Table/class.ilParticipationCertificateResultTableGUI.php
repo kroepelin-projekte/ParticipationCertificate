@@ -29,6 +29,13 @@ class ilParticipationCertificateResultTableGUI
 
     public const string NO_PROGRESS = 'ilCourseObjectiveProgressBarNeutral';
 
+    public const int DEFAULT_ROWS_PER_PAGE = 25;
+
+    /**
+     * Columns that can be sorted (all are part of ilPartCertUserData)
+     */
+    private const array SORTABLE_FIELDS = ['loginname', 'firstname', 'lastname'];
+
     private ilParticipationCertificateAccess $cert_access;
 
     protected Factory $df;
@@ -111,17 +118,15 @@ class ilParticipationCertificateResultTableGUI
         $data_retrieval = $this->getDataRetrieval();
         $columns = $this->getColumsForRepresentation();
 
-        if ($this->cert_access->hasCurrentUserWriteAccess()) {
-            $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
-                          ->withActions($actions)
-                          ->withRequest($DIC->http()->request());
+        $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
+                                  ->withId(self::IDENTIFIER . '_' . $this->ref_id)
+                                  ->withRange(new Range(0, self::DEFAULT_ROWS_PER_PAGE));
 
-        } else {
-            $table = $this->ui_factory->table()->data($data_retrieval, '', $columns)
-                          ->withRequest($DIC->http()->request());
+        if ($this->cert_access->hasCurrentUserWriteAccess()) {
+            $table = $table->withActions($actions);
         }
 
-        return $table;
+        return $table->withRequest($request);
 
     }
 
@@ -151,20 +156,32 @@ class ilParticipationCertificateResultTableGUI
             $this->order,
             $this->ref_id,
             $this->getRecords(...),
+            $this->getTotalRowCount(...),
             $this->buildProgressBar(...),
             $this->firstname,
             $this->lastname
         ) implements DataRetrieval {
+
             private bool $ementoring;
+
             private ilParticipationCertificatePlugin $pl;
+
             private array $usr_ids;
+
             private array $range;
+
             private mixed $order;
+
             private int $ref_id;
+
             private ?string $firstname;
+
             private ?string $lastname;
 
             private Closure $records;
+
+            private Closure $total_count;
+
             private Closure $progress_bar_builder;
 
             /**
@@ -175,6 +192,7 @@ class ilParticipationCertificateResultTableGUI
              * @param mixed                            $order
              * @param int                              $ref_id
              * @param Closure                          $records
+             * @param Closure                          $total_count
              * @param Closure                          $progress_bar_builder
              * @param string|null                      $firstname
              * @param string|null                      $lastname
@@ -187,6 +205,7 @@ class ilParticipationCertificateResultTableGUI
                 mixed $order,
                 int $ref_id,
                 Closure $records,
+                Closure $total_count,
                 Closure $progress_bar_builder,
                 ?string $firstname,
                 ?string $lastname
@@ -200,6 +219,7 @@ class ilParticipationCertificateResultTableGUI
                 $this->firstname = $firstname;
                 $this->lastname = $lastname;
                 $this->records = $records;
+                $this->total_count = $total_count;
                 $this->progress_bar_builder = $progress_bar_builder;
             }
 
@@ -258,10 +278,70 @@ class ilParticipationCertificateResultTableGUI
                 mixed $filter_data,
                 mixed $additional_parameters
             ): ?int {
-                return count(($this->records)());
+                return ($this->total_count)();
             }
         };
         return $data_retrieval;
+    }
+
+    /**
+     * Number of rows after applying the name filter (cheap: only user data is loaded)
+     */
+    public function getTotalRowCount(): int
+    {
+        return count($this->getFilteredUserData());
+    }
+
+    /**
+     * @return array<int, ilPartCertUserData> keyed by usr_id
+     */
+    private function getFilteredUserData(): array
+    {
+        $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
+
+        return $this->excludeUserIdIfFiltered($arr_usr_data);
+    }
+
+    /**
+     * Sorts the user data by the table order and cuts out the requested page.
+     * The expensive result data is only computed for the users of that page.
+     *
+     * @param array<int, ilPartCertUserData> $arr_usr_data
+     * @return array<int, ilPartCertUserData>
+     */
+    private function sortAndSliceUserData(array $arr_usr_data, ?Range $range, ?Order $order): array
+    {
+        if ($order !== null) {
+            $order_fields = array_filter(
+                $order->get(),
+                static fn(string $field): bool => in_array($field, self::SORTABLE_FIELDS, true),
+                ARRAY_FILTER_USE_KEY
+            );
+
+            if ($order_fields !== []) {
+                $getters = [
+                    'loginname' => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertUserName(),
+                    'firstname' => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertFirstname(),
+                    'lastname'  => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertLastname(),
+                ];
+
+                uasort($arr_usr_data, static function (ilPartCertUserData $a, ilPartCertUserData $b) use ($order_fields, $getters): int {
+                    foreach ($order_fields as $field => $direction) {
+                        $cmp = strnatcasecmp($getters[$field]($a), $getters[$field]($b));
+                        if ($cmp !== 0) {
+                            return $direction === Order::DESC ? -$cmp : $cmp;
+                        }
+                    }
+                    return 0;
+                });
+            }
+        }
+
+        if ($range !== null) {
+            $arr_usr_data = array_slice($arr_usr_data, $range->getStart(), $range->getLength(), true);
+        }
+
+        return $arr_usr_data;
     }
 
     /**
@@ -271,15 +351,21 @@ class ilParticipationCertificateResultTableGUI
      */
     public function getRecords(?Range $range = null, ?Order $order = null): array
     {
-        $arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids, $this->range[1], $this->range[0], $this->order, '');
+        $arr_usr_data = $this->sortAndSliceUserData($this->getFilteredUserData(), $range, $order);
+        if ($arr_usr_data === []) {
+            return [];
+        }
+
+        $page_usr_ids = array_map('intval', array_keys($arr_usr_data));
         $course_obj_id = ilObject::_lookupObjectId((int) $this->ref_id);
 
-        $arr_usr_data = $this->excludeUserIdIfFiltered($arr_usr_data);
-        $arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
-        $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
-        $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $this->usr_ids);
-        $arr_new_iass_states = ilIassStatesMulti::getData($this->usr_ids, $this->ref_id);
-        $arr_excercise_states = ilExcerciseStates::getData($this->usr_ids, $this->ref_id);
+        $arr_initial_test_states = ilCrsInitialTestStates::getData($page_usr_ids);
+        $arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $page_usr_ids);
+        $arr_final_tests = ilLearnObjectFinalTestStates::getDataByCourseObjId($course_obj_id, $page_usr_ids);
+        $arr_new_iass_states = ilIassStatesMulti::getData($page_usr_ids, $this->ref_id);
+        $arr_excercise_states = ilExcerciseStates::getData($page_usr_ids, $this->ref_id);
+        $calculation_type = ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $this->ref_id);
+        $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->ref_id));
 
         $rows = array();
         foreach ($arr_usr_data as $usr_id=>$user_data) {
@@ -308,9 +394,7 @@ class ilParticipationCertificateResultTableGUI
             }
 
             if ((key_exists($usr_id, $arr_learn_reached_percentages)) && (is_object($arr_learn_reached_percentages[$usr_id]))) {
-                $learn_suggestion_results = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
-                $learn_suggest_results = $learn_suggestion_results[$usr_id]->getAveragePercentage(ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $this->ref_id), true);
-                $row['result_qualifing_tests'] = $learn_suggest_results;
+                $row['result_qualifing_tests'] = $arr_learn_reached_percentages[$usr_id]->getAveragePercentage($calculation_type, true);
             } else {
                 $row['result_qualifing_tests'] = $this->buildProgressBar(0,0);
             }
@@ -357,7 +441,6 @@ class ilParticipationCertificateResultTableGUI
                 }
             }
 
-            $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->ref_id));
             $count_tests = $count_tests + count($sessions);
             foreach ($sessions as $session) {
                 $event_participants = new ilEventParticipants($session['obj_id']);
