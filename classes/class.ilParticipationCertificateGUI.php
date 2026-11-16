@@ -91,7 +91,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 
         //Access
         $cert_access = new ilParticipationCertificateAccess($this->group_ref_id);
-        if (!$cert_access->hasCurrentUserAdminAccess()) {
+        if (!$cert_access->isEnabled() || !$cert_access->hasCurrentUserAdminAccess()) {
             $this->tpl->setOnScreenMessage('failure', $this->lng->txt('no_permission'), true);
             $DIC->ctrl()->redirectToURL('login.php');
         }

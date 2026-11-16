@@ -89,13 +89,12 @@ class ilParticipationCertificateResultModificationGUI
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
 
-        $this->course_ref_id = (int) ($this->fetchUrlParameter('ref_id', FILTER_SANITIZE_NUMBER_INT) ?? 0);
+        $this->course_ref_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'int') ?? 0);
 
         // applies to every command (display, printPDF, ...), also when called directly via ilUIPluginRouterGUI
         $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
         if (!$cert_access->hasCurrentUserWriteAccess()) {
-            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
-            $this->ctrl->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
 
         $usr_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter(self::IDENTIFIER, 'string') ?? 0);
@@ -127,7 +126,10 @@ class ilParticipationCertificateResultModificationGUI
         $course_obj_id = ilObject::_lookupObjectId((int) $this->course_ref_id);
 
         $this->arr_usr_data = ilPartCertUsersData::getData($this->pl, $this->usr_ids);
-        $this->arr_initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
+        $this->arr_initial_test_states = ilCrsInitialTestStates::getData(
+            $this->usr_ids,
+            $cert_access->getCourseRefId()
+        );
         $this->arr_learn_reached_percentages = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
         $this->arr_iass_states = ilIassStates::getData($this->usr_ids);
         $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
@@ -192,7 +194,7 @@ class ilParticipationCertificateResultModificationGUI
             }
 
         } else {
-            $this->ctrl->redirect(new ilParticipationCertificateResultGUI(), 'content');
+            $this->redirectNoPermission();
         }
     }
 
@@ -361,6 +363,24 @@ class ilParticipationCertificateResultModificationGUI
      * @return void
      * @throws ilCtrlException
      */
+    /**
+     * No permission: back to the course/group (or the dashboard without ref_id)
+     * with an error message. Never redirects to the plugin GUIs, to avoid a loop.
+     *
+     * @throws ilCtrlException
+     */
+    private function redirectNoPermission(): void
+    {
+        $this->tpl->setOnScreenMessage('failure', $this->dic->language()->txt('no_permission'), true);
+
+        if ($this->course_ref_id > 0) {
+            $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->course_ref_id);
+            $this->ctrl->redirectByClass(ilRepositoryGUI::class);
+        }
+
+        $this->ctrl->redirectByClass(ilDashboardGUI::class);
+    }
+
     private function redirectWithError(string $cmd, string $msg): void
     {
         $this->tpl->setOnScreenMessage('failure', $msg, true);

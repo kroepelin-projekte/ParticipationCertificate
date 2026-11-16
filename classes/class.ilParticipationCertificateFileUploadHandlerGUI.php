@@ -268,8 +268,8 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
     }
 
     /**
-     * Write permission on the bound ref_id: course/group admins in the repository,
-     * plugin administrators on the component settings node.
+     * Write permission on the bound ref_id: course/group admins in the repository
+     * (only where the plugin is enabled), plugin administrators on the component settings node.
      */
     private function hasCurrentUserAccess(): bool
     {
@@ -277,7 +277,12 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
             return false;
         }
 
-        return (new ilParticipationCertificateAccess($this->ref_id))->hasCurrentUserAdminAccess();
+        $access = new ilParticipationCertificateAccess($this->ref_id);
+        if (ilObject::_lookupType($this->ref_id, true) !== 'cmps' && !$access->isEnabled()) {
+            return false;
+        }
+
+        return $access->hasCurrentUserAdminAccess();
     }
 
     /**

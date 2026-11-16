@@ -97,7 +97,6 @@ helper_action_post#:# , um das Drucken freizuschalten!
 helper_name#:#Einträge aktualisieren
 unsugg_color#:#Farbe nicht empfohlene LZ
 true_name_helper#:#UDF-Editor-Objekt für die Namenseingabe
-nonnumeric_ref#:#Die Eingabe für das UDF-Editor-Objekt muss die Ref-ID sein (numerisch oder leer, andere Zeichen sind nicht erlaubt).
 enable_ementoring#:#Ementoring einblenden
 back#:#Zurück
 Mr#:#Herr
@@ -111,7 +110,7 @@ excel_export#:#Excel-Export
 csv_export#:#.CSV-Export
 print_all_info#:#Die Buttons oben lösen die Ausgabe <strong>aller druckbaren Bescheinigungen</strong> aus
 add_ementoring#:#Drucken inklusive Ementoring
-add_ementoring_additional#:#Ernn ein Druck ohne Ementoring gewünscht ist, muss diese Option abgewählt sein
+add_ementoring_additional#:#Wenn ein Druck ohne Ementoring gewünscht ist, muss diese Option abgewählt sein
 mod_section#:#Resultate für %s bearbeiten
 print_done#:#Die Teilnahmebescheinigung wurde in einem neuen Tab/Fenster erstellt
 failure_timeframe_save#:#Das Startdatum darf nicht nach dem Enddatum liegen

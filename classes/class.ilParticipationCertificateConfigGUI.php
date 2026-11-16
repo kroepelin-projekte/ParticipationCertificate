@@ -2,6 +2,7 @@
 
 use ILIAS\UI\Component\Input\Container\Form\Standard;
 use ILIAS\UI\Component\Table\Data;
+use ILIAS\UI\Component\Modal\Interruptive;
 
 /**
  * Class ilParticipationCertificateConfigGUI
@@ -11,8 +12,6 @@ use ILIAS\UI\Component\Table\Data;
  */
 class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements ilCtrlSecurityInterface
 {
-    private const string CMD_CONFIRM_RESET_CONFIG = 'confirm_reset_config';
-
     private const string CMD_RESET_CONFIG = 'resetConfig';
 
     private const string CMD_SHOW_FORM = 'showForm';
@@ -48,7 +47,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         self::CMD_SORTING,
         self::CMD_SHOW_FORM,
         self::CMD_SHOW_FORM_ERR,
-        self::CMD_CONFIRM_RESET_CONFIG,
         self::CMD_RESET_CONFIG,
         self::CMD_ADD_CONFIG,
         self::CMD_COPY_CONFIG,
@@ -483,22 +481,20 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     }
 
     /**
+     * Confirmation for resetConfig() as Kitchen Sink interruptive modal.
+     * The form action carries the CSRF token (resetConfig is an unsafe command).
+     *
      * @throws ilCtrlException
      */
-    public function confirm_reset_config(): void
+    private function buildConfirmResetConfigModal(): Interruptive
     {
         global $DIC;
 
-        $confirmation = new ilConfirmationGUI();
-
-        $confirmation->setFormAction($DIC->ctrl()->getFormAction($this));
-
-        $confirmation->setHeaderText($this->pl->txt('confirm_reset_config'));
-
-        $confirmation->setConfirm($this->pl->txt('reset_config'), self::CMD_RESET_CONFIG);
-        $confirmation->setCancel($DIC->language()->txt('cancel'), self::CMD_CONFIGURE);
-
-        $DIC->ui()->mainTemplate()->setContent($confirmation->getHTML());
+        return $DIC->ui()->factory()->modal()->interruptive(
+            $this->pl->txt('reset_config'),
+            $this->pl->txt('confirm_reset_config'),
+            $this->ctrl->getFormAction($this, self::CMD_RESET_CONFIG)
+        )->withActionButtonLabel($this->pl->txt('reset_config'));
     }
 
     /**
@@ -745,13 +741,13 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorSelect(
                         $this->pl->txt('color'),
                         ''
-                    )->withValue('#' . $config->getConfigValue() ?? '');
+                    )->withValue('#' . $config->getConfigValue() ?? '000a35');
                     break;
                 case 'unsugg_color':
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->colorSelect(
                         $this->pl->txt('unsugg_color'),
                         ''
-                    )->withValue('#' . $config->getConfigValue() ?? '');
+                    )->withValue('#' . $config->getConfigValue() ?? '000a35');
                     break;
 
                 case 'keyword':
@@ -1098,19 +1094,18 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
         );
         $this->ilToolbar->addComponent($toolbarButton);
 
-        $toolbarButton = $ui->button()->standard(
-            $this->pl->txt('reset_config'),
-            $this->ctrl->getLinkTargetByClass(
-                ilParticipationCertificateConfigGUI::class,
-                ilParticipationCertificateConfigGUI::CMD_CONFIRM_RESET_CONFIG
-            )
-        );
+        $reset_modal = $this->buildConfirmResetConfigModal();
+        $toolbarButton = $ui->button()->standard($this->pl->txt('reset_config'), '')
+                            ->withOnClick($reset_modal->getShowSignal());
         $this->ilToolbar->addComponent($toolbarButton);
 
         $table = $this->initTable();
 
         $this->tpl->setContent(
-            $r->render($table->withRequest($DIC->http()->request()))
+            $r->render([
+                $table->withRequest($DIC->http()->request()),
+                $reset_modal,
+            ])
         );
     }
 

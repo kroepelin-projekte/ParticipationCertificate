@@ -19,8 +19,6 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
 
     protected string $learn_group_title;
 
-    protected array $keywords;
-
     private string $object_type;
 
     /**
@@ -31,7 +29,6 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
     {
         global $DIC;
 
-        $this->keywords = [];
         if ($DIC->offsetExists('tpl')) {
             $this->ctrl = $DIC->ctrl();
             $this->pl = ilParticipationCertificatePlugin::getInstance();
@@ -50,17 +47,6 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             }
             $this->learn_group = ilObjectFactory::getInstanceByRefId($this->group_ref_id);
             $this->learn_group_title = $this->learn_group->getTitle();
-
-            $config = ilParticipationCertificateConfig::where(array(
-                'config_key' => 'keyword',
-                'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
-                'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER,
-                'group_ref_id' => 0
-            ))->first();
-
-            if (is_object($config)) {
-                $this->keywords = self::parseKeywords((string) $config->getConfigValue());
-            }
         }
     }
 
@@ -107,14 +93,14 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
             if (($this->object_type === 'crs') && key_exists(
                     'cmdClass', $gui_classes_array
                 ) && ($gui_classes_array['cmdClass'] == ilObjCourseGUI::class)) {
-                if ($this->titleMatchesKeyword($this->learn_group_title)) {
+                if (ilParticipationCertificateAccess::isEnabledForObject($this->group_ref_id)) {
                     return true;
                 }
             }
             if (($this->object_type === 'grp') && key_exists(
                     'cmdClass', $gui_classes_array
                 ) && ($gui_classes_array['cmdClass'] == ilObjGroupGUI::class)) {
-                if ($this->titleMatchesKeyword($this->learn_group_title)) {
+                if (ilParticipationCertificateAccess::isEnabledForObject($this->group_ref_id)) {
                     return true;
                 }
             }
@@ -130,24 +116,7 @@ class ilParticipationCertificateUIHookGUI extends ilUIHookPluginGUI
      */
     public static function parseKeywords(string $config_value): array
     {
-        return array_values(array_filter(
-            array_map('trim', explode(',', $config_value)),
-            static fn(string $keyword): bool => $keyword !== ''
-        ));
-    }
-
-    /**
-     * Case-insensitive (multibyte-safe) match of the object title against the configured keywords.
-     * No keywords configured means no match, i.e. the tab is shown nowhere.
-     */
-    private function titleMatchesKeyword(string $title): bool
-    {
-        foreach ($this->keywords as $keyword) {
-            if (mb_stripos($title, $keyword) !== false) {
-                return true;
-            }
-        }
-        return false;
+        return ilParticipationCertificateAccess::parseKeywords($config_value);
     }
 
 }

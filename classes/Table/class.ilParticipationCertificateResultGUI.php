@@ -106,8 +106,7 @@ class ilParticipationCertificateResultGUI
 
         $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
         if (!$cert_access->hasCurrentUserWriteAccess()) {
-            $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_permission'), true);
-            $DIC->ctrl()->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
         $next_class = $this->ctrl->getNextClass();
 
@@ -680,8 +679,7 @@ class ilParticipationCertificateResultGUI
                 $this->course_ref_id
             );
         } else {
-            $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_permission'), true);
-            $DIC->ctrl()->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
     }
 
@@ -743,7 +741,7 @@ class ilParticipationCertificateResultGUI
                 $this->course_ref_id
             );
         } else {
-            $DIC->ctrl()->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
     }
 
@@ -805,7 +803,7 @@ class ilParticipationCertificateResultGUI
                 $this->course_ref_id
             );
         } else {
-            $DIC->ctrl()->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
     }
 
@@ -844,6 +842,24 @@ class ilParticipationCertificateResultGUI
      * @return void
      * @throws ilCtrlException
      */
+    /**
+     * No permission: back to the course/group (or the dashboard without ref_id)
+     * with an error message. Never redirects to this GUI itself, to avoid a loop.
+     *
+     * @throws ilCtrlException
+     */
+    private function redirectNoPermission(): void
+    {
+        $this->tpl->setOnScreenMessage('failure', $this->lng->txt('no_permission'), true);
+
+        if ($this->course_ref_id > 0) {
+            $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->course_ref_id);
+            $this->ctrl->redirectByClass(ilRepositoryGUI::class);
+        }
+
+        $this->ctrl->redirectByClass(ilDashboardGUI::class);
+    }
+
     private function redirectWithError(string $cmd, string $msg): void
     {
         $this->tpl->setOnScreenMessage('failure', $msg, true);

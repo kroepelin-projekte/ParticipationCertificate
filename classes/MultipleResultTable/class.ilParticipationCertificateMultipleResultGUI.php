@@ -57,8 +57,7 @@ class ilParticipationCertificateMultipleResultGUI
 
         $cert_access = new ilParticipationCertificateAccess($this->ref_id);
         if (!$cert_access->hasCurrentUserWriteAccess()) {
-            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
-            $this->ctrl->redirectToURL('login.php');
+            $this->redirectNoPermission();
         }
 
         if ($userIds !== null) {
@@ -84,6 +83,26 @@ class ilParticipationCertificateMultipleResultGUI
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, 'ref_id');
 
         $this->show_all_results();
+    }
+
+    /**
+     * No permission: back to the course/group (or the dashboard without ref_id)
+     * with an error message. Never redirects to the plugin GUIs, to avoid a loop.
+     *
+     * @throws ilCtrlException
+     */
+    private function redirectNoPermission(): void
+    {
+        global $DIC;
+
+        $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+
+        if ($this->ref_id > 0) {
+            $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $this->ref_id);
+            $this->ctrl->redirectByClass(ilRepositoryGUI::class);
+        }
+
+        $this->ctrl->redirectByClass(ilDashboardGUI::class);
     }
 
     /**

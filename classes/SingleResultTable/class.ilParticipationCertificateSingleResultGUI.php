@@ -52,8 +52,7 @@ class ilParticipationCertificateSingleResultGUI
 
         $cert_access = new ilParticipationCertificateAccess($ref_id);
         if (!$cert_access->hasCurrentUserWriteAccess()) {
-            $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
-            $this->ctrl->redirectToURL('login.php');
+            $this->redirectNoPermission($ref_id);
         }
 
         $usr_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('usr_id', 'string') ?? 0);
@@ -82,6 +81,26 @@ class ilParticipationCertificateSingleResultGUI
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultModificationGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateUIHookGUI::class, 'usr_id');
+    }
+
+    /**
+     * No permission: back to the course/group (or the dashboard without ref_id)
+     * with an error message. Never redirects to the plugin GUIs, to avoid a loop.
+     *
+     * @throws ilCtrlException
+     */
+    private function redirectNoPermission(int $ref_id): void
+    {
+        global $DIC;
+
+        $this->tpl->setOnScreenMessage('failure', $DIC->language()->txt('no_permission'), true);
+
+        if ($ref_id > 0) {
+            $this->ctrl->setParameterByClass(ilRepositoryGUI::class, 'ref_id', $ref_id);
+            $this->ctrl->redirectByClass(ilRepositoryGUI::class);
+        }
+
+        $this->ctrl->redirectByClass(ilDashboardGUI::class);
     }
 
     /**

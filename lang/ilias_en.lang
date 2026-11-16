@@ -97,7 +97,6 @@ helper_action_post#:#&nbspto enable printing!
 helper_name#:#Update Entries
 unsugg_color#:#Color Not Recommended LZ
 true_name_helper#:#UDF Editor Object for Name Entry
-nonnumeric_ref#:#Input for the UDF Editor Object must be the Ref ID (numeric or empty, other characters are not allowed).
 enable_ementoring#:#Show eMentoring
 back#:#Back
 Mr#:#Mr

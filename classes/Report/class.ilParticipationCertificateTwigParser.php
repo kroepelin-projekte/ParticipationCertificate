@@ -207,7 +207,10 @@ class ilParticipationCertificateTwigParser
             $this->setUserData($user_data, $firstname, $lastname);
         }
 
-        $initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
+        $initial_test_states = ilCrsInitialTestStates::getData(
+            $this->usr_ids,
+            (new ilParticipationCertificateAccess((int) $ref_id))->getCourseRefId()
+        );
         $final_test_states = ilCrsFinalTestStates::getData($this->usr_ids, (int) $ref_id);
         $excercise_states = ilExcerciseStates::getData($this->usr_ids, $this->group_ref_id);
         $learn_sugg_results = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
@@ -438,7 +441,10 @@ class ilParticipationCertificateTwigParser
 
             $course_obj_id = ilObject::_lookupObjectId((int) $course_obj['ref_id']);
 
-            $initial_test_states = ilCrsInitialTestStates::getData($this->usr_ids);
+            $initial_test_states = ilCrsInitialTestStates::getData(
+                $this->usr_ids,
+                (new ilParticipationCertificateAccess((int) $course_obj['ref_id']))->getCourseRefId()
+            );
             $final_test_states = ilCrsFinalTestStates::getData($this->usr_ids, (int) $course_obj['ref_id']);
             $excercise_states = ilExcerciseStates::getData($this->usr_ids, $course_obj['ref_id']);
             $learnSugestion_results = ilLearnObjectSuggResults::getData($course_obj_id, $this->usr_ids);
@@ -866,30 +872,5 @@ class ilParticipationCertificateTwigParser
             },
             $text
         ) ?? $text;
-    }
-
-    /**
-     * @param int $obj_id
-     * @return array
-     */
-    public function getDataFinalTest(int $obj_id): array
-    {
-        global $DIC;
-
-        $ilDB = $DIC->database();
-
-        $result = $ilDB->queryF(
-            "SELECT * FROM loc_settings
-              WHERE obj_id = %s AND qtest IS NOT NULL",
-            ['integer'],
-            [$obj_id]
-        );
-
-        $data = [];
-        while ($row = $ilDB->fetchAssoc($result)) {
-            $data = $row;
-        }
-
-        return $data;
     }
 }

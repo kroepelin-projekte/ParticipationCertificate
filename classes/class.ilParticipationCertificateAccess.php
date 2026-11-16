@@ -12,6 +12,12 @@ class ilParticipationCertificateAccess {
 
 	protected ilDBInterface $db;
 
+	/** @var array<int, bool> ref_id => plugin enabled, cached per request */
+	private static array $enabled_cache = [];
+
+	/** @var string[]|null configured keywords, cached per request */
+	private static ?array $keywords = null;
+
 	/**
 	 * ilParticipationCertificateAccess constructor.
 	 */
@@ -24,11 +30,108 @@ class ilParticipationCertificateAccess {
 		$this->db = $DIC->database();
 	}
 
+	/**
+	 * The plugin is only
+	 * active for courses/groups (not in the trash) whose title contains a configured keyword.
+	 * Every entry GUI must check this, otherwise any ref_id where the user has
+	 * write/read_learning_progress could be used (e.g. a group admin's group in a foreign course).
+	 */
+	public static function isEnabledForObject(int $ref_id): bool
+	{
+		if ($ref_id <= 0) {
+			return false;
+		}
+
+		if (!array_key_exists($ref_id, self::$enabled_cache)) {
+			$type = ilObject::_lookupType($ref_id, true);
+			$enabled = ($type === 'crs' || $type === 'grp')
+				&& !ilObject::_isInTrash($ref_id)
+				&& self::titleMatchesKeyword((string) ilObject::_lookupTitle(ilObject::_lookupObjId($ref_id)));
+
+			self::$enabled_cache[$ref_id] = $enabled;
+		}
+
+		return self::$enabled_cache[$ref_id];
+	}
+
+	public function isEnabled(): bool
+	{
+		return self::isEnabledForObject($this->group_ref_id);
+	}
+
+	/**
+	 * Comma-separated keyword config -> list of trimmed, non-empty keywords.
+	 * '' or ' , ' must give [] (not ['']): an empty needle matches every title.
+	 *
+	 * @return string[]
+	 */
+	public static function parseKeywords(string $config_value): array
+	{
+		return array_values(array_filter(
+			array_map('trim', explode(',', $config_value)),
+			static fn(string $keyword): bool => $keyword !== ''
+		));
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function getKeywords(): array
+	{
+		if (self::$keywords === null) {
+			$config = ilParticipationCertificateConfig::where([
+				'config_key' => 'keyword',
+				'config_type' => ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL,
+				'config_value_type' => ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER,
+				'group_ref_id' => 0
+			])->first();
+
+			self::$keywords = is_object($config) ? self::parseKeywords((string) $config->getConfigValue()) : [];
+		}
+
+		return self::$keywords;
+	}
+
+	/**
+	 * Case-insensitive (multibyte-safe) match against the configured keywords.
+	 * No keywords configured means no match.
+	 */
+	public static function titleMatchesKeyword(string $title): bool
+	{
+		foreach (self::getKeywords() as $keyword) {
+			if (mb_stripos($title, $keyword) !== false) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Course whose initial test belongs to this object: the course itself,
+	 * or for a group the course above it. 0 if there is none.
+	 */
+	public function getCourseRefId(): int
+	{
+		global $DIC;
+
+		$type = ilObject::_lookupType($this->group_ref_id, true);
+		if ($type === 'crs') {
+			return $this->group_ref_id;
+		}
+		if ($type === 'grp') {
+			return (int) $DIC->repositoryTree()->checkForParentType($this->group_ref_id, 'crs');
+		}
+		return 0;
+	}
+
     /**
-     * @return bool
+     * write or read_learning_progress, only for objects where the plugin is enabled
      */
 	public function hasCurrentUserWriteAccess(): bool
 	{
+		if (!$this->isEnabled()) {
+			return false;
+		}
 		if ($this->access->checkAccess('write', '', $this->group_ref_id)) {
 			return true;
 		}
@@ -59,6 +162,10 @@ class ilParticipationCertificateAccess {
         if (!$print_by_course_member && $this->hasCurrentUserWriteAccess()) {
             return true;
         }
+
+		if (!$this->isEnabled()) {
+			return false;
+		}
 
 		$usr_id = $this->usr->getId();
 		if ($usr_id <= 0 || $usr_id === ANONYMOUS_USER_ID) {
@@ -113,6 +220,9 @@ class ilParticipationCertificateAccess {
      */
 	public function hasCurrentUserReadAccess(): bool
 	{
+		if (!$this->isEnabled()) {
+			return false;
+		}
 		if ($this->access->checkAccess('read', '', $this->group_ref_id)) {
 			return true;
 		}
@@ -125,6 +235,9 @@ class ilParticipationCertificateAccess {
      */
 	public function hasCurrentUserSpecialAccess(): bool
 	{
+		if (!$this->isEnabled()) {
+			return false;
+		}
 		if ($this->access->checkAccess('read_learning_progress', '', $this->group_ref_id)) {
 			return true;
 		}

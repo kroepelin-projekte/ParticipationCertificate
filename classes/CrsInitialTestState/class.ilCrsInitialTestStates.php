@@ -6,11 +6,12 @@ class ilCrsInitialTestStates {
 
 	/**
 	 * @param array $arr_usr_ids
-	 * @param int $crs_ref_id (defaults to 0)
-  	 *
+	 * @param int|null $crs_ref_id only the initial test of this course; null = all courses
+	 *                             (0 = no course, returns nothing)
+	 *
 	 * @return ilCrsInitialTestState[]
 	 */
-	public static function getData(array $arr_usr_ids = array(), int $crs_ref_id = 0): array
+	public static function getData(array $arr_usr_ids = array(), ?int $crs_ref_id = null): array
     {
 		global $DIC;
 
@@ -30,7 +31,7 @@ class ilCrsInitialTestStates {
 			$crsitst_state->setCrsitestItestTries($row['crsitest_itest_tries']);
 			$crsitst_state->setCrsitestItestSubmitted($row['crsitest_itest_submitted']);
 
-			if (( $crs_ref_id == 0 ) || ( $crs_ref_id == (int) $row['crsitest_crs_ref_id'] )) {
+			if ($crs_ref_id === null || $crs_ref_id === (int) $row['crsitest_crs_ref_id']) {
 				$crsitst_data[$row['crsitest_usr_id']] = $crsitst_state;
 			}
 		}
