@@ -35,6 +35,29 @@ class ParticipationCertificateHelper
     }
 
     /**
+     * ilEventParticipants reads all participants of its session, so it is created once per session.
+     *
+     * @param array $sessions as returned by getSessions()
+     * @return array<int, int> usr_id => attended sessions
+     */
+    public static function countAttendedSessions(array $sessions, array $usr_ids): array
+    {
+        $usr_ids = array_map('intval', $usr_ids);
+        $attended = array_fill_keys($usr_ids, 0);
+
+        foreach ($sessions as $session) {
+            $event_participants = new ilEventParticipants((int) $session['obj_id']);
+            foreach ($usr_ids as $usr_id) {
+                if ($event_participants->hasParticipated($usr_id)) {
+                    $attended[$usr_id]++;
+                }
+            }
+        }
+
+        return $attended;
+    }
+
+    /**
      * @param int                   $container_ref_id
      * @param InternalDomainService $domain
      * @return int|null
