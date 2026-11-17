@@ -21,14 +21,6 @@ class ilParticipationCertificateResultTableGUI
 {
     public const string IDENTIFIER = 'ilpartusr';
 
-    public const string GREEN_PROGRESS = 'ilCourseObjectiveProgressBarCompleted';
-
-    public const string ORANGE_PROGRESS = 'progress-bar-warning';
-
-    public const string RED_PROGRESS = 'ilCourseObjectiveProgressBarFailed';
-
-    public const string NO_PROGRESS = 'ilCourseObjectiveProgressBarNeutral';
-
     public const int DEFAULT_ROWS_PER_PAGE = 25;
 
     /**
@@ -65,12 +57,6 @@ class ilParticipationCertificateResultTableGUI
     private ?array $filtered_user_data = null;
 
     /**
-     * Course period for the progress bars, read once per request
-     * @var array{start: ?string, end: ?string}|null
-     */
-    private ?array $progress_period = null;
-
-    /**
      * @var ilParticipationCertificateResultGUI
      */
     protected ?object $parent_obj;
@@ -105,7 +91,7 @@ class ilParticipationCertificateResultTableGUI
         $this->order = null;
 
         $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->ref_id);
-        if ($ementoring === NULL) {
+        if ($ementoring === null) {
             $ementoring = true;
         } else {
             $ementoring = boolval($ementoring);
@@ -170,11 +156,9 @@ class ilParticipationCertificateResultTableGUI
             $this->ref_id,
             $this->getRecords(...),
             $this->getTotalRowCount(...),
-            $this->buildProgressBar(...),
             $this->firstname,
             $this->lastname
         ) implements DataRetrieval {
-
             private bool $ementoring;
 
             private ilParticipationCertificatePlugin $pl;
@@ -195,8 +179,6 @@ class ilParticipationCertificateResultTableGUI
 
             private Closure $total_count;
 
-            private Closure $progress_bar_builder;
-
             /**
              * @param bool                             $ementoring
              * @param ilParticipationCertificatePlugin $pl
@@ -206,7 +188,6 @@ class ilParticipationCertificateResultTableGUI
              * @param int                              $ref_id
              * @param Closure                          $records
              * @param Closure                          $total_count
-             * @param Closure                          $progress_bar_builder
              * @param string|null                      $firstname
              * @param string|null                      $lastname
              */
@@ -219,7 +200,6 @@ class ilParticipationCertificateResultTableGUI
                 int $ref_id,
                 Closure $records,
                 Closure $total_count,
-                Closure $progress_bar_builder,
                 ?string $firstname,
                 ?string $lastname
             ) {
@@ -233,20 +213,6 @@ class ilParticipationCertificateResultTableGUI
                 $this->lastname = $lastname;
                 $this->records = $records;
                 $this->total_count = $total_count;
-                $this->progress_bar_builder = $progress_bar_builder;
-            }
-
-            /**
-             * Delegates to ilParticipationCertificateResultTableGUI::buildProgressBar()
-             * @param int $a_perc_result
-             * @param int $a_perc_limit
-             * @return string
-             */
-            private function buildProgressBar(
-                int $a_perc_result,
-                int $a_perc_limit
-            ): string {
-                return ($this->progress_bar_builder)($a_perc_result, $a_perc_limit);
             }
 
             /**
@@ -271,7 +237,7 @@ class ilParticipationCertificateResultTableGUI
                 $data = ($this->records)($range, $order);
 
                 $ementoring_is_active = false;
-                if($this->ementoring) {
+                if ($this->ementoring) {
                     $ementoring_is_active = true;
                 }
 
@@ -362,7 +328,7 @@ class ilParticipationCertificateResultTableGUI
                 $getters = [
                     'loginname' => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertUserName(),
                     'firstname' => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertFirstname(),
-                    'lastname'  => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertLastname(),
+                    'lastname' => static fn(ilPartCertUserData $u): string => (string) $u->getPartCertLastname(),
                 ];
 
                 uasort($arr_usr_data, static function (ilPartCertUserData $a, ilPartCertUserData $b) use ($order_fields, $getters): int {
@@ -405,23 +371,29 @@ class ilParticipationCertificateResultTableGUI
         $arr_new_iass_states = ilIassStatesMulti::getData($page_usr_ids, $this->ref_id);
         $arr_excercise_states = ilExcerciseStates::getData($page_usr_ids, $this->ref_id);
         $calculation_type = ilParticipationCertificateConfig::getConfig('calculation_type_processing_state_suggested_objectives', $this->ref_id);
+        // Same format as ilLearnObjectSuggResult::getAveragePercentage() for these calculation types
+        $no_suggestion_result = in_array(
+            (int) ($calculation_type ?? ilLearnObjectSuggResult::CALC_TYPE_BY_POINTS),
+            [ilLearnObjectSuggResult::CALC_TYPE_BY_COMPLETED_OBJECTIVE, ilLearnObjectSuggResult::CALC_TYPE_HIGHEST_VALUE],
+            true
+        ) ? '0/0' : '0%';
         $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->ref_id));
         $count_sessions = count($sessions);
         $attended_sessions = $this->countAttendedSessions($sessions, $page_usr_ids);
 
         $rows = array();
-        foreach ($arr_usr_data as $usr_id=>$user_data) {
+        foreach ($arr_usr_data as $usr_id => $user_data) {
             $row = array();
             $row['usr_id'] = $usr_id;
             $row['loginname'] = htmlspecialchars((string) $user_data->getPartCertUserName(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             $row['firstname'] = '';
-            if ($user_data->getPartCertFirstname()  != NULL) {
+            if ($user_data->getPartCertFirstname() != null) {
                 $row['firstname'] = htmlspecialchars((string) $user_data->getPartCertFirstname(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             }
 
             $row['lastname'] = '';
-            if ($user_data->getPartCertLastname() != NULL) {
+            if ($user_data->getPartCertLastname() != null) {
                 $row['lastname'] = htmlspecialchars((string) $user_data->getPartCertLastname(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             }
 
@@ -438,7 +410,7 @@ class ilParticipationCertificateResultTableGUI
             if ((key_exists($usr_id, $arr_learn_reached_percentages)) && (is_object($arr_learn_reached_percentages[$usr_id]))) {
                 $row['result_qualifing_tests'] = $arr_learn_reached_percentages[$usr_id]->getAveragePercentage($calculation_type, true);
             } else {
-                $row['result_qualifing_tests'] = $this->buildProgressBar(0,0);
+                $row['result_qualifing_tests'] = $no_suggestion_result;
             }
 
             $rec_array = [];
@@ -486,7 +458,7 @@ class ilParticipationCertificateResultTableGUI
             $count_tests = $count_tests + $count_sessions;
             $count_passed = $count_passed + ($attended_sessions[(int) $usr_id] ?? 0);
 
-            if($count_tests > 0) {
+            if ($count_tests > 0) {
                 $percentage = $count_passed / $count_tests * 100;
                 switch ($count_tests) {
                     case 1:
@@ -506,10 +478,10 @@ class ilParticipationCertificateResultTableGUI
 
             if (key_exists($usr_id, $arr_excercise_states) && is_object($arr_excercise_states[$usr_id])) {
                 $row['eMentoring_homework'] = $arr_excercise_states[$usr_id]->getPassed();
-                $row['eMentoring_percentage'] = $this->buildProgressBar($arr_excercise_states[$usr_id]->getPassedPercentage(),0);
+                $row['eMentoring_percentage'] = $arr_excercise_states[$usr_id]->getPassed() . '/' . $arr_excercise_states[$usr_id]->getTotal();
             } else {
                 $row['eMentoring_homework'] = 0;
-                $row['eMentoring_percentage'] = $this->buildProgressBar(0,0);
+                $row['eMentoring_percentage'] = '0/0';
             }
 
             $rows[] = $row;
@@ -523,13 +495,13 @@ class ilParticipationCertificateResultTableGUI
      */
     private function excludeUserIdIfFiltered(array $user_data): array
     {
-        foreach($user_data as $user_id => $user) {
+        foreach ($user_data as $user_id => $user) {
             if ((!empty($this->firstname) && $user->getPartCertFirstname() !== $this->firstname) ||
                 (!empty($this->lastname) && $user->getPartCertLastname() !== $this->lastname)
             ) {
                 unset($user_data[$user_id]);
 
-                $this->usr_ids = array_values(array_filter($this->usr_ids, function($value) use ($user_id) {
+                $this->usr_ids = array_values(array_filter($this->usr_ids, function ($value) use ($user_id) {
                     return $value !== $user_id;
                 }));
             }
@@ -622,7 +594,7 @@ class ilParticipationCertificateResultTableGUI
             $this->row_id_token
         );
 
-        if($this->cert_access->hasCurrentUserWriteAccess()) {
+        if ($this->cert_access->hasCurrentUserWriteAccess()) {
             $actions['show_all_results'] = $f->table()->action()->single(
                 $this->pl->txt('list_overview'),
                 $url_builder->withParameter($this->action_parameter_token, 'show_all_results'),
@@ -636,7 +608,7 @@ class ilParticipationCertificateResultTableGUI
             $this->row_id_token
         );
 
-        if($this->cert_access->hasCurrentUserWriteAccess()) {
+        if ($this->cert_access->hasCurrentUserWriteAccess()) {
             $actions['show_selected_all_results'] = $f->table()->action()->multi(
                 $this->pl->txt('list_overview'),
                 $url_builder->withParameter($this->action_parameter_token, 'show_selected_all_results'),
@@ -655,106 +627,11 @@ class ilParticipationCertificateResultTableGUI
     }
 
     /**
-     * @param int $a_perc_result
-     * @param int $a_perc_limit
-     * @return string
-     * @throws DateMalformedStringException
-     */
-    public function buildProgressBar(int $a_perc_result, int $a_perc_limit): string
-    {
-        if ($this->progress_period === null) {
-            $this->progress_period = [
-                'start' => ilParticipationCertificateConfig::getConfig('period_start', $this->ref_id),
-                'end' => ilParticipationCertificateConfig::getConfig('period_end', $this->ref_id),
-            ];
-        }
-
-        $start = $this->progress_period['start'];
-        $end = $this->progress_period['end'];
-
-        if ($start !== NULL && $end !== NULL) {
-            // Period set
-            $start = new DateTime($start);
-            $end = new DateTime($end);
-            $current = new DateTime();
-
-            if ($current >= $start) {
-                if ($current <= $end) {
-                    // Running
-                    $rest_days = $end->diff($current)->days;
-                    $total_days = max(1, $end->diff($start)->days);
-                    $perc_limit = (100 - ($rest_days / $total_days * 100));
-                } else {
-                    // Ended
-                    $perc_limit = 100;
-                }
-
-                if ($a_perc_result >= 90) {
-                    // 90% reached
-                    $css_class = self::GREEN_PROGRESS;
-                } elseif ($current <= $end) {
-                    // End not reached
-                    if ($a_perc_result >= ($perc_limit - 30)) {
-                        // In time or already farer
-                        $css_class = self::GREEN_PROGRESS;
-                    } elseif ($a_perc_result >= ($perc_limit - 40)) {
-                        //
-                        $css_class = self::ORANGE_PROGRESS;
-                    } else {
-                        // Not in time
-                        $css_class = self::RED_PROGRESS;
-
-                        if ($a_perc_result === 0) {
-                            $css_class .= ' percent-0';
-                        }
-                    }
-                } else {
-                    // End reached
-                    $css_class = self::RED_PROGRESS;
-
-                    if ($a_perc_result === 0) {
-                        $css_class .= ' percent-0';
-                    }
-                }
-
-                if ($perc_limit < 30) {
-                    //
-                    $perc_limit = 30;
-                }
-            } else {
-                // Not started
-                $perc_limit = 1;
-                $css_class = self::NO_PROGRESS;
-            }
-        } else {
-            // No period set
-            $perc_limit = NULL;
-
-            if ($a_perc_result >= 80) {
-                // 80% reached
-                $css_class = self::GREEN_PROGRESS;
-            } else {
-                // <80%
-                $css_class = self::RED_PROGRESS;
-
-                if ($a_perc_result === 0 ){
-                    $css_class .= ' percent-0';
-                }
-            }
-        }
-
-        if (is_float($perc_limit)) {
-            $perc_limit = (int) round($perc_limit);
-        }
-
-        return ilContainerObjectiveGUI::renderProgressBar($a_perc_result, $perc_limit, $css_class);
-    }
-
-    /**
      * @return URI
      * @throws ilCtrlException
      */
-    private function buildURI(): URI {
+    private function buildURI(): URI
+    {
         global $DIC;
 
         return new URI(

@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.1]
+### Changed
+* Result table shows exercise progress as passed/total instead of progress bars (faster)
+
 ## [3.0.0]
 ### Updated
 * Plugin für release_11 updated
