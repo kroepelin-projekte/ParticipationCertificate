@@ -4,51 +4,54 @@ class ilIassStatesMulti
 {
     /**
      * @param array $arr_usr_ids
-     * @param int   $group_ref_id
+     * @param int|int[] $group_ref_id container ref(s) whose direct IASS children count
      * @return ilIassStateMulti[]
      */
-	public static function getData(array $arr_usr_ids, int $group_ref_id): array
+    public static function getData(array $arr_usr_ids, int|array $group_ref_id): array
     {
-		global $DIC;
+        global $DIC;
 
-		$ilDB = $DIC->database();
-		$result = $ilDB->query(self::getSQL($arr_usr_ids));
-		$iass_data = array();
+        $ilDB = $DIC->database();
+        $result = $ilDB->query(self::getSQL($arr_usr_ids));
+        $iass_data = array();
 
-		$items = $DIC->repositoryTree()->getChildIds($group_ref_id);
+        $items = [];
+        foreach ((array) $group_ref_id as $container_ref_id) {
+            $items = array_merge($items, $DIC->repositoryTree()->getChildIds((int) $container_ref_id));
+        }
 
-		while ($row = $ilDB->fetchAssoc($result)) {
-		    if(!in_array($row['iass_ref_id'], $items)) {
-		        continue;
-		    }
+        while ($row = $ilDB->fetchAssoc($result)) {
+            if (!in_array($row['iass_ref_id'], $items)) {
+                continue;
+            }
 
-			$iass_state = new ilIassStateMulti();
-			$iass_state->setUsrId($row['iass_usr_id']);
-			$iass_state->setIassObjTitle($row['iass_obj_title']);
-			$iass_state->setIassObjId($row['iass_obj_id']);
-			$iass_state->setIassRefId($row['iass_ref_id']);
-			$iass_state->setPassed($row['iass_passed']);
-			$iass_state->setTotal($row['iass_total']);
-			$iass_state->setPassedPercentage($row['iass_passed_percentage']);
+            $iass_state = new ilIassStateMulti();
+            $iass_state->setUsrId($row['iass_usr_id']);
+            $iass_state->setIassObjTitle($row['iass_obj_title']);
+            $iass_state->setIassObjId($row['iass_obj_id']);
+            $iass_state->setIassRefId($row['iass_ref_id']);
+            $iass_state->setPassed($row['iass_passed']);
+            $iass_state->setTotal($row['iass_total']);
+            $iass_state->setPassedPercentage($row['iass_passed_percentage']);
 
-			$iass_data[$row['iass_usr_id']][] = $iass_state;
-		}
-		return $iass_data;
-	}
+            $iass_data[$row['iass_usr_id']][] = $iass_state;
+        }
+        return $iass_data;
+    }
 
 
-	/**
-	 * @param array $arr_usr_ids
-	 *
-	 * @return string
-	 */
-	protected static function getSQL(array $arr_usr_ids = []): string
+    /**
+     * @param array $arr_usr_ids
+     *
+     * @return string
+     */
+    protected static function getSQL(array $arr_usr_ids = []): string
     {
-		global $DIC;
+        global $DIC;
 
-		$ilDB = $DIC->database();
+        $ilDB = $DIC->database();
 
-		$select = "SELECT 
+        $select = "SELECT 
 					iass.usr_id as iass_usr_id,
 					iass_obj.title as iass_obj_title,
 					iass_obj.obj_id as iass_obj_id,
@@ -68,6 +71,6 @@ class ilIassStatesMulti
 					iass_obj.title
 					";
 
-		return $select;
-	}
+        return $select;
+    }
 }
