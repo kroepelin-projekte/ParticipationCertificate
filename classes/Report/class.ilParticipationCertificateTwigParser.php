@@ -517,11 +517,13 @@ class ilParticipationCertificateTwigParser
         // The texts are editable by course admins, so they must never be compiled as Twig
         // (that would allow template injection / code execution). Only the known
         // placeholders are replaced; escaping happens once in certificate.html.
+        // self print does not exclude users without data row, so it may be missing
+        $usr_data = $user_data[$user_id] ?? null;
+        $salutation = $usr_data?->getPartCertSalutation();
         $placeholder_values = [
-            'username' => ($user_data[$user_id]->getPartCertSalutation() ?
-                    $user_data[$user_id]->getPartCertSalutation() . ' ' : '') .
-                ($firstname ?? $user_data[$user_id]->getPartCertFirstname()) . ' ' .
-                ($lastname ?? $user_data[$user_id]->getPartCertLastname()),
+            'username' => ($salutation ? $salutation . ' ' : '') .
+                ($firstname ?? $usr_data?->getPartCertFirstname()) . ' ' .
+                ($lastname ?? $usr_data?->getPartCertLastname()),
             'date' => $date->get(IL_CAL_FKT_DATE, 'd.m.Y')
         ];
 
