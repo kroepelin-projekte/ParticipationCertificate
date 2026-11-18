@@ -317,6 +317,7 @@ class ilParticipationCertificateTwigParser
             $excercise_states = ilExcerciseStates::getData($usr_ids_to_print, $ref_id);
             $learn_sugg_results = ilLearnObjectSuggResults::getData($course_obj_id, $usr_ids_to_print);
             $final_test_data = null;
+            $not_recommended_objectives = TrackingTool::getNotRecommendedLearningObjectivesForCertificates($usr_ids_to_print, $ref_id);
 
             foreach ($usr_ids_to_print as $usr_id) {
                 $usr_id = (int) $usr_id;
@@ -371,7 +372,7 @@ class ilParticipationCertificateTwigParser
                     $count_completed_individual_assessments,
                     count($sessions),
                     $attended_sessions[$usr_id] ?? 0,
-                    TrackingTool::getNotRecommendedLearningObjectivesForCertificate($usr_id, $ref_id)
+                    $not_recommended_objectives[$usr_id] ?? '0/0'
                 );
                 $rendered_certificates[] = $this->twig_template->render($arr_render);
             }
