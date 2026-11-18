@@ -112,6 +112,7 @@
 {% endif %}
 {% endif %}
 
+<div class="signature_block">
 {% if text_values.page1_location_date|trim %}
 <div class="date"> <p>{{text_values.page1_location_date}}</p>  </div>
 {% endif %}
@@ -124,6 +125,7 @@
   <b>{{text_values.page1_issuer_title}}</b><br/><br/>
   </p>
   {% endif %}
+</div>
 </div>
   {% if text_values.page1_disclaimer|trim %}
   <br/>{{text_values.page1_disclaimer}}<br/>
