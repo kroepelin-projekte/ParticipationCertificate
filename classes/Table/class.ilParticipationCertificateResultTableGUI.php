@@ -477,10 +477,8 @@ class ilParticipationCertificateResultTableGUI
             }
 
             if (key_exists($usr_id, $arr_excercise_states) && is_object($arr_excercise_states[$usr_id])) {
-                $row['eMentoring_homework'] = $arr_excercise_states[$usr_id]->getPassed();
                 $row['eMentoring_percentage'] = $arr_excercise_states[$usr_id]->getPassed() . '/' . $arr_excercise_states[$usr_id]->getTotal();
             } else {
-                $row['eMentoring_homework'] = 0;
                 $row['eMentoring_percentage'] = '0/0';
             }
 
@@ -543,10 +541,6 @@ class ilParticipationCertificateResultTableGUI
         if ($this->ementoring or $write_access) {
             $cols['eMentoring_finished'] = $factory->table()->column()
                                              ->text($this->pl->txt('cols_eMentoring_finished'))
-                                             ->withIsSortable(false)
-                                             ->withIsOptional(true, $this->ementoring);
-            $cols['eMentoring_homework'] = $factory->table()->column()
-                                             ->text($this->pl->txt('cols_eMentoring_homework'))
                                              ->withIsSortable(false)
                                              ->withIsOptional(true, $this->ementoring);
             $cols['eMentoring_percentage'] = $factory->table()->column()

@@ -2,47 +2,63 @@
 
 class ilExcerciseStates
 {
-	public static function getData(
+    public static function getData(
         array $arr_usr_ids,
         int $group_ref_id
     ): array {
-		global $DIC;
+        global $DIC;
 
-		$ilDB = $DIC->database();
-		$result = $ilDB->query(self::getSQL($arr_usr_ids));
-		$exerc_data = array();
+        $ilDB = $DIC->database();
+        $result = $ilDB->query(self::getSQL($arr_usr_ids));
+        $exerc_data = array();
 
         $items = $DIC->repositoryTree()->getChildIds($group_ref_id);
 
-		while ($row = $ilDB->fetchAssoc($result)) {
-            if(!in_array($row['exc_ref_id'], $items)) {
+        $counted_exercises = [];
+        while ($row = $ilDB->fetchAssoc($result)) {
+            if (!in_array($row['exc_ref_id'], $items)) {
                 continue;
             }
+            $usr_id = (int) $row['exc_usr_id'];
+            // an exercise linked twice into the container counts once
+            if (isset($counted_exercises[$usr_id][$row['exc_obj_id']])) {
+                continue;
+            }
+            $counted_exercises[$usr_id][$row['exc_obj_id']] = true;
 
-			$exerc_state = new ilExcerciseState();
-			$exerc_state->setUsrId($row['exc_usr_id']);
-			$exerc_state->setExcObjId($row['exc_obj_id']);
-			$exerc_state->setExcObjTitle($row['exc_obj_title']);
-			$exerc_state->setExcRefId($row['exc_ref_id']);
-			$exerc_state->setPassed($row['exc_passed']);
-			$exerc_state->setTotal($row['exc_total']);
-			$exerc_state->setPassedPercentage($row['exc_passed_percentage']);
+            // sum over all exercises; title/obj/ref stay those of the first exercise found (not used by callers)
+            if (!isset($exerc_data[$usr_id])) {
+                $exerc_state = new ilExcerciseState();
+                $exerc_state->setUsrId($usr_id);
+                $exerc_state->setExcObjId((int) $row['exc_obj_id']);
+                $exerc_state->setExcObjTitle((string) $row['exc_obj_title']);
+                $exerc_state->setExcRefId((int) $row['exc_ref_id']);
+                $exerc_state->setPassed(0);
+                $exerc_state->setTotal(0);
+                $exerc_data[$usr_id] = $exerc_state;
+            }
+            $exerc_state = $exerc_data[$usr_id];
+            $exerc_state->setPassed($exerc_state->getPassed() + (int) $row['exc_passed']);
+            $exerc_state->setTotal($exerc_state->getTotal() + (int) $row['exc_total']);
+        }
 
-			$exerc_data[$row['exc_usr_id']] = $exerc_state;
-		}
+        foreach ($exerc_data as $exerc_state) {
+            $total = $exerc_state->getTotal();
+            $exerc_state->setPassedPercentage($total > 0 ? (int) round($exerc_state->getPassed() / $total * 100) : 0);
+        }
 
-		return $exerc_data;
-	}
+        return $exerc_data;
+    }
 
     /**
      * @param array $arr_usr_ids
      * @return string
      */
-	protected static function getSQL(array $arr_usr_ids = []): string
+    protected static function getSQL(array $arr_usr_ids = []): string
     {
-		global $DIC;
+        global $DIC;
 
-		$ilDB = $DIC->database();
+        $ilDB = $DIC->database();
 
         $select = "SELECT 
 					exerc.usr_id as exc_usr_id,
@@ -64,8 +80,6 @@ class ilExcerciseStates
 					exc_ref.ref_id,
 					exc_obj.title";
 
-		return $select;
-	}
+        return $select;
+    }
 }
-
-?>

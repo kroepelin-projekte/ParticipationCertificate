@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.2]
+### Fixed
+* Exercise results are summed over all exercises of the group instead of using only the last one (table, certificate and the prefilled "homework" value when editing a certificate)
+* Excel/CSV export: header and values are built from the same column list, no more shifted titles
+### Changed
+* Faster certificate printing: tracking tool data is loaded once per course instead of per user
+### Removed
+* Result table column "Bearbeitung der Aufgaben zu überfachlichen Themen (Anzahl)" (duplicated the passed count of the passed/total column)
+
 ## [3.0.1]
 ### Changed
 * Result table shows exercise progress as passed/total instead of progress bars (faster)
