@@ -123,3 +123,5 @@ upload_invalid_file_type#:#Only PNG or JPEG images are allowed.
 upload_file_too_large#:#The file is too large. Maximum upload size: 2 MB.
 template_not_available#:#The selected template does not exist or is not active. Nothing was changed.
 keyword_required#:#Please enter at least one keyword (several keywords separated by commas).
+no_permission#:#No permission
+max_upload_size#:#Maximum upload size: 2 MB. Allowed file types: .png
