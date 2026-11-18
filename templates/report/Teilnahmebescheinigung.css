@@ -56,10 +56,6 @@ p {
   text-align: center;
 }
 
-.pagebreak{
-  page-break-after: always;
-}
-
 .table {
   table-layout: fixed;
   width: 650px;
