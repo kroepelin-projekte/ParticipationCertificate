@@ -6,6 +6,7 @@
 * Excel/CSV export: header and values are built from the same column list, no more shifted titles
 * Self print (tracking tool) no longer fails with HTTP 500 when the user has no certificate user data; the name falls back to the entered or an empty name
 * No blank page between page 1 and page 2 of a certificate when page 1 is completely filled
+* Location/date and the signature block are no longer split across pages; if they do not fit on page 1 they move to the next page together
 ### Changed
 * Faster certificate printing: tracking tool data is loaded once per course instead of per user
 ### Removed
