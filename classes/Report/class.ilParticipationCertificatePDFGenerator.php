@@ -64,6 +64,8 @@ class ilParticipationCertificatePDFGenerator
             'tempDir' => '/tmp/mpdf',
             'default_font' => 'dejavusans',
             'whitelistStreamWrappers' => ['file'],
+            // a full page 1 may end inside the bottom margin; empty block ends there must not add a blank page
+            'margBuffer' => 16,
         ]);
 
         $css = file_get_contents(
