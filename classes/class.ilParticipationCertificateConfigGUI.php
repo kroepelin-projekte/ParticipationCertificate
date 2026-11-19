@@ -764,7 +764,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('logo'),
-                        'Maximum upload size: 2 MB. Allowed file types: .png' . "<br>\n" .
                         '<img src="' . $src . '">'
                     )->withAcceptedMimeTypes([
                         'image/png'
@@ -784,7 +783,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->file(
                         new ilParticipationCertificateFileUploadHandlerGUI(),
                         $this->pl->txt('page1_issuer_signature'),
-                        'Maximum upload size: 2 MB. Allowed file types: .png' . "<br>\n" .
                         '<img src="' . $src . '">'
                     )->withAcceptedMimeTypes([
                         'image/png'

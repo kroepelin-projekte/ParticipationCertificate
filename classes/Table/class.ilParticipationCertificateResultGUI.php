@@ -78,15 +78,19 @@ class ilParticipationCertificateResultGUI
     {
         global $DIC;
 
-        $ref_id = ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string');
+        $this->tpl = $DIC->ui()->mainTemplate();
+        $this->lng = $DIC->language();
+        $this->ctrl = $DIC->ctrl();
+        $this->course_ref_id = (int) (ilParticipationCertificateHelper::fetchUrlParameter('ref_id', 'string') ?? 0);
+
+        if ($this->course_ref_id <= 0) {
+            $this->redirectNoPermission();
+        }
+
         $this->toolbar = $DIC->toolbar();
         $this->tabs = $DIC->tabs();
-        $this->ctrl = $DIC->ctrl();
-        $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->course_ref_id = (int) $ref_id;
-        $this->lng = $DIC->language();
-	    $this->cert_access = new ilParticipationCertificateAccess($ref_id);
+	    $this->cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
 	    
         $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->course_ref_id);
         if ($ementoring === NULL) {
