@@ -3,6 +3,7 @@
 ## [3.0.0]
 ### Updated
 * Plugin für release_11 updated
+* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
 ## [2.1.0]
 ### Removed
