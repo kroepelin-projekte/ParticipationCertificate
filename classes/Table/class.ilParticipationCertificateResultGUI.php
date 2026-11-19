@@ -89,10 +89,7 @@ class ilParticipationCertificateResultGUI
 
         $this->toolbar = $DIC->toolbar();
         $this->tabs = $DIC->tabs();
-        $this->ctrl = $DIC->ctrl();
-        $this->tpl = $DIC->ui()->mainTemplate();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-        $this->lng = $DIC->language();
 	    $this->cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
 	    
         $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->course_ref_id);
