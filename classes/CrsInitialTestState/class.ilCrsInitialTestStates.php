@@ -6,16 +6,19 @@ class ilCrsInitialTestStates {
 
 	/**
 	 * @param array $arr_usr_ids
-	 * @param int crsRefId (defaults to 0=
-  	 *
+	 * @param int|null $crs_ref_id only the initial test of this course; null = all courses
+	 *                             (0 = no course, returns nothing)
+	 *
 	 * @return ilCrsInitialTestState[]
 	 */
-	public static function getData(array $arr_usr_ids = array(), int $crsRefId = 0): array
+	public static function getData(array $arr_usr_ids = array(), ?int $crs_ref_id = null): array
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
 		$result = $ilDB->query(self::getSQL($arr_usr_ids));
 		$crsitst_data = array();
+
 		while ($row = $ilDB->fetchAssoc($result)) {
 			$crsitst_state = new ilCrsInitialTestState();
 			$crsitst_state->setCrsitestUsrId($row['crsitest_usr_id']);
@@ -28,7 +31,7 @@ class ilCrsInitialTestStates {
 			$crsitst_state->setCrsitestItestTries($row['crsitest_itest_tries']);
 			$crsitst_state->setCrsitestItestSubmitted($row['crsitest_itest_submitted']);
 
-			if (( $crsRefId == 0 ) || ( $crsRefId == (int) $row['crsitest_crs_ref_id'] )) {
+			if ($crs_ref_id === null || $crs_ref_id === (int) $row['crsitest_crs_ref_id']) {
 				$crsitst_data[$row['crsitest_usr_id']] = $crsitst_state;
 			}
 		}
@@ -36,12 +39,18 @@ class ilCrsInitialTestStates {
 		return $crsitst_data;
 	}
 
+	/**
+	 * @param array $arr_usr_ids
+	 * @return string
+	 */
 	protected static function getSQL(array $arr_usr_ids = array()): string
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
-	        $course_configs = new ConfigProvider();
-	        $arr_malok_ids = $course_configs->getCourseRefIds();
+		$course_configs = new ConfigProvider();
+	    $arr_malok_ids = $course_configs->getCourseRefIds();
+
 		$select = "SELECT test_act.user_fi as crsitest_usr_id,
 					crs_obj.obj_id as crsitest_crs_obj_id,
 					crs_obj.title as crsitest_crs_title,

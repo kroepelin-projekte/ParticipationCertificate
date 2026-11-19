@@ -1,13 +1,13 @@
 <?php
 class LearnObjectivesFinalTestsQuery
 {
+    public const string DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_final_tests';
 
-    const DEFAULT_TMP_TABLE_NAME = 'tmp_learn_objectives_final_tests';
-
-
+    /**
+     * @return string
+     */
     public function getSQL(): string
     {
-
         $this->createTemporaryTableReqPercentage();
 
         return "SELECT 
@@ -34,20 +34,27 @@ FROM
 ";
     }
 
+    /**
+     * @param string $table_name
+     * @return void
+     */
     public function createTemporaryTable(string $table_name = self::DEFAULT_TMP_TABLE_NAME): void
     {
         global $DIC;
+
         $ilDB = $DIC->database();
 
-
         $sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX cob (crs_id, crs_objective_id)) (" . $this->getSQL() . ")";
-        //echo $sql."; ";
         $ilDB->query($sql);
     }
 
+    /**
+     * @return void
+     */
     private function createTemporaryTableReqPercentage(): void
     {
         global $DIC;
+
         $ilDB = $DIC->database();
 
         $sql = "CREATE Temporary Table IF NOT Exists tmp_req_percentage  (INDEX obi (objective_id)) (" . $this->getSqlReqPercentage() . ")";
@@ -56,13 +63,14 @@ FROM
         $ilDB->query($sql);
     }
 
-
+    /**
+     * @return string
+     */
     private function getSqlReqPercentage(): string
     {
         return "SELECT objective_id, course_id as container_id, limit_perc as percentage
              from loc_user_results
              where type=".ilLOUserResults::TYPE_QUALIFIED."
              Group by objective_id,course_id, limit_perc";
-
     }
 }

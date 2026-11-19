@@ -1,16 +1,18 @@
 <?php
 
-class ilIassStates {
-
+class ilIassStates
+{
 	/**
 	 * @return ilIassState[]
 	 */
-	public static function getData(array $arr_usr_ids = array()): array
+	public static function getData(array $arr_usr_ids = []): array
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
 		$result = $ilDB->query(self::getSQL($arr_usr_ids));
-		$iass_data = array();
+		$iass_data = [];
+
 		while ($row = $ilDB->fetchAssoc($result)) {
 			$iass_state = new ilIassState();
 			$iass_state->setUsrId($row['iass_usr_id']);
@@ -23,16 +25,20 @@ class ilIassStates {
 
 			$iass_data[$row['iass_usr_id']] = $iass_state;
 		}
-
 		return $iass_data;
 	}
 
-
-	protected static function getSQL(array $arr_usr_ids = array()): string
+    /**
+     * @param array $arr_usr_ids
+     * @return string
+     */
+	protected static function getSQL(array $arr_usr_ids = []): string
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
-		$select = "SELECT 
+
+        $select = "SELECT 
 					iass.usr_id as iass_usr_id,
 					iass_obj.title as iass_obj_title,
 					iass_obj.obj_id as iass_obj_id,
@@ -51,7 +57,6 @@ class ilIassStates {
 					iass_ref.ref_id,
 					iass_obj.title
 					";
-
 		return $select;
 	}
 }

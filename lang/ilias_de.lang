@@ -34,6 +34,7 @@ upload_header #:# Laden Sie Ihren PDF Header hoch
 save#:#Speichern
 udf_lastname#:#Benutzerdefiniertes Feld Nachname
 udf_firstname#:#Benutzerdefiniertes Feld Vorname
+udf_gender#:#Benutzerdefiniertes Feld Anrede
 config_plugin#:#Konfiguration Teilnahmebescheinigung
 mod_initial#:#Einstiegstest abgeschlossen (Ja(1)/Nein(0) )
 mod_resultstest#:#Resultat qualifizierende Tests (Prozentwert)
@@ -66,6 +67,7 @@ config_type#:#Konfigurationstyp
 title#:#Bezeichnung
 parent_title#:#Titel darüberliegendes Objekt
 active#:#Aktiv
+inactive#:#Inaktiv
 edit#:#Bearbeiten
 config_title#:#Bezeichnung
 order_by#:#Sortierung
@@ -95,7 +97,6 @@ helper_action_post#:# , um das Drucken freizuschalten!
 helper_name#:#Einträge aktualisieren
 unsugg_color#:#Farbe nicht empfohlene LZ
 true_name_helper#:#UDF-Editor-Objekt für die Namenseingabe
-nonnumeric_ref#:#Die Eingabe für das UDF-Editor-Objekt muss die Ref-ID sein (numerisch oder leer, andere Zeichen sind nicht erlaubt).
 enable_ementoring#:#Ementoring einblenden
 back#:#Zurück
 Mr#:#Herr
@@ -108,8 +109,8 @@ sorting#:#Sortierung
 excel_export#:#Excel-Export
 csv_export#:#.CSV-Export
 print_all_info#:#Die Buttons oben lösen die Ausgabe <strong>aller druckbaren Bescheinigungen</strong> aus
-add_ementoring#:#Druken inklusive Ementoring
-add_ementoring_additional#:#Ernn ein Druck ohne Ementoring gewünscht ist, muss diese Option abgewählt sein
+add_ementoring#:#Drucken inklusive Ementoring
+add_ementoring_additional#:#Wenn ein Druck ohne Ementoring gewünscht ist, muss diese Option abgewählt sein
 mod_section#:#Resultate für %s bearbeiten
 print_done#:#Die Teilnahmebescheinigung wurde in einem neuen Tab/Fenster erstellt
 failure_timeframe_save#:#Das Startdatum darf nicht nach dem Enddatum liegen
@@ -118,3 +119,7 @@ individual_assessments#:#Videokonferenzen
 sessions#:#Sitzungen
 not_suggested_courses#:#Nicht empfohlene-Kurse
 not_suggested_learning_modules#:#Nicht empfohlene-Lernmodule
+upload_invalid_file_type#:#Es sind nur PNG- oder JPEG-Bilder erlaubt.
+upload_file_too_large#:#Die Datei ist zu groß. Maximale Uploadgröße: 2 MB.
+template_not_available#:#Die gewählte Vorlage existiert nicht oder ist nicht aktiv. Es wurde nichts geändert.
+keyword_required#:#Bitte mindestens ein Schlüsselwort eingeben (mehrere durch Kommas getrennt).

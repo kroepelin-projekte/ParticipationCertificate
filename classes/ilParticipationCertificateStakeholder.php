@@ -2,7 +2,7 @@
 
 use ILIAS\ResourceStorage\Stakeholder\AbstractResourceStakeholder;
 
-class Stakeholder extends AbstractResourceStakeholder
+class ilParticipationCertificateStakeholder extends AbstractResourceStakeholder
 {
     public function __construct()
     {

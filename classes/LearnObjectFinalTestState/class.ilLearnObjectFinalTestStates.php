@@ -2,15 +2,18 @@
 class ilLearnObjectFinalTestStates
 {
     /**
-     * @param int   $courseObjId
+     * @param int   $course_obj_id
      * @param array $userIds
      * @return array
      */
-    public static function getDataByCourseObjId(int $courseObjId, array $userIds = array()): array
-    {
+    public static function getDataByCourseObjId(
+        int $course_obj_id,
+        array $userIds = []
+    ): array {
         global $DIC;
+
         $ilDB = $DIC->database();
-        $result = $ilDB->query(self::getSQLByMasterCourseObjId($courseObjId, $userIds));
+        $result = $ilDB->query(self::getSQLByMasterCourseObjId($course_obj_id, $userIds));
         $locftst_data = array();
 
         while ($row = $ilDB->fetchAssoc($result)) {
@@ -41,12 +44,14 @@ class ilLearnObjectFinalTestStates
     }
 
     /**
-     * @param array $userIds
-     * @param int   $courseObjId
+     * @param array $user_ids
+     * @param int   $course_obj_id
      * @return string
      */
-    protected static function getSQLByMasterCourseObjId(int $courseObjId, array $userIds = array()): string
-    {
+    protected static function getSQLByMasterCourseObjId(
+        int $course_obj_id,
+        array $user_ids = []
+    ): string {
         global $DIC;
 
         $ilDB = $DIC->database();
@@ -90,41 +95,41 @@ class ilLearnObjectFinalTestStates
  
                     FROM 
                     
-                    (".$learn_objectives_courses_query->getSQL($courseObjId).") as learn_objective_crs
+                    (".$learn_objectives_courses_query->getSQL($course_obj_id).") as learn_objective_crs
                     
                     INNER JOIN (SELECT * from ".LearnObjectivesFinalTestsQuery::DEFAULT_TMP_TABLE_NAME.") as final_tests on final_tests.crs_id = learn_objective_crs.learn_objective_crs_obj_id
                     
-                    INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $userIds, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
+                    INNER JOIN obj_members as crs_memb on ".$ilDB->in('crs_memb.usr_id', $user_ids, false, 'integer')." and crs_memb.obj_id = learn_objective_crs.master_crs_id
                     
                     LEFT JOIN loc_user_results
                         ON loc_user_results.course_id = final_tests.crs_id
-                        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $userIds, false, 'integer')."
+                        AND loc_user_results.user_id = crs_memb.usr_id AND ".$ilDB->in('loc_user_results.user_id', $user_ids, false, 'integer')."
                         AND loc_user_results.objective_id = final_tests.crs_objective_id
                         AND loc_user_results.type = ".ilLOUserResults::TYPE_QUALIFIED."
                         
-			        WHERE learn_objective_crs.master_crs_id = " . $ilDB->quote($courseObjId, 'integer')  . "
+			        WHERE learn_objective_crs.master_crs_id = " . $ilDB->quote($course_obj_id, 'integer')  . "
 			        ORDER BY learn_objective_crs.master_crs_objective_position, final_tests.crs_objective_position";
 
         return $select;
     }
 
-	protected static function createTemporaryTableTestMaxResult(string $table_name = 'tmp_test_max_result'): void
-    {
+    /**
+     * @param int    $course_obj_id
+     * @param array  $arr_usr_ids
+     * @param string $table_name
+     * @return void
+     */
+	public static function createTemporaryTableLearnObjectFinalTest(
+        int $course_obj_id,
+        array $arr_usr_ids = [],
+        string $table_name = 'tmp_lo_fin_test'
+    ): void {
 		global $DIC;
-		$ilDB = $DIC->database();
 
-
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name  (INDEX af (active_fi)) (SELECT max(points) as points, active_fi, maxpoints FROM tst_pass_result group by active_fi, maxpoints)";
-		$ilDB->query($sql);
-	}
-
-	public static function createTemporaryTableLearnObjectFinalTest(int $courseObjId, array $arr_usr_ids = array(), string $table_name = 'tmp_lo_fin_test'): void
-    {
-		global $DIC;
 		$ilDB = $DIC->database();
 
         $ilDB->query("DROP TEMPORARY TABLE IF EXISTS $table_name");
-		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQLByMasterCourseObjId($courseObjId, $arr_usr_ids) . ")";
+		$sql = "CREATE Temporary Table IF NOT Exists $table_name (" . self::getSQLByMasterCourseObjId($course_obj_id, $arr_usr_ids) . ")";
 
 		$ilDB->query($sql);
 	}

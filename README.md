@@ -7,8 +7,8 @@ This plugin adds the user interface for the `ParticipationCertificate` plugin:
 ## Installation
 Start at your ILIAS root directory
 ```
-mkdir -p Customizing/global/plugins/Services/UIComponent/UserInterfaceHook
-cd Customizing/global/plugins/Services/UIComponent/UserInterfaceHook
+mkdir -p public/Customizing/global/plugins/Services/UIComponent/UserInterfaceHook
+cd public/Customizing/global/plugins/Services/UIComponent/UserInterfaceHook
 git clone https://git.studer-raimann.ch/ILIAS-Kunde-DHBW-Karlsruhe/ParticipationCertificate.git 
 ```
 As an ILIAS administrator, go to "Administration -> Plugins" and install/activate the plugin.
@@ -52,3 +52,7 @@ $rendered = str_replace('http://localhost:<port>', 'http://host.docker.internal:
 This ensures that image URLs referencing localhost are correctly resolved from within the Docker container by redirecting them to host.docker.internal.
 
 Replace <port> with the actual port number your application is running on.
+
+## Dependencies
+
+Plugin LearningObjectiveSuggestions must be installed and activated

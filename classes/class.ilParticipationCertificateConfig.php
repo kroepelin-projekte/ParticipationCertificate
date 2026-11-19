@@ -1,16 +1,23 @@
 <?php
-class ilParticipationCertificateConfig extends ActiveRecord {
 
-	const TABLE_NAME = 'dhbw_part_cert_conf';
-	const LOGO_FILE_NAME = "pic.png";
-    const ISSUER_SIGNATURE_FILE_NAME = "page1_issuer_signature.png";
+class ilParticipationCertificateConfig extends ActiveRecord
+{
 
-	const CONFIG_SET_TYPE_TEMPLATE = 1;
-	const CONFIG_SET_TYPE_GROUP = 2;
-	const CONFIG_SET_TYPE_GLOBAL = 3;
+    public const string TABLE_NAME = 'dhbw_part_cert_conf';
 
-	const CONFIG_VALUE_TYPE_CERT_TEXT = 1;
-	const CONFIG_VALUE_TYPE_OTHER = 2;
+    public const string LOGO_FILE_NAME = 'pic.png';
+
+    public const string  ISSUER_SIGNATURE_FILE_NAME = 'page1_issuer_signature.png';
+
+    public const int CONFIG_SET_TYPE_TEMPLATE = 1;
+
+    public const int CONFIG_SET_TYPE_GROUP = 2;
+
+    public const int CONFIG_SET_TYPE_GLOBAL = 3;
+
+    public const int CONFIG_VALUE_TYPE_CERT_TEXT = 1;
+
+    public const int CONFIG_VALUE_TYPE_OTHER = 2;
 
     /**
      * @var int
@@ -74,7 +81,7 @@ class ilParticipationCertificateConfig extends ActiveRecord {
      * @db_fieldtype    text
      * @db_length       1024
      */
-    protected ?string $config_value = "";
+    protected ?string $config_value = '';
     /**
      * @var int
      *
@@ -85,229 +92,295 @@ class ilParticipationCertificateConfig extends ActiveRecord {
      */
     protected int $order_by = 0;
 
-	public function getConnectorContainerName(): string
+    /**
+     * @param                  $primary_key
+     * @param arConnector|null $connector
+     */
+    public function __construct($primary_key = 0, arConnector $connector = null)
     {
-		return self::TABLE_NAME;
-	}
+        parent::__construct($primary_key, $connector);
+    }
 
-	public static function returnDbTableName(): string
+    /**
+     * @return string
+     */
+    public function getConnectorContainerName(): string
     {
-		return self::TABLE_NAME;
-	}
+        return self::TABLE_NAME;
+    }
 
-	public function __construct($primary_key = 0, arConnector $connector = null) {
-		parent::__construct($primary_key, $connector);
-	}
-
-	static function getConfig(string $config_key, int $group_ref_id = 0, int $config_type = self::CONFIG_SET_TYPE_GROUP, int $config_value_type = self::CONFIG_VALUE_TYPE_OTHER, ?string $default = NULL): ?string
+    /**
+     * @return string
+     */
+    public static function returnDbTableName(): string
     {
-		/**
-		 * @var ilParticipationCertificateConfig|null $config
-		 */
+        return self::TABLE_NAME;
+    }
 
-		$config = self::where([
-			"config_key" => $config_key,
-			"config_type" => $config_type,
-			"config_value_type" => $config_value_type,
-			"group_ref_id" => $group_ref_id
-		])->first();
+    /**
+     * @param string      $config_key
+     * @param int         $group_ref_id
+     * @param int         $config_type
+     * @param int         $config_value_type
+     * @param string|null $default
+     * @return string|null
+     */
+    public static function getConfig(
+        string $config_key,
+        int $group_ref_id = 0,
+        int $config_type = self::CONFIG_SET_TYPE_GROUP,
+        int $config_value_type = self::CONFIG_VALUE_TYPE_OTHER,
+        ?string $default = null
+    ): ?string {
+        /**
+         * @var ilParticipationCertificateConfig|null $config
+         */
+        $config = self::where([
+            'config_key' => $config_key,
+            'config_type' => $config_type,
+            'config_value_type' => $config_value_type,
+            'group_ref_id' => $group_ref_id
+        ])->first();
 
-		if ($config !== NULL) {
-			return $config->getConfigValue();
-		} else {
-			return $default;
-		}
-	}
+        if ($config !== null) {
+            return $config->getConfigValue();
+        }
+        return $default;
+    }
 
-	static function setConfig(string $config_key, ?string $config_value, int $group_ref_id = 0, int $config_type = self::CONFIG_SET_TYPE_GROUP, int $config_value_type = self::CONFIG_VALUE_TYPE_OTHER): void
-    {
-		/**
-		 * @var ilParticipationCertificateConfig|null $config
-		 */
+    /**
+     * @param string      $config_key
+     * @param string|null $config_value
+     * @param int         $group_ref_id
+     * @param int         $config_type
+     * @param int         $config_value_type
+     * @return void
+     */
+    public static function setConfig(
+        string $config_key,
+        ?string $config_value,
+        int $group_ref_id = 0,
+        int $config_type = self::CONFIG_SET_TYPE_GROUP,
+        int $config_value_type = self::CONFIG_VALUE_TYPE_OTHER
+    ): void {
+        /**
+         * @var ilParticipationCertificateConfig|null $config
+         */
+        $config = self::where([
+            'config_key' => $config_key,
+            'config_type' => $config_type,
+            'config_value_type' => $config_value_type,
+            'group_ref_id' => $group_ref_id
+        ])->first();
 
-		$config = self::where([
-			"config_key" => $config_key,
-			"config_type" => $config_type,
-			"config_value_type" => $config_value_type,
-			"group_ref_id" => $group_ref_id
-		])->first();
+        if ($config !== null) {
+            $config->setConfigValue($config_value);
+            $config->update();
+        } else {
+            $config = new self();
 
-		if ($config !== NULL) {
-			$config->setConfigValue($config_value);
+            $config->setConfigKey($config_key);
+            $config->setConfigValue($config_value);
+            $config->setConfigType($config_type);
+            $config->setConfigValueType($config_value_type);
+            $config->setGroupRefId($group_ref_id);
+            $config->create();
+        }
+    }
 
-			$config->update();
-		} else {
-			$config = new self();
-
-			$config->setConfigKey($config_key);
-
-			$config->setConfigValue($config_value);
-
-			$config->setConfigType($config_type);
-
-			$config->setConfigValueType($config_value_type);
-
-			$config->setGroupRefId($group_ref_id);
-
-			$config->create();
-		}
-	}
-
-	/**
-	 * Get a path where the template layout file and static assets are stored
-	 */
-	public static function getFileStoragePath(string $type = 'img', string $path_type = "absolute", int $grp_ref_id = 0, bool $create = false): string
-    {
+    /**
+     * Get a path where the template layout file and static assets are stored
+     */
+    public static function getFileStoragePath(
+        string $type = 'img',
+        string $path_type = 'absolute',
+        int $grp_ref_id = 0,
+        bool $create = false
+    ): string {
         $path = match ($path_type) {
-            "absolute" => CLIENT_WEB_DIR . '/dhbw_part_cert',
-            "relative" => ilFileUtils::getWebspaceDir() . '/dhbw_part_cert',
+            'relative' => ilFileUtils::getWebspaceDir() . '/dhbw_part_cert',
             default => CLIENT_WEB_DIR . '/dhbw_part_cert',
         };
 
-		if ($grp_ref_id) {
-			$path = $path . '/' . $grp_ref_id;
-		}
+        if ($grp_ref_id) {
+            $path = $path . '/' . $grp_ref_id;
+        }
 
-		switch ($type) {
-			case 'img':
-				$path = $path . '/img/';
-				if (!is_dir($path) && $create) {
-					ilFileUtils::makeDirParents($path);
-				}
-
-				return $path;
-				break;
-			default:
-				if (!is_dir($path) && $create) {
+        switch ($type) {
+            case 'img':
+                $path = $path . '/img/';
+                if (!is_dir($path) && $create) {
                     ilFileUtils::makeDirParents($path);
-				}
+                }
 
-				return $path;
-		}
-	}
+                return $path;
+                break;
+            default:
+                if (!is_dir($path) && $create) {
+                    ilFileUtils::makeDirParents($path);
+                }
+                return $path;
+        }
+    }
 
-	public static function storePicture(array $file_data, int $template_id, string $file_name): string
+    /**
+     * @param int    $template_id
+     * @param string $file_name
+     * @return void
+     */
+    public static function deletePicture(int $template_id, string $file_name): void
     {
+        $file_path = self::returnPicturePath('absolute', $template_id, $file_name);
 
-		self::deletePicture($template_id, $file_name);
+        if (is_file($file_path)) {
+            unlink($file_path);
+        }
+    }
 
-		$file_path = self::getFileStoragePath('img', 'absolute', $template_id, true);
-		ilFileUtils::moveUploadedFile($file_data['tmp_name'], '', $file_path . $file_name);
-
-		return self::returnPicturePath("relative", $template_id, $file_name);
-	}
-
-	public static function deletePicture(int $template_id, string $file_name): void
+    /**
+     * @param string $path_type absolute|relative
+     * @param int    $grp_ref_id
+     * @param        $file_name
+     * @return string
+     */
+    public static function returnPicturePath(string $path_type, int $grp_ref_id, $file_name): string
     {
-		$file_path = self::returnPicturePath('absolute', $template_id, $file_name);
+        return self::getFileStoragePath('img', $path_type, $grp_ref_id, true) . $file_name;
+    }
 
-		if (is_file($file_path)) {
-			unlink($file_path);
-		}
-	}
-
-
-	/**
-	 * @param string $path_type absolute|relative
-	 * @param int    $grp_ref_id
-	 *
-	 * @return string
-	 */
-	public static function returnPicturePath(string $path_type, int $grp_ref_id, $file_name): string
+    /**
+     * @return int
+     */
+    public function getId(): int
     {
-		return self::getFileStoragePath('img', $path_type, $grp_ref_id, true) . $file_name;
-	}
+        return $this->id;
+    }
 
-	public function getId(): int
+    /**
+     * @param int $id
+     * @return void
+     */
+    public function setId(int $id): void
     {
-		return $this->id;
-	}
+        $this->id = $id;
+    }
 
-	public function setId(int $id): void
+    /**
+     * @return string
+     */
+    public function getConfigKey(): string
     {
-		$this->id = $id;
-	}
+        return $this->config_key;
+    }
 
-	public function getConfigKey(): string
+    /**
+     * @param string $config_key
+     * @return void
+     */
+    public function setConfigKey(string $config_key): void
     {
-		return $this->config_key;
-	}
+        $this->config_key = $config_key;
+    }
 
-	public function setConfigKey(string $config_key): void
+    /**
+     * @return string|null
+     */
+    public function getConfigValue(): ?string
     {
-		$this->config_key = $config_key;
-	}
+        return $this->config_value;
+    }
 
-	public function getConfigValue(): ?string
+    /**
+     * @param string|null $config_value
+     * @return void
+     */
+    public function setConfigValue(?string $config_value): void
     {
-		return $this->config_value;
-	}
+        $this->config_value = $config_value;
+    }
 
-
-	public function setConfigValue(?string $config_value): void
+    /**
+     * @return int
+     */
+    public function getConfigType(): int
     {
-		$this->config_value = $config_value;
-	}
+        return $this->config_type;
+    }
 
-	public function getConfigType(): int
+    /**
+     * @param int $config_type
+     * @return void
+     */
+    public function setConfigType(int $config_type): void
     {
-		return $this->config_type;
-	}
+        $this->config_type = $config_type;
+    }
 
-	public function setConfigType(int $config_type): void
+    /**
+     * @return int
+     */
+    public function getConfigValueType(): int
     {
-		$this->config_type = $config_type;
-	}
+        return $this->config_value_type;
+    }
 
-	public function getConfigValueType(): int
+    /**
+     * @param int $config_value_type
+     * @return void
+     */
+    public function setConfigValueType(int $config_value_type): void
     {
-		return $this->config_value_type;
-	}
+        $this->config_value_type = $config_value_type;
+    }
 
-	public function setConfigValueType(int $config_value_type): void
+    /**
+     * @return int
+     */
+    public function getGroupRefId(): int
     {
-		$this->config_value_type = $config_value_type;
-	}
+        return $this->group_ref_id;
+    }
 
-	public function getGroupRefId(): int
+    /**
+     * @param int $group_ref_id
+     * @return void
+     */
+    public function setGroupRefId(int $group_ref_id): void
     {
-		return $this->group_ref_id;
-	}
+        $this->group_ref_id = $group_ref_id;
+    }
 
-	public function setGroupRefId(int $group_ref_id): void
+    /**
+     * @return int
+     */
+    public function getGlobalConfigId(): int
     {
-		$this->group_ref_id = $group_ref_id;
-	}
+        return $this->global_config_id;
+    }
 
-	public function getGlobalConfigId(): int
+    /**
+     * @param int $global_config_id
+     * @return void
+     */
+    public function setGlobalConfigId(int $global_config_id): void
     {
-		return $this->global_config_id;
-	}
+        $this->global_config_id = $global_config_id;
+    }
 
-	public function setGlobalConfigId(int $global_config_id): void
+    /**
+     * @return int
+     */
+    public function getOrderBy(): int
     {
-		$this->global_config_id = $global_config_id;
-	}
+        return $this->order_by;
+    }
 
-	public function getOrderBy(): int
+    /**
+     * @param int $order_by
+     * @return void
+     */
+    public function setOrderBy(int $order_by): void
     {
-		return $this->order_by;
-	}
-
-	public function setOrderBy(int $order_by): void
-    {
-		$this->order_by = $order_by;
-	}
-
-	public static function returnDefaultValuesTypeOther(): array
-    {
-
-		return array(
-			'udf_firstname' => 0,
-			'udf_lastname' => 0,
-			'color' => '73B249',
-			'keyword' => 'Lerngruppe',
-			'Logo' => null,
-		);
-	}
+        $this->order_by = $order_by;
+    }
 }

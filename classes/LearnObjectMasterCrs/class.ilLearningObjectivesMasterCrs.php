@@ -5,13 +5,14 @@ class ilLearningObjectivesMasterCrs
     /**
      * @return ilLearningObjectiveMasterCrs[]
      */
-    public static function getData(int $crsId, array $arr_usr_ids = array()): array
+    public static function getData(int $crsId, array $arr_usr_ids = []): array
     {
         global $DIC;
+
         $ilDB = $DIC->database();
         $result = $ilDB->query(self::getSQL($crsId, $arr_usr_ids));
 
-        $lo_master_data = array();
+        $lo_master_data = [];
         while ($row = $ilDB->fetchAssoc($result)) {
             $lo_master = new ilLearningObjectiveMasterCrs();
             $lo_master->setLoMasterObjectiveTitle($row['lo_master_objective_title']);
@@ -23,11 +24,17 @@ class ilLearningObjectivesMasterCrs
         return $lo_master_data;
     }
 
-
-    protected static function getSQL(int $crsId, array $arr_usr_ids = array()): string
+    /**
+     * @param int   $crsId
+     * @param array $arr_usr_ids
+     * @return string
+     */
+    protected static function getSQL(int $crsId, array $arr_usr_ids = []): string
     {
         global $DIC;
+
         $ilDB = $DIC->database();
+
         $select = "SELECT 
 					DISTINCT 
 					crso.title as lo_master_objective_title,

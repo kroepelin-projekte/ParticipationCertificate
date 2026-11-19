@@ -1,7 +1,7 @@
 <?php
 
-class ilIassStatesMulti {
-
+class ilIassStatesMulti
+{
     /**
      * @param array $arr_usr_ids
      * @param int   $group_ref_id
@@ -10,15 +10,14 @@ class ilIassStatesMulti {
 	public static function getData(array $arr_usr_ids, int $group_ref_id): array
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
 		$result = $ilDB->query(self::getSQL($arr_usr_ids));
 		$iass_data = array();
 
 		$items = $DIC->repositoryTree()->getChildIds($group_ref_id);
 
-
 		while ($row = $ilDB->fetchAssoc($result)) {
-
 		    if(!in_array($row['iass_ref_id'], $items)) {
 		        continue;
 		    }
@@ -34,7 +33,6 @@ class ilIassStatesMulti {
 
 			$iass_data[$row['iass_usr_id']][] = $iass_state;
 		}
-
 		return $iass_data;
 	}
 
@@ -44,10 +42,12 @@ class ilIassStatesMulti {
 	 *
 	 * @return string
 	 */
-	protected static function getSQL(array $arr_usr_ids = array()): string
+	protected static function getSQL(array $arr_usr_ids = []): string
     {
 		global $DIC;
+
 		$ilDB = $DIC->database();
+
 		$select = "SELECT 
 					iass.usr_id as iass_usr_id,
 					iass_obj.title as iass_obj_title,
