@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.0.0]
+## [3.0.1]
 ### Updated
 * Plugin for release_11 updated
 
@@ -18,13 +18,13 @@
 ### Removed
 * Attendance list (xali) integration
 * Unused code
+* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
 ### Security
 * CSRF protection for all commands that change data (ilCtrlSecurityInter, token checks)
 * Commands restricted to fixed allow-lists in all GUIs
 * Checks that users belong to the course/group for all user IDs taken  from the request
 * Output escaped against XSS; CSV/Excel export protected against formula injection
-* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
 ## [2.1.0]
 ### Removed
