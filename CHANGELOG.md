@@ -1,6 +1,11 @@
 # Changelog
 
 ## [3.0.1]
+### Removed
+* Autocomplete functions
+* UDF field in Config
+
+## [3.0.0]
 ### Updated
 * Plugin for release_11 updated
 
