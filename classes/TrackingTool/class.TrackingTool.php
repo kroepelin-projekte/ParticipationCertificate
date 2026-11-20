@@ -165,10 +165,11 @@ class TrackingTool
                 if ($key === $k) {
                     $completed = 0;
                     foreach ($data as $course) {
-                        if ($course['test_percentage'] !== null && $course['test_percentage'] >= '60') {
+                        if ($course['test_percentage'] !== null && $course['test_percentage'] >= $course['test_required_percentage']) {
                             $completed++;
                         }
                     }
+
                     $learning_objectives[$key]['required_percentage'] = $required_percentages[$learning_objective['obj_id']];
                     $learning_objectives[$key]['courses'] = $data;
                     $learning_objectives[$key]['count_completed_courses'] = $completed;
