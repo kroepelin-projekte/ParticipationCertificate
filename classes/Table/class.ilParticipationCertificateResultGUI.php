@@ -660,7 +660,7 @@ class ilParticipationCertificateResultGUI
             $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
-                $this->tpl->setOnScreenMessage('failure', $this->lng->txt('no_records_selected'), true);
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_records_selected'), true);
                 $this->ctrl->redirect($this, self::CMD_CONTENT);
             }
 
@@ -723,7 +723,7 @@ class ilParticipationCertificateResultGUI
             $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
-                $this->tpl->setOnScreenMessage('failure', $this->lng->txt('no_records_selected'), true);
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_records_selected'), true);
                 $this->ctrl->redirect($this, self::CMD_CONTENT);
             }
             $usr_ids = [];
