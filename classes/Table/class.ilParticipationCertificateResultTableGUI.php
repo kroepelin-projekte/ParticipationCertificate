@@ -306,30 +306,6 @@ class ilParticipationCertificateResultTableGUI
     }
 
     /**
-     * Number of attended sessions per user. Every ilEventParticipants reads all
-     * participants of its session, so it is created once per session, not per row.
-     *
-     * @param array $sessions
-     * @param int[] $usr_ids
-     * @return array<int, int> usr_id => attended sessions
-     */
-    private function countAttendedSessions(array $sessions, array $usr_ids): array
-    {
-        $attended = array_fill_keys($usr_ids, 0);
-
-        foreach ($sessions as $session) {
-            $event_participants = new ilEventParticipants((int) $session['obj_id']);
-            foreach ($usr_ids as $usr_id) {
-                if ($event_participants->hasParticipated($usr_id)) {
-                    $attended[$usr_id]++;
-                }
-            }
-        }
-
-        return $attended;
-    }
-
-    /**
      * Sorts the user data by the table order and cuts out the requested page.
      * The expensive result data is only computed for the users of that page.
      *
@@ -400,7 +376,7 @@ class ilParticipationCertificateResultTableGUI
         ) ? '0/0' : '0%';
         $sessions = ParticipationCertificateHelper::getSessions(ParticipationCertificateHelper::getGroupRefId((int) $this->ref_id));
         $count_sessions = count($sessions);
-        $attended_sessions = $this->countAttendedSessions($sessions, $page_usr_ids);
+        $attended_sessions = ParticipationCertificateHelper::countAttendedSessions($sessions, $page_usr_ids);
 
         $rows = array();
         foreach ($arr_usr_data as $usr_id => $user_data) {
