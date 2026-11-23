@@ -116,9 +116,6 @@ class TrackingTool
     }
 
     /**
-     * Minimum level of the first passed mark of the course's qualifying test, null if there is none.
-     */
-    /**
      * @return array<int, int> master_crs_id => required percentage
      */
     private static function getRequiredPercentages(array $final_tests_states_user, ?int $pass_level): array
@@ -137,6 +134,9 @@ class TrackingTool
         return $required_percentages;
     }
 
+    /**
+     * Minimum level of the first passed mark of the course's qualifying test, null if there is none.
+     */
     private static function getFinalTestPassLevel(int $course_obj_id): ?int
     {
         $data_final_test = self::getDataFinalTest($course_obj_id);
