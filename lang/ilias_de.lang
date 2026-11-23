@@ -9,6 +9,7 @@ cols_result_qualifying#:#Bearbeitung der empfohlenen Lernmodule
 cols_results_qualifying#:#Resultate der durchgeführten Tests der empfohlenen Lernmodule
 cols_eMentoring_finished#:#Aktive Teilnahme an Videokonferenzen
 cols_eMentoring_percentage#:#Bearbeitung der Aufgaben zu überfachlichen Themen (bestanden/gesamt)
+progress_target#:#Soll: %d %%
 cols_actions#:#Aktion
 list_actions#:#Aktionen
 list_results#:#Resultate für den Druck anpassen

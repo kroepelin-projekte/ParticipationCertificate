@@ -9,6 +9,7 @@ cols_result_qualifying#:#Processing of Recommended Mathematics Learning Modules
 cols_results_qualifying#:#Results of Completed Tests of Recommended Mathematics Learning Modules
 cols_eMentoring_finished#:#Active Participation in Video Conferences
 cols_eMentoring_percentage#:#Processing of Cross-Disciplinary Homework (Passed/Total)
+progress_target#:#Target: %d %%
 cols_actions#:#Action
 list_actions#:#Actions
 list_results#:#Adjust Results for Printing

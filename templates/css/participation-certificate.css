@@ -44,3 +44,34 @@
 .il-filter input[type="text"]  {
     min-height: 36px;
 }
+
+/* Delos colors: background = .alert-*, border = $il-success/warning/danger-color */
+.dhbw-pc-progress {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #161616;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dhbw-pc-progress--green {
+    background-color: #ebf4e1;
+    border-color: #6ea03c;
+}
+
+.dhbw-pc-progress--orange {
+    background-color: #ffe5d1;
+    border-color: #b54f00;
+}
+
+.dhbw-pc-progress--red {
+    background-color: #ffd7d7;
+    border-color: #dd0000;
+}
+
+.dhbw-pc-progress--neutral {
+    background-color: #f0f0f0;
+    border-color: #737373;
+}

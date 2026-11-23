@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.3]
+### Changed
+* Result table: "Processing of Cross-Disciplinary Homework (Passed/Total)" is colored again with the rules of the former progress bars (green/orange/red/grey, based on the configured period), now as a colored badge around the value
+* Result table: "Processing of Recommended Mathematics Learning Modules" is now colored with the same rules as well (previously only the fallback without results was a progress bar)
+* While the period is running, the badge tooltip shows the target value; the Excel/CSV export stays plain text
+
 ## [3.0.2]
 ### Fixed
 * Exercise results are summed over all exercises of the group instead of using only the last one (table, certificate and the prefilled "homework" value when editing a certificate)

@@ -28,6 +28,19 @@ class ilParticipationCertificateResultTableGUI
      */
     private const array SORTABLE_FIELDS = ['loginname', 'firstname', 'lastname'];
 
+    /** Record key with the percentages rating the progress cells; not a column, so not exported */
+    public const string PROGRESS_PERCENTAGES = 'progress_percentages';
+
+    private const string PROGRESS_CSS_CLASS = 'dhbw-pc-progress';
+
+    public const string GREEN_PROGRESS = 'dhbw-pc-progress--green';
+
+    public const string ORANGE_PROGRESS = 'dhbw-pc-progress--orange';
+
+    public const string RED_PROGRESS = 'dhbw-pc-progress--red';
+
+    public const string NO_PROGRESS = 'dhbw-pc-progress--neutral';
+
     private ilParticipationCertificateAccess $cert_access;
 
     protected Factory $df;
@@ -55,6 +68,9 @@ class ilParticipationCertificateResultTableGUI
      * @var array<int, ilPartCertUserData>|null
      */
     private ?array $filtered_user_data = null;
+
+    /** @var array{start: ?DateTimeImmutable, end: ?DateTimeImmutable}|null */
+    private ?array $progress_period = null;
 
     /**
      * @var ilParticipationCertificateResultGUI
@@ -156,6 +172,7 @@ class ilParticipationCertificateResultTableGUI
             $this->ref_id,
             $this->getRecords(...),
             $this->getTotalRowCount(...),
+            $this->decorateProgressCells(...),
             $this->firstname,
             $this->lastname
         ) implements DataRetrieval {
@@ -179,6 +196,8 @@ class ilParticipationCertificateResultTableGUI
 
             private Closure $total_count;
 
+            private Closure $progress_decorator;
+
             /**
              * @param bool                             $ementoring
              * @param ilParticipationCertificatePlugin $pl
@@ -200,6 +219,7 @@ class ilParticipationCertificateResultTableGUI
                 int $ref_id,
                 Closure $records,
                 Closure $total_count,
+                Closure $progress_decorator,
                 ?string $firstname,
                 ?string $lastname
             ) {
@@ -213,6 +233,7 @@ class ilParticipationCertificateResultTableGUI
                 $this->lastname = $lastname;
                 $this->records = $records;
                 $this->total_count = $total_count;
+                $this->progress_decorator = $progress_decorator;
             }
 
             /**
@@ -242,7 +263,7 @@ class ilParticipationCertificateResultTableGUI
                 }
 
                 foreach ($data as $key => $record) {
-                    yield $row_builder->buildDataRow($record['usr_id'] . '_' . $ementoring_is_active, $record);
+                    yield $row_builder->buildDataRow($record['usr_id'] . '_' . $ementoring_is_active, ($this->progress_decorator)($record));
                 }
             }
 
@@ -385,6 +406,7 @@ class ilParticipationCertificateResultTableGUI
         foreach ($arr_usr_data as $usr_id => $user_data) {
             $row = array();
             $row['usr_id'] = $usr_id;
+            $row[self::PROGRESS_PERCENTAGES] = ['result_qualifing_tests' => 0, 'eMentoring_percentage' => 0];
             $row['loginname'] = htmlspecialchars((string) $user_data->getPartCertUserName(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             $row['firstname'] = '';
@@ -409,6 +431,7 @@ class ilParticipationCertificateResultTableGUI
 
             if ((key_exists($usr_id, $arr_learn_reached_percentages)) && (is_object($arr_learn_reached_percentages[$usr_id]))) {
                 $row['result_qualifing_tests'] = $arr_learn_reached_percentages[$usr_id]->getAveragePercentage($calculation_type, true);
+                $row[self::PROGRESS_PERCENTAGES]['result_qualifing_tests'] = (int) $arr_learn_reached_percentages[$usr_id]->getAveragePercentage($calculation_type);
             } else {
                 $row['result_qualifing_tests'] = $no_suggestion_result;
             }
@@ -478,6 +501,7 @@ class ilParticipationCertificateResultTableGUI
 
             if (key_exists($usr_id, $arr_excercise_states) && is_object($arr_excercise_states[$usr_id])) {
                 $row['eMentoring_percentage'] = $arr_excercise_states[$usr_id]->getPassed() . '/' . $arr_excercise_states[$usr_id]->getTotal();
+                $row[self::PROGRESS_PERCENTAGES]['eMentoring_percentage'] = $arr_excercise_states[$usr_id]->getPassedPercentage();
             } else {
                 $row['eMentoring_percentage'] = '0/0';
             }
@@ -485,6 +509,97 @@ class ilParticipationCertificateResultTableGUI
             $rows[] = $row;
         }
         return $rows;
+    }
+
+    /** Web table only; the export uses the plain records */
+    private function decorateProgressCells(array $record): array
+    {
+        foreach ($record[self::PROGRESS_PERCENTAGES] ?? [] as $key => $percentage) {
+            if (isset($record[$key])) {
+                $record[$key] = $this->renderProgressBadge((string) $record[$key], (int) $percentage);
+            }
+        }
+        unset($record[self::PROGRESS_PERCENTAGES]);
+
+        return $record;
+    }
+
+    private function renderProgressBadge(string $text, int $percentage): string
+    {
+        [$css_class, $target] = $this->rateProgress($percentage);
+
+        $title = '';
+        if ($target !== null) {
+            $title = ' title="' . htmlspecialchars(
+                sprintf($this->pl->txt('progress_target'), $target),
+                ENT_QUOTES | ENT_SUBSTITUTE,
+                'UTF-8'
+            ) . '"';
+        }
+
+        return '<span class="' . self::PROGRESS_CSS_CLASS . ' ' . $css_class . '"' . $title . '>'
+            . htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
+    }
+
+    /**
+     * @return array{0: string, 1: ?int} CSS class, target percentage while the period is running
+     */
+    private function rateProgress(int $percentage): array
+    {
+        ['start' => $start, 'end' => $end] = $this->getProgressPeriod();
+
+        if ($start === null || $end === null) {
+            return [$percentage >= 80 ? self::GREEN_PROGRESS : self::RED_PROGRESS, null];
+        }
+
+        $now = new DateTimeImmutable();
+        if ($now < $start) {
+            return [self::NO_PROGRESS, null];
+        }
+
+        if ($now > $end) {
+            return [$percentage >= 90 ? self::GREEN_PROGRESS : self::RED_PROGRESS, null];
+        }
+
+        $rest_days = $end->diff($now)->days;
+        $total_days = max(1, $end->diff($start)->days);
+        $target = 100 - ($rest_days / $total_days * 100);
+
+        if ($percentage >= 90 || $percentage >= ($target - 30)) {
+            $css_class = self::GREEN_PROGRESS;
+        } elseif ($percentage >= ($target - 40)) {
+            $css_class = self::ORANGE_PROGRESS;
+        } else {
+            $css_class = self::RED_PROGRESS;
+        }
+
+        return [$css_class, (int) round($target)];
+    }
+
+    /**
+     * @return array{start: ?DateTimeImmutable, end: ?DateTimeImmutable}
+     */
+    private function getProgressPeriod(): array
+    {
+        if ($this->progress_period === null) {
+            $this->progress_period = [
+                'start' => $this->parsePeriodDate(ilParticipationCertificateConfig::getConfig('period_start', $this->ref_id)),
+                'end' => $this->parsePeriodDate(ilParticipationCertificateConfig::getConfig('period_end', $this->ref_id)),
+            ];
+        }
+
+        return $this->progress_period;
+    }
+
+    private function parsePeriodDate(?string $value): ?DateTimeImmutable
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        // stored as d.m.Y; '!' resets the time to midnight
+        $date = DateTimeImmutable::createFromFormat('!d.m.Y', $value);
+
+        return $date === false ? null : $date;
     }
 
     /**
