@@ -40,7 +40,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
 
     private const string CMD_CREATE_TEMPLATE =  'createTemplateFromLocalConfig';
 
-    private const RETURN_BACK = 'returnBack';
+    private const string RETURN_BACK = 'returnBack';
 
     private const array COMMANDS = [
         self::CMD_CONFIGURE,
@@ -99,8 +99,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     public string $lastname;
 
     public string $gender;
-
-    private bool $err_helper;
 
     private $logger;
 
@@ -853,8 +851,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             return false;
         }
 
-        $this->err_helper = false;
-
         $part_cert_configs = new ilParticipationCertificateConfigs();
         switch ($set_type) {
             case ilParticipationCertificateConfig::CONFIG_SET_TYPE_TEMPLATE:
@@ -1000,11 +996,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                 }
         }
 
-        if ($this->err_helper) {
-            $this->ctrl->redirect($this, self::CMD_SHOW_FORM_ERR);
-        } else {
-            $this->ctrl->redirect($this, self::CMD_CONFIGURE);
-        }
+        $this->ctrl->redirect($this, self::CMD_CONFIGURE);
         $this->logger->debug('End saving participation certificate');
 
         return true;
