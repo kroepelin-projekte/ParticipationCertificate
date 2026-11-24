@@ -56,10 +56,6 @@ p {
   text-align: center;
 }
 
-.pagebreak{
-  page-break-after: always;
-}
-
 .table {
   table-layout: fixed;
   width: 650px;
@@ -84,6 +80,11 @@ table tr td {
 .date{
   margin-top: 100px;
   margin-bottom: 40px;
+}
+
+/* mPDF moves the whole block to the next page instead of splitting it */
+.signature_block{
+  page-break-inside: avoid;
 }
 
 #signature{

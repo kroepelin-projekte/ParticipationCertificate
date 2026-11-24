@@ -47,10 +47,8 @@ class ilParticipationCertificateResultGUI
         self::CMD_RESET_FILTER,
     ];
 
-    /**
-     * @var array|array[]
-     */
-    private array $columns;
+    /** @var array<string, string> export column key => title */
+    private array $columns = [];
 
     private ilParticipationCertificateAccess $cert_access;
 
@@ -90,10 +88,10 @@ class ilParticipationCertificateResultGUI
         $this->toolbar = $DIC->toolbar();
         $this->tabs = $DIC->tabs();
         $this->pl = ilParticipationCertificatePlugin::getInstance();
-	    $this->cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
-	    
+        $this->cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
+
         $ementoring = ilParticipationCertificateConfig::getConfig('enable_ementoring', $this->course_ref_id);
-        if ($ementoring === NULL) {
+        if ($ementoring === null) {
             $this->ementoring = true;
         } else {
             $this->ementoring = boolval($ementoring);
@@ -165,7 +163,7 @@ class ilParticipationCertificateResultGUI
         $ui = $DIC->ui()->factory();
 
         if ($this->cert_access->hasCurrentUserPrintAccess()) {
-            $this->tpl->setOnScreenMessage('info',$this->pl->txt('print_all_info'),true);
+            $this->tpl->setOnScreenMessage('info', $this->pl->txt('print_all_info'), true);
 
             if ($this->ementoring) {
                 $this->ctrl->setParameter($this, 'ementor', true);
@@ -215,23 +213,23 @@ class ilParticipationCertificateResultGUI
 
         $target_ref = 0;
         if ($this->cert_access->isSelfPrintEnabled() && !$this->cert_access->hasCurrentUserPrintAccess()) {
-            $global_config_sets = ilParticipationCertificateConfig::where(['config_type'=>3, 'global_config_id' => 0 ])->orderBy('order_by')->get();
+            $global_config_sets = ilParticipationCertificateConfig::where(['config_type' => 3, 'global_config_id' => 0 ])->orderBy('order_by')->get();
 
             foreach ($global_config_sets as $config) {
-				if ($config->getConfigKey() == 'true_name_helper') {
-					$target_ref=$config->getConfigValue();
-				}
-			}
-            $this->tpl->setOnScreenMessage('failure',$this->pl->txt('noname_noprint'), true);
+                if ($config->getConfigKey() == 'true_name_helper') {
+                    $target_ref = $config->getConfigValue();
+                }
+            }
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('noname_noprint'), true);
 
             if (is_numeric($target_ref) && ($target_ref > 0)) {
-                $msgurl = ' <a href="ilias.php?baseClass=ilObjPluginDispatchGUI&cmd=forward&ref_id=' . $target_ref . '">' .  $this->pl->txt('helper_name') . '</a>';
+                $msgurl = ' <a href="ilias.php?baseClass=ilObjPluginDispatchGUI&cmd=forward&ref_id=' . $target_ref . '">' . $this->pl->txt('helper_name') . '</a>';
             } else {
                 $msgurl = ' <a href="ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile">' . $this->pl->txt('helper_name') . '</a>';
             }
 
             $msgadd = $this->pl->txt('helper_action_pre') . $msgurl . $this->pl->txt('helper_action_post');
-            $this->tpl->setOnScreenMessage('info',$msgadd, true);
+            $this->tpl->setOnScreenMessage('info', $msgadd, true);
             //Variants sendQuestion, send Info or unified Failure (with some codechange). two same not possible
         }
 
@@ -351,110 +349,62 @@ class ilParticipationCertificateResultGUI
     {
     }
 
-    /**
-     * Excel Version of Fill Header.
-     *
-     * @param	ilExcel	$a_excel excel wrapper
-     * @param	int		$a_row   row counter
-     */
-    protected function fillHeaderExcel(ilExcel $a_excel, int &$a_row, $resultTable): void
+    // same column list as the table, so export header and values stay aligned
+    private function initExportColumns(ilParticipationCertificateResultTableGUI $result_table): void
     {
-        $this->columns = [
-            [
-                'text' => 'invisible'
-            ]
-        ];
-        
-        $selectable_columns = $resultTable->getColumsForRepresentation();
-        foreach ($selectable_columns as $column) {
-            $this->columns[] = [
-                'text' => $column->getTitle()
-                ];
+        $this->columns = [];
+        foreach ($result_table->getColumsForRepresentation() as $key => $column) {
+            $this->columns[$key] = strip_tags($column->getTitle());
         }
+    }
+
+    protected function fillHeaderExcel(ilExcel $a_excel, int &$a_row, ilParticipationCertificateResultTableGUI $resultTable): void
+    {
+        $this->initExportColumns($resultTable);
 
         $col = 0;
-        foreach ($this->columns as $column) {
-            $title = strip_tags($column['text']);
-            if ($title) {
-                $a_excel->setCell($a_row, $col++, $title);
-            }
+        foreach ($this->columns as $title) {
+            $a_excel->setCell($a_row, $col++, $title);
         }
         $a_excel->setBold('A' . $a_row . ':' . $a_excel->getColumnCoord($col - 1) . $a_row);
     }
 
-    /**
-     * Excel Version of Fill Row.
-     *
-     * @param	ilExcel $a_excel excel wrapper
-     * @param	int     $a_row   row counter
-     * @param	array   $a_set   data array
-     */
     protected function fillRowExcel(ilExcel $a_excel, int &$a_row, array $a_set): void
     {
         $col = 0;
-
-        foreach ($a_set as $key => $value) {
-
-            if ($key !== 'usr_id') {
-                if (is_array($value)) {
-                    $value = implode(', ', $value);
-                }
-                if (is_string($value)) {
-                    // table records are HTML-escaped for the web table
-                    $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                }
-                $a_excel->setCell($a_row, $col++, $value);
+        foreach (array_keys($this->columns) as $key) {
+            $value = $a_set[$key] ?? '';
+            if (is_array($value)) {
+                $value = implode(', ', $value);
             }
-
+            if (is_string($value)) {
+                // table records are HTML-escaped for the web table
+                $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+            $a_excel->setCell($a_row, $col++, $value);
         }
     }
 
-    /**
-     * CSV Version of Fill Header.
-     *
-     * @param	ilCSVWriter $a_csv current file
-     */
-    protected function fillHeaderCSV(ilCSVWriter $a_csv, $resultTable): void
+    protected function fillHeaderCSV(ilCSVWriter $a_csv, ilParticipationCertificateResultTableGUI $resultTable): void
     {
-        $this->columns = [
-            [
-                'text' => 'invisible'
-            ]
-        ];
+        $this->initExportColumns($resultTable);
 
-        $selectable_columns = $resultTable->getColumsForRepresentation();
-        foreach ($selectable_columns as $column) {
-            $this->columns[] = [
-                'text' => $column->getTitle()
-            ];
-        }
-
-        foreach ($this->columns as $column) {
-            $title = strip_tags($column['text']);
-            if ($title) {
-                $a_csv->addColumn($this->neutralizeCsvFormula($title));
-            }
+        foreach ($this->columns as $title) {
+            $a_csv->addColumn($this->neutralizeCsvFormula($title));
         }
         $a_csv->addRow();
     }
 
-    /**
-     * CSV Version of Fill Row.
-     *
-     * @param	ilCSVWriter $a_csv current file
-     * @param	array       $a_set data array
-     */
     protected function fillRowCSV(ilCSVWriter $a_csv, array $a_set): void
     {
-        foreach ($a_set as $key => $value) {
-            if ($key !== 'usr_id') {
-                if (is_array($value)) {
-                    $value = implode(', ', $value);
-                }
-                $a_csv->addColumn($this->neutralizeCsvFormula(
-                    html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')
-                ));
+        foreach (array_keys($this->columns) as $key) {
+            $value = $a_set[$key] ?? '';
+            if (is_array($value)) {
+                $value = implode(', ', $value);
             }
+            $a_csv->addColumn($this->neutralizeCsvFormula(
+                html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')
+            ));
         }
         $a_csv->addRow();
     }
@@ -491,13 +441,21 @@ class ilParticipationCertificateResultGUI
         $this->ctrl->saveParameterByClass(ilParticipationCertificateResultGUI::class, ['ref_id', 'group_id']);
         $this->ctrl->saveParameterByClass(ilParticipationCertificateGUI::class, 'ref_id');
 
-        $this->tabs->addTab(self::CMD_OVERVIEW, $this->pl->txt('header_overview'),
-            $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONTENT));
-        
+        $this->tabs->addTab(
+            self::CMD_OVERVIEW,
+            $this->pl->txt('header_overview'),
+            $this->ctrl->getLinkTargetByClass(self::class, self::CMD_CONTENT)
+        );
+
         if ($this->cert_access->hasCurrentUserAdminAccess()) {
-            $this->tabs->addTab(ilParticipationCertificateGUI::TAB_CONFIG, $this->pl->txt('header_config'),
-                $this->ctrl->getLinkTargetByClass(ilParticipationCertificateGUI::class,
-                    ilParticipationCertificateGUI::CMD_CONFIG));
+            $this->tabs->addTab(
+                ilParticipationCertificateGUI::TAB_CONFIG,
+                $this->pl->txt('header_config'),
+                $this->ctrl->getLinkTargetByClass(
+                    ilParticipationCertificateGUI::class,
+                    ilParticipationCertificateGUI::CMD_CONFIG
+                )
+            );
         }
         $this->tabs->activateTab(self::CMD_OVERVIEW);
     }
@@ -512,7 +470,7 @@ class ilParticipationCertificateResultGUI
         $renderer = $DIC->ui()->renderer();
 
         $result_table = new ilParticipationCertificateResultTableGUI();
-        
+
         $filter_html = '';
         $filter_firstname = '';
         $filter_lastname = '';
@@ -549,8 +507,8 @@ class ilParticipationCertificateResultGUI
         if (!empty($action)) {
             switch ($action) {
                 case 'print_with_ementorining':
-		        $this->printPdf(true);
-		        break;
+                    $this->printPdf(true);
+                    break;
 
                 case 'print_without_ementorining':
                     $this->printPdf(false);
@@ -647,8 +605,8 @@ class ilParticipationCertificateResultGUI
             } else {
                 $ementor_url_parameter = ilParticipationCertificateHelper::fetchUrlParameter('ementor', 'string');
                 if ($ementor_url_parameter == 'true') {
-			        $ementor = true;
-		         }
+                    $ementor = true;
+                }
                 $cert_access = new ilParticipationCertificateAccess($this->course_ref_id);
                 $user_ids = $cert_access->getUserIdsOfGroup();
                 if (empty($usr_id)) {
@@ -702,7 +660,7 @@ class ilParticipationCertificateResultGUI
             $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
-                $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_records_selected'), true);
                 $this->ctrl->redirect($this, self::CMD_CONTENT);
             }
 
@@ -728,7 +686,7 @@ class ilParticipationCertificateResultGUI
             $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_ids);
             $usr_ids = $this->excludeUserIfDataMissing($usr_ids, $arr_usr_data);
 
-            if(empty($usr_ids)) {
+            if (empty($usr_ids)) {
                 $this->redirectWithError(self::CMD_CONTENT, $this->pl->txt('all_user_data_missing'));
             }
 
@@ -765,7 +723,7 @@ class ilParticipationCertificateResultGUI
             $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
             if (empty($config_entries)) {
-                $this->tpl->setOnScreenMessage('failure',$this->lng->txt('no_records_selected'), true);
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_records_selected'), true);
                 $this->ctrl->redirect($this, self::CMD_CONTENT);
             }
             $usr_ids = [];
@@ -790,7 +748,7 @@ class ilParticipationCertificateResultGUI
             $arr_usr_data = ilPartCertUsersData::getData($this->pl, $usr_ids);
             $usr_ids = $this->excludeUserIfDataMissing($usr_ids, $arr_usr_data);
 
-            if(empty($usr_ids)) {
+            if (empty($usr_ids)) {
                 $this->redirectWithError(self::CMD_CONTENT, $this->pl->txt('all_user_data_missing'));
             }
 
@@ -884,7 +842,7 @@ class ilParticipationCertificateResultGUI
                 continue;
             }
 
-            if(!$user_data->checkIfUserDataFilled(
+            if (!$user_data->checkIfUserDataFilled(
                 $arr_usr_data[$id]->getPartCertFirstname(),
                 $arr_usr_data[$id]->getPartCertLastname()
             )) {

@@ -3,18 +3,31 @@
     {% if logo_path %}
     <div> <img src="{{logo_path}}" alt=""></div>
     {% endif %}
+    {% if text_values.page1_title|trim %}
     <div><h1>{{text_values.page1_title}}</h1></div>
+    {% endif %}
   </div>
 
   <div>
+    {% if text_values.page1_introduction1|trim %}
     <p class="p-default">{{text_values.page1_introduction1}}</p>
+    {% endif %}
+    {% if text_values.page1_introduction2|trim %}
     <p class="p-default">{{text_values.page1_introduction2}}</p>
+    {% endif %}
   </div>
 
+ {% set page1_box1_has_rows = (not final_test and text_values.page1_box1_row1|trim)
+     or (suggested_courses and text_values.page1_box1_row2|trim)
+     or additional_offer
+     or (final_test and text_values.page1_box1_row1_alternative|trim) %}
+ {% if page1_box1_has_rows %}
  <div class="table_container">
+  {% if text_values.page1_box1_title|trim %}
   <p class="p-default"><b>{{text_values.page1_box1_title}}</b></p>
+  {% endif %}
   <table class="table" id="table1">
-      {% if not final_test %}
+      {% if not final_test and text_values.page1_box1_row1|trim %}
       <tr>
           <td class="td1">
               {{text_values.page1_box1_row1}}
@@ -28,7 +41,7 @@
           </td>
       </tr>
     {% endif %}
-    {% if suggested_courses %}
+    {% if suggested_courses and text_values.page1_box1_row2|trim %}
     <tr>
       <td class="td1">{{text_values.page1_box1_row2}}</td>
       <td class="td2">{{learn_sugg_reached_percentage}}</td>
@@ -40,7 +53,7 @@
           <td class="td2">{{not_suggested_courses.value}}</td>
       </tr>
     {% endif %}
-    {% if final_test %}
+    {% if final_test and text_values.page1_box1_row1_alternative|trim %}
       <tr>
           <td class="td1">
               {{text_values.page1_box1_row1_alternative}}
@@ -52,11 +65,16 @@
       {% endif %}
   </table>
   </div>
+ {% endif %}
 
 {% if show_ementoring %}
+{% if text_values.page1_box2_row1|trim or (homework_included and text_values.page1_box2_row2|trim) %}
 <div class="table_container">
+  {% if text_values.page1_box2_title|trim %}
   <p class="p-default"><b>{{text_values.page1_box2_title}}</b></p>
+  {% endif %}
   <table class="table" id="table2">
+   {% if text_values.page1_box2_row1|trim %}
    <tr>
      <td class="td1">
        {{text_values.page1_box2_row1}}
@@ -69,7 +87,8 @@
        {% endif %}
      </td>
    </tr>
-  {% if homework_included %}
+   {% endif %}
+  {% if homework_included and text_values.page1_box2_row2|trim %}
    <tr>
      <td class="td1">{{text_values.page1_box2_row2}}</td>
      <td class="td2">Abgabe von {{excercise_percentage}}% der Hausaufgaben</td>
@@ -77,9 +96,12 @@
   {% endif %}
   </table>
 </div>
+{% endif %}
 {% if sessions_included %}
 <div class="table_container">
+    {% if text_values.sessions|trim %}
     <p class="p-default"><b>{{text_values.sessions}}</b></p>
+    {% endif %}
     <table class="table" id="table7">
         <tr>
             <td class="td1">{{sessions.label}}</td>
@@ -90,36 +112,59 @@
 {% endif %}
 {% endif %}
 
+<div class="signature_block">
+{% if text_values.page1_location_date|trim %}
 <div class="date"> <p>{{text_values.page1_location_date}}</p>  </div>
+{% endif %}
 <div id="signature">
   {% if page1_issuer_signature %}
   <img alt="" src="{{page1_issuer_signature}}"/><br/>
   {% endif %}
+  {% if text_values.page1_issuer_name|trim or text_values.page1_issuer_title|trim %}
   <p>{{text_values.page1_issuer_name}}<br/>
   <b>{{text_values.page1_issuer_title}}</b><br/><br/>
   </p>
+  {% endif %}
 </div>
+</div>
+  {% if text_values.page1_disclaimer|trim %}
   <br/>{{text_values.page1_disclaimer}}<br/>
-  {% if show_footer %}
+  {% endif %}
+  {% if show_footer and text_values.footer_config|trim %}
   <div class="footer"><i>{{text_values.footer_config}}</i></div>
   {% endif %}
 <!-- ENDE SEITE EINS -->
-<div class="pagebreak">
-</div>
+<pagebreak />
 <!-- BEGIN SEITE ZWEI -->
 <div class="center">
+  {% if logo_path %}
   <div> <img src="{{logo_path}}" alt=""> </div>
+  {% endif %}
+  {% if text_values.page2_title|trim %}
   <div> <h2>{{text_values.page2_title}}</h2> </div>
+  {% endif %}
 </div>
 
+{% if text_values.page2_introduction1|trim %}
 <p class="p-default">{{text_values.page2_introduction1}} </p>
+{% endif %}
+{% if text_values.page2_introduction2|trim %}
 <p class="p-default">{{text_values.page2_introduction2}}</p>
+{% endif %}
+{% if text_values.page2_introduction3|trim %}
 <p class="p-default"><b>{{text_values.page2_introduction3}}</b></p>
+{% endif %}
 
+{% set page2_box1_has_rows = (not final_test and text_values.page2_box1_row1|trim)
+   or (suggested_courses and text_values.page2_box1_row2|trim)
+   or additional_offer %}
+{% if page2_box1_has_rows %}
 <div class="table_container">
+  {% if text_values.page2_box1_title|trim %}
   <p><b>{{text_values.page2_box1_title}}</b></p>
+  {% endif %}
   <table class="table" id="table3">
-  {% if not final_test %}
+  {% if not final_test and text_values.page2_box1_row1|trim %}
   <tr>
       <td class="td1">{{text_values.page2_box1_row1}}</td>
       <td class="td2">{{text_values.page2_box1_row1_total_questions}} Fragen aus den Themengebieten:
@@ -131,7 +176,7 @@
       </td>
   </tr>
   {% endif %}
-  {% if suggested_courses %}
+  {% if suggested_courses and text_values.page2_box1_row2|trim %}
   <tr>
     <td class="td1">{{text_values.page2_box1_row2}}</td>
     <td class="td2">{{learn_sugg_reached_percentage}} der empfohlenen Module wurden bearbeitet </td>
@@ -145,17 +190,23 @@
   {% endif %}
   </table>
 </div>
+{% endif %}
 {% if show_ementoring %}
+{% if text_values.page2_box2_row1|trim or (homework_included and text_values.page2_box2_row2|trim) %}
 <div class="table_container">
+  {% if text_values.page2_box2_title|trim %}
   <p><b>{{text_values.page2_box2_title}}</b></p>
+  {% endif %}
   <table class="table" id="table4">
+  {% if text_values.page2_box2_row1|trim %}
   <tr>
     <td class="td1">{{text_values.page2_box2_row1}}</td>
     <td class="td2">
    {{iass_states | raw}}
     </td>
   </tr>
-  {% if homework_included %}
+  {% endif %}
+  {% if homework_included and text_values.page2_box2_row2|trim %}
   <tr>
     <td class="td1">{{text_values.page2_box2_row2}}</td>
     <td class="td2">Abgabe von {{excercise_percentage}}% der Hausaufgaben</td>
@@ -163,10 +214,15 @@
   {% endif %}
   </table>
 </div>
+{% endif %}
+{% if text_values.page1_disclaimer|trim %}
 <br/>{{text_values.page1_disclaimer}}<br/>
+{% endif %}
 {% if sessions_included %}
 <div class="table_container">
+    {% if text_values.sessions|trim %}
     <p class="p-default"><b>{{text_values.sessions}}</b></p>
+    {% endif %}
     <table class="table" id="table8">
         <tr>
             <td class="td1">{{sessions.label}}</td>
@@ -178,7 +234,7 @@
 
 {% endif %}
 
-{% if show_footer %}
+{% if show_footer and text_values.footer_config|trim %}
   <div class="footer"><i>{{text_values.footer_config}}</i></div>
 {% endif %}
 </div>
