@@ -776,3 +776,18 @@ if ($this->db->tableExists('udf_field_id_map')) {
     }
 }
 ?>
+
+<#43>
+<?php
+/** @var ilParticipationCertificateConfig $config */
+$config = ilParticipationCertificateConfig::where(array(
+        'config_key' => 'true_name_helper',
+        'global_config_id' => '0'
+    )
+)->first();
+
+if(!empty($config)) {
+    $config->delete();
+}
+?>
+
