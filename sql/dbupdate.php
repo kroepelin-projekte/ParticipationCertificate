@@ -786,7 +786,7 @@ $config = ilParticipationCertificateConfig::where(array(
     )
 )->first();
 
-if(!empty($configs)) {
+if(!empty($config)) {
     $config->delete();
 }
 ?>
