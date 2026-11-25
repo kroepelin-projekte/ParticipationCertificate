@@ -3,6 +3,9 @@
 use Twig\Error\SyntaxError;
 use Twig\Error\LoaderError;
 use JetBrains\PhpStorm\NoReturn;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Suggestion\LearningObjectiveSuggestion;
+use  SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\LearningObjective\LearningObjectiveCourse;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\User\User;
 
 /**
  * Class ilParticipationCertificateResultGUI
@@ -47,10 +50,8 @@ class ilParticipationCertificateResultGUI
         self::CMD_RESET_FILTER,
     ];
 
-    /**
-     * @var array|array[]
-     */
-    private array $columns;
+    /** @var array<string, string> export column key => title */
+    private array $columns = [];
 
     private ilParticipationCertificateAccess $cert_access;
 
@@ -357,29 +358,52 @@ class ilParticipationCertificateResultGUI
      * @param	ilExcel	$a_excel excel wrapper
      * @param	int		$a_row   row counter
      */
-    protected function fillHeaderExcel(ilExcel $a_excel, int &$a_row, $resultTable): void
+    protected function fillHeaderExcel(ilExcel $a_excel, int &$a_row, ilParticipationCertificateResultTableGUI $resultTable): void
     {
-        $this->columns = [
-            [
-                'text' => 'invisible'
-            ]
-        ];
-        
-        $selectable_columns = $resultTable->getColumsForRepresentation();
-        foreach ($selectable_columns as $column) {
-            $this->columns[] = [
-                'text' => $column->getTitle()
-                ];
-        }
+        $this->initExportColumns($resultTable);
 
         $col = 0;
-        foreach ($this->columns as $column) {
-            $title = strip_tags($column['text']);
-            if ($title) {
-                $a_excel->setCell($a_row, $col++, $title);
-            }
+        foreach ($this->columns as $title) {
+            $a_excel->setCell($a_row, $col++, $title);
         }
         $a_excel->setBold('A' . $a_row . ':' . $a_excel->getColumnCoord($col - 1) . $a_row);
+    }
+
+    /**
+     * Header and rows are built from the same column keys, so every value stays under its title
+     * (records may lack keys, e.g. suggestions_generated_at, or contain keys without a column).
+     */
+    private function initExportColumns(ilParticipationCertificateResultTableGUI $result_table): void
+    {
+        $this->columns = [];
+        foreach ($result_table->getColumsForRepresentation() as $key => $column) {
+            $this->columns[$key] = strip_tags($column->getTitle());
+        }
+    }
+
+    /**
+     * Record value as plain export text: date formatted, list joined, HTML (e.g. progress bars) removed.
+     */
+    private function exportValue(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('d.m.Y H:i');
+        }
+        if (is_array($value)) {
+            $value = implode(', ', $value);
+        }
+        $value = preg_replace('#<br\s*/?>#i', "\n", (string) $value);
+        // table records are HTML-escaped for the web table
+        $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // progress bar markup leaves template placeholders and indentation behind
+        $value = preg_replace('/\{[A-Z0-9_]+\}/', '', $value);
+        $lines = array_filter(
+            // \x{00A0}: &nbsp; from the markup
+            array_map(static fn(string $line): string => trim(preg_replace('/[\s\x{00A0}]+/u', ' ', $line)), explode("\n", $value)),
+            static fn(string $line): bool => $line !== ''
+        );
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -392,20 +416,8 @@ class ilParticipationCertificateResultGUI
     protected function fillRowExcel(ilExcel $a_excel, int &$a_row, array $a_set): void
     {
         $col = 0;
-
-        foreach ($a_set as $key => $value) {
-
-            if ($key !== 'usr_id') {
-                if (is_array($value)) {
-                    $value = implode(', ', $value);
-                }
-                if (is_string($value)) {
-                    // table records are HTML-escaped for the web table
-                    $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                }
-                $a_excel->setCell($a_row, $col++, $value);
-            }
-
+        foreach (array_keys($this->columns) as $key) {
+            $a_excel->setCell($a_row, $col++, $this->exportValue($a_set[$key] ?? ''));
         }
     }
 
@@ -414,26 +426,12 @@ class ilParticipationCertificateResultGUI
      *
      * @param	ilCSVWriter $a_csv current file
      */
-    protected function fillHeaderCSV(ilCSVWriter $a_csv, $resultTable): void
+    protected function fillHeaderCSV(ilCSVWriter $a_csv, ilParticipationCertificateResultTableGUI $resultTable): void
     {
-        $this->columns = [
-            [
-                'text' => 'invisible'
-            ]
-        ];
+        $this->initExportColumns($resultTable);
 
-        $selectable_columns = $resultTable->getColumsForRepresentation();
-        foreach ($selectable_columns as $column) {
-            $this->columns[] = [
-                'text' => $column->getTitle()
-            ];
-        }
-
-        foreach ($this->columns as $column) {
-            $title = strip_tags($column['text']);
-            if ($title) {
-                $a_csv->addColumn($this->neutralizeCsvFormula($title));
-            }
+        foreach ($this->columns as $title) {
+            $a_csv->addColumn($this->neutralizeCsvFormula($title));
         }
         $a_csv->addRow();
     }
@@ -446,15 +444,8 @@ class ilParticipationCertificateResultGUI
      */
     protected function fillRowCSV(ilCSVWriter $a_csv, array $a_set): void
     {
-        foreach ($a_set as $key => $value) {
-            if ($key !== 'usr_id') {
-                if (is_array($value)) {
-                    $value = implode(', ', $value);
-                }
-                $a_csv->addColumn($this->neutralizeCsvFormula(
-                    html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')
-                ));
-            }
+        foreach (array_keys($this->columns) as $key) {
+            $a_csv->addColumn($this->neutralizeCsvFormula($this->exportValue($a_set[$key] ?? '')));
         }
         $a_csv->addRow();
     }
@@ -601,6 +592,10 @@ class ilParticipationCertificateResultGUI
 
                 case 'print_selected_without_ementorining':
                     $this->printSelectedWithouteMentoring();
+                    break;
+
+                case 'suggestions_regenerate':
+                    $this->suggestionsRegenerate();
                     break;
             }
         }
@@ -809,6 +804,109 @@ class ilParticipationCertificateResultGUI
         } else {
             $this->redirectNoPermission();
         }
+    }
+
+    private function suggestionsRegenerate(): void
+    {
+        global $DIC;
+
+        $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
+
+        if (empty($config_entries) || empty($config_entries[0])) {
+            $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_records_selected'));
+        }
+
+        $url_parameters = $this->excludeURLParameters($config_entries[0]);
+
+        $member_ids = $this->restrictToCourseMembers([(int) $url_parameters[0]]);
+        if ($member_ids === []) {
+            $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_permission'));
+        }
+        $user_id = $member_ids[0];
+
+        $obj_id = ilObject::_lookupObjectId($this->course_ref_id);
+        $settings = ilLOSettings::getInstanceByObjId($obj_id);
+        $initial_test_ref_id = $settings->getInitialTest();
+
+        if (empty($initial_test_ref_id)) {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('initial_test_missing') . ':' . $this->course_ref_id, true);
+            $this->ctrl->redirect($this, self::CMD_CONTENT);
+        }
+
+        $test = new ilObjTest($initial_test_ref_id, true);
+
+        $test_ref_ids = ilObject::_getAllReferences($test->getId());
+        $learning_objective_suggestion = new LearningObjectiveSuggestion();
+        $active_participants = [];
+        if ($test->participantDataExist()) {
+            $active_participants_list = $test->getActiveParticipantList();
+            $active_participants = $this->removeInactiveUsers($active_participants_list->getAllUserIds());
+        }
+
+        if (!empty($active_participants) && in_array($user_id, $active_participants)) {
+            $learning_suggestion_exists = $learning_objective_suggestion->suggestionExists(
+                $user_id,
+                $obj_id
+            );
+
+            if ($learning_suggestion_exists) {
+                $user_id = null;
+            }
+
+        }
+
+        if($user_id === null) {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_active_participant'), true);
+            $this->ctrl->redirect($this, self::CMD_CONTENT);
+        }
+
+        $learning_suggestion_exists = $learning_objective_suggestion->suggestionExists(
+            $user_id,
+            $obj_id
+        );
+
+        if ($learning_suggestion_exists) {
+            $user_id = null;
+        }
+
+        $parent_found = false;
+        $parent = 0;
+        foreach ($test_ref_ids as $test_ref_id) {
+            $parent = $DIC->repositoryTree()->getParentId($test_ref_id);
+
+            if ($parent === $this->course_ref_id) {
+                $parent_found = true;
+                break;
+            }
+        }
+
+        if ($parent_found && ilObject::_lookupType($parent, true) === 'crs') {
+            $course = new LearningObjectiveCourse(new ilObjCourse($parent, true));
+
+            if (!$course->getIsCalculationInactive()) {
+                $user = new User(new ilObjUser($user_id));
+                $learning_objective_suggestion_plugin = ilLearningObjectiveSuggestionsPlugin::getInstance();
+                if ($learning_objective_suggestion_plugin->startCalculation($course, $user)) {
+                    $learning_objective_suggestion_plugin->sendSuggestions($course, $user);
+                }
+            }
+        }
+        $this->tpl->setOnScreenMessage('success', $this->pl->txt('learning_suggestions_generated'), true);
+        $this->ctrl->redirect($this, self::CMD_CONTENT);
+    }
+
+    /**
+     * @param array $user_ids
+     * @return array
+     */
+    private function removeInactiveUsers(array $user_ids): array
+    {
+        foreach ($user_ids as $key => $user_id) {
+            if (!ilObjUser::_lookupActive($user_id)) {
+                unset($user_ids[$key]);
+            }
+        }
+        return array_values($user_ids);
     }
 
     /**
