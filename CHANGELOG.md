@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+* TrackingTool counts a course as completed when its required percentage is reached (previously fixed 60 %)
+
 ## [3.0.0]
 ### Updated
 * Plugin for release_11 updated

@@ -165,7 +165,7 @@ class TrackingTool
                 if ($key === $k) {
                     $completed = 0;
                     foreach ($data as $course) {
-                        if ($course['test_percentage'] !== null && $course['test_percentage'] >= '60') {
+                        if ($course['test_percentage'] !== null && $course['test_percentage'] >= $course['test_required_percentage']) {
                             $completed++;
                         }
                     }
