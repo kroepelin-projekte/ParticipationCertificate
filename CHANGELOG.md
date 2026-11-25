@@ -1,9 +1,6 @@
 # Changelog
 
 ## [3.0.1]
-### Added
-* Condition for existence of ilParticipationCertificateConfig when delete it
-
 ### Removed
 * UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
