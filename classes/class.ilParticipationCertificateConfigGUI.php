@@ -40,7 +40,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
 
     private const string CMD_CREATE_TEMPLATE =  'createTemplateFromLocalConfig';
 
-    private const RETURN_BACK = 'returnBack';
+    private const string RETURN_BACK = 'returnBack';
 
     private const array COMMANDS = [
         self::CMD_CONFIGURE,
@@ -99,8 +99,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
     public string $lastname;
 
     public string $gender;
-
-    private bool $err_helper;
 
     private $logger;
 
@@ -438,18 +436,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
             $config->setGlobalConfigId(0);
             $config->setOrderBy(5);
-            $config->store();
-        }
-
-        $config = ilParticipationCertificateConfig::where(['config_key' => 'true_name_helper'])->first();
-        if (!is_object($config)) {
-            $config = new ilParticipationCertificateConfig();
-            $config->setConfigKey('true_name_helper');
-            $config->setConfigValue('');
-            $config->setConfigType(ilParticipationCertificateConfig::CONFIG_SET_TYPE_GLOBAL);
-            $config->setConfigValueType(ilParticipationCertificateConfig::CONFIG_VALUE_TYPE_OTHER);
-            $config->setGlobalConfigId(0);
-            $config->setOrderBy(6);
             $config->store();
         }
 
@@ -802,13 +788,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
 
                     break;
 
-                case 'true_name_helper':
-                    $inputFields[$config->getConfigKey()] = $ui->input()->field()->textarea(
-                        $this->pl->txt('true_name_helper')
-                    )->withValue($config->getConfigValue() ?? '');
-
-                    break;
-
                 default:
                     $configValue = $config->getConfigValue();
                     if (!empty($configValue)) {
@@ -871,8 +850,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
             $this->tpl->setContent($DIC->ui()->renderer()->render($form));
             return false;
         }
-
-        $this->err_helper = false;
 
         $part_cert_configs = new ilParticipationCertificateConfigs();
         switch ($set_type) {
@@ -997,16 +974,6 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                             }
                             break;
 
-                        case 'true_name_helper':
-                            $userinput = trim($item);
-                            if (!ctype_digit($userinput) and $userinput != '') {
-                                $userinput = '';
-                                $this->err_helper = true;
-                            }
-                            $input = $userinput;
-
-                            break;
-
                         case 'color':
                         case 'unsugg_color':
                             $hexValue = $this->rgbToHex(
@@ -1029,11 +996,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                 }
         }
 
-        if ($this->err_helper) {
-            $this->ctrl->redirect($this, self::CMD_SHOW_FORM_ERR);
-        } else {
-            $this->ctrl->redirect($this, self::CMD_CONFIGURE);
-        }
+        $this->ctrl->redirect($this, self::CMD_CONFIGURE);
         $this->logger->debug('End saving participation certificate');
 
         return true;

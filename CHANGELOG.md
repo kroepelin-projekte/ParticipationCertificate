@@ -1,8 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [3.2.0]
 ### Fixed
 * TrackingTool counts a course as completed when its required percentage is reached (previously fixed 60 %)
+
+## [3.0.1]
+### Removed
+* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
 ## [3.0.0]
 ### Updated
