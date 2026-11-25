@@ -1,28 +1,25 @@
 # Changelog
 
-## [3.0.3]
+## [3.1.0]
 ### Changed
 * Result table: "Processing of Cross-Disciplinary Homework (Passed/Total)" is colored again with the rules of the former progress bars (green/orange/red/grey, based on the configured period), now as a colored badge around the value
 * Result table: "Processing of Recommended Mathematics Learning Modules" is now colored with the same rules as well (previously only the fallback without results was a progress bar)
 * While the period is running, the badge tooltip shows the target value; the Excel/CSV export stays plain text
+* Faster certificate printing: tracking tool data is loaded once per course instead of per user
+* Result table shows exercise progress as passed/total instead of progress bars (faster)
 ### Fixed
 * Printing several certificates without a selection shows "No Users Selected" instead of "-no_records_selected-"
-
-## [3.0.2]
-### Fixed
 * Exercise results are summed over all exercises of the group instead of using only the last one (table, certificate and the prefilled "homework" value when editing a certificate)
 * Excel/CSV export: header and values are built from the same column list, no more shifted titles
 * Self print (tracking tool) no longer fails with HTTP 500 when the user has no certificate user data; the name falls back to the entered or an empty name
 * No blank page between page 1 and page 2 of a certificate when page 1 is completely filled
 * Location/date and the signature block are no longer split across pages; if they do not fit on page 1 they move to the next page together
-### Changed
-* Faster certificate printing: tracking tool data is loaded once per course instead of per user
 ### Removed
 * Result table column "Bearbeitung der Aufgaben zu überfachlichen Themen (Anzahl)" (duplicated the passed count of the passed/total column)
 
 ## [3.0.1]
-### Changed
-* Result table shows exercise progress as passed/total instead of progress bars (faster)
+### Removed
+* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
 
 ## [3.0.0]
 ### Updated

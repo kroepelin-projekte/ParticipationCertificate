@@ -96,7 +96,6 @@ helper_action_pre#:#Hier können Sie Ihre
 helper_action_post#:# , um das Drucken freizuschalten!
 helper_name#:#Einträge aktualisieren
 unsugg_color#:#Farbe nicht empfohlene LZ
-true_name_helper#:#UDF-Editor-Objekt für die Namenseingabe
 enable_ementoring#:#Ementoring einblenden
 back#:#Zurück
 Mr#:#Herr
