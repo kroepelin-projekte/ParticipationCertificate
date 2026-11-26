@@ -11,10 +11,10 @@ use ILIAS\UI\URLBuilderToken;
 use ILIAS\UI\Component\Input\Container\Filter\Standard;
 use ILIAS\UI\Component\Table\DataRetrieval;
 use ILIAS\UI\Component\Table\DataRowBuilder;
-use ILIAS\UI\Implementation\Component\Table\Data;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Notification\Notification;
 
 /**
- * Class ilParticipationCertificateResultTableNewGUI
+ * Class ilParticipationCertificateResultTableGUI
  */
 #[AllowDynamicProperties]
 class ilParticipationCertificateResultTableGUI
@@ -410,7 +410,7 @@ class ilParticipationCertificateResultTableGUI
         $attended_sessions = $this->countAttendedSessions($sessions, $page_usr_ids);
 
         $rows = array();
-        foreach ($arr_usr_data as $usr_id=>$user_data) {
+        foreach ($arr_usr_data as $usr_id => $user_data) {
             $row = array();
             $row['usr_id'] = $usr_id;
             $row['loginname'] = htmlspecialchars((string) $user_data->getPartCertUserName(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -512,9 +512,58 @@ class ilParticipationCertificateResultTableGUI
                 $row['eMentoring_percentage'] = $this->buildProgressBar(0,0);
             }
 
+            /** @var Notification $notification */
+            $notification = $this->getNotification($usr_id, $course_obj_id);
+
+            $notification_sent = $this->pl->txt('no');
+            if ($notification != '' && !empty($notification->getSentAt())) {
+                $notification_sent = $this->pl->txt('yes');
+            }
+
+            /** @var getLearnSugg[] $suggestions */
+            $suggestions = getLearnSuggs::getData($usr_id, $course_obj_id);
+
+            $created_dates = array_filter(array_map(
+                static fn(getLearnSugg $suggestion): ?string => $suggestion->getSuggCreatedAt(),
+                $suggestions
+            ));
+
+            $created_at = '';
+            if (!empty($created_dates)) {
+                $created_at_datetime = new \DateTimeImmutable(min($created_dates));
+                $created_at = $created_at_datetime->format('d.m.Y H:i');
+            }
+            $row['generated_at'] = $created_at;
+
+            $suggestion_titles = [];
+            foreach ($suggestions as $suggestion) {
+                $suggestion_titles[] = htmlspecialchars($suggestion->getSuggObjTitle(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+            $row['suggestions'] = implode('<br>', $suggestion_titles);
+
+            $row['notification_sent'] = $notification_sent;
+
             $rows[] = $row;
         }
         return $rows;
+    }
+
+    /**
+     * @param int $user_id
+     * @param int $course_obj_id
+     * @return ActiveRecord|string
+     */
+    private function getNotification(int $user_id, int $course_obj_id): ActiveRecord|string
+    {
+        $notification = Notification::where(array(
+            'user_id' => $user_id,
+            'course_obj_id' => $course_obj_id
+        ))->first();
+
+        if ($notification === null) {
+            return '';
+        }
+        return $notification;
     }
 
     /**
@@ -568,6 +617,7 @@ class ilParticipationCertificateResultTableGUI
                                              ->text($this->pl->txt('cols_results_qualifying'))
                                              ->withIsSortable(false)
                                              ->withIsOptional(true, false);
+
         if ($this->ementoring or $write_access) {
             $cols['eMentoring_finished'] = $factory->table()->column()
                                              ->text($this->pl->txt('cols_eMentoring_finished'))
@@ -582,6 +632,21 @@ class ilParticipationCertificateResultTableGUI
                                                ->withIsSortable(false)
                                                ->withIsOptional(true, $this->ementoring);
         }
+
+        $cols['generated_at'] = $factory->table()->column()
+                                        ->text($this->pl->txt('generated_at'))
+                                        ->withIsOptional(true, true)
+                                        ->withIsSortable(false);
+
+        $cols['suggestions'] = $factory->table()->column()
+                                 ->text($this->pl->txt('suggestions'))
+                                 ->withIsOptional(true, true)
+                                 ->withIsSortable(false);
+        $cols['notification_sent'] = $factory->table()->column()
+                                       ->text($this->pl->txt('notification_sent'))
+                                       ->withIsOptional(true, true)
+                                       ->withIsSortable(false);
+
         return $cols;
     }
 
@@ -651,6 +716,13 @@ class ilParticipationCertificateResultTableGUI
                 $this->row_id_token
             );
         }
+
+        $actions['suggestions_regenerate'] = $f->table()->action()->single(
+            $this->pl->txt('suggestions_regenerate'),
+            $url_builder->withParameter($this->action_parameter_token, 'suggestions_regenerate'),
+            $this->row_id_token
+        );
+
         return $actions;
     }
 
