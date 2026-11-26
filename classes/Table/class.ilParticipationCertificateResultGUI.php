@@ -830,27 +830,20 @@ class ilParticipationCertificateResultGUI
             $active_participants = $this->removeInactiveUsers($active_participants_list->getAllUserIds());
         }
 
-        if (!empty($active_participants) && in_array($user_id, $active_participants)) {
-            $learning_suggestion_exists = $learning_objective_suggestion->suggestionExists(
-                $user_id,
-                $obj_id
-            );
-
-            if ($learning_suggestion_exists) {
-                $user_id = null;
-            }
-
-        }
-
-        if($user_id === null) {
-            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_active_participant'), true);
-            $this->ctrl->redirect($this, self::CMD_CONTENT);
-        }
-
         $learning_suggestion_exists = $learning_objective_suggestion->suggestionExists(
             $user_id,
             $obj_id
         );
+
+        if (!empty($active_participants) && in_array($user_id, $active_participants)) {
+            if ($learning_suggestion_exists) {
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('learning_suggestions_exist'), true);
+                $this->ctrl->redirect($this, self::CMD_CONTENT);
+            }
+        } else {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_active_participant'), true);
+            $this->ctrl->redirect($this, self::CMD_CONTENT);
+        }
 
         if ($learning_suggestion_exists) {
             $user_id = null;
