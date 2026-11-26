@@ -845,10 +845,6 @@ class ilParticipationCertificateResultGUI
             $this->ctrl->redirect($this, self::CMD_CONTENT);
         }
 
-        if ($learning_suggestion_exists) {
-            $user_id = null;
-        }
-
         $parent_found = false;
         $parent = 0;
         foreach ($test_ref_ids as $test_ref_id) {

@@ -127,7 +127,7 @@ suggestions_regenerate#:#Generate learning recommendation
 no_active_participant#:#No active participant
 initial_test_missing#:#No initial test is configured for this course
 learning_suggestions_generated#:#The learning recommendations have been generated.
-learning_suggestions_not_generated#:#The learning recommendations have been generated.
+learning_suggestions_not_generated#:#The learning recommendations haven't been generated.
 suggestions#:#Suggestions
 notification_sent#:#Notification sent
 learning_suggestions_exist#:#Learning suggestions exist
