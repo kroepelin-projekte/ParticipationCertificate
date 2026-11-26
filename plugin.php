@@ -1,7 +1,7 @@
 <?php
 // alphanumerical ID of the plugin; never change this
 $id = 'dhbwparticipationpdf';
-$version = '3.2.0';
+$version = '3.3.0';
 $ilias_min_version = '11.0';
 $ilias_max_version = '11.999';
 $responsible = 'Kröpelin Projekt GmbH';

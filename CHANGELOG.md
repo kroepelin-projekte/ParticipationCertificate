@@ -1,8 +1,20 @@
 # Changelog
 
-## [3.2.0]
+## [3.3.0]
 ### Fixed
 * TrackingTool counts a course as completed when its required percentage is reached (previously fixed 60 %)
+
+## [3.1.0]
+### Added
+* New columns "Generated at" (date and time the learning suggestions were generated), "Learning objective suggestions" and "Notification sent" in the results table
+* New row action "Generate learning recommendation" in the results table: starts the calculation of the learning suggestions (LearningObjectiveSuggestions plugin) for an active participant of the course's initial test and sends them to the user, if no suggestions exist yet
+
+### Fixed
+* Excel/CSV export: header and values are built from the same column list, so every value is under the right title (the header no longer contains an "invisible" column, missing values no longer shift the following columns)
+* Excel/CSV export: cells contain plain text only (no HTML or progress bar markup, line breaks kept)
+
+### Security
+* The regenerate action only accepts course/group members and requires a selected row
 
 ## [3.0.1]
 ### Removed
