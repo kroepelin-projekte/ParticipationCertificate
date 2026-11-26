@@ -635,13 +635,16 @@ class ilParticipationCertificateResultTableGUI
 
         $cols['generated_at'] = $factory->table()->column()
                                         ->text($this->pl->txt('generated_at'))
+                                        ->withIsOptional(true, true)
                                         ->withIsSortable(false);
 
         $cols['suggestions'] = $factory->table()->column()
                                  ->text($this->pl->txt('suggestions'))
+                                 ->withIsOptional(true, true)
                                  ->withIsSortable(false);
         $cols['notification_sent'] = $factory->table()->column()
                                        ->text($this->pl->txt('notification_sent'))
+                                       ->withIsOptional(true, true)
                                        ->withIsSortable(false);
 
         return $cols;

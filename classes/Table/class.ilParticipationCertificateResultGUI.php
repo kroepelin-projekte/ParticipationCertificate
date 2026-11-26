@@ -867,6 +867,8 @@ class ilParticipationCertificateResultGUI
             }
         }
 
+        $screen_message_type = 'failure';
+        $screen_message = $this->pl->txt('learning_suggestions_not_generated');
         if ($parent_found && ilObject::_lookupType($parent, true) === 'crs') {
             $course = new LearningObjectiveCourse(new ilObjCourse($parent, true));
 
@@ -874,11 +876,14 @@ class ilParticipationCertificateResultGUI
                 $user = new User(new ilObjUser($user_id));
                 $learning_objective_suggestion_plugin = ilLearningObjectiveSuggestionsPlugin::getInstance();
                 if ($learning_objective_suggestion_plugin->startCalculation($course, $user)) {
+                    $screen_message_type = 'success';
+                    $screen_message = $this->pl->txt('learning_suggestions_generated');
                     $learning_objective_suggestion_plugin->sendSuggestions($course, $user);
                 }
             }
         }
-        $this->tpl->setOnScreenMessage('success', $this->pl->txt('learning_suggestions_generated'), true);
+
+        $this->tpl->setOnScreenMessage($screen_message_type, $screen_message, true);
         $this->ctrl->redirect($this, self::CMD_CONTENT);
     }
 

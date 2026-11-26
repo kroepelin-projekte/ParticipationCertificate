@@ -2,12 +2,11 @@
 
 ## [3.1.0]
 ### Added
-* New columns "Generated at" (date and time the learning suggestions were genersted), "Learning ojective suggestions" and "Notification sent" in the results table
-* New row action "Regenerate the learning recommendation" in the results table: starts the calculation of the learning suggestions (LearningObjectiveSuggestions plugin) for an active participant of the course's initial test and sends them to the user, if no suggestions exist yet
+* New columns "Generated at" (date and time the learning suggestions were generated), "Learning objective suggestions" and "Notification sent" in the results table
+* New row action "Generate learning recommendation" in the results table: starts the calculation of the learning suggestions (LearningObjectiveSuggestions plugin) for an active participant of the course's initial test and sends them to the user, if no suggestions exist yet
 
 ### Fixed
 * Excel/CSV export: header and values are built from the same column list, so every value is under the right title (the header no longer contains an "invisible" column, missing values no longer shift the following columns)
-* Excel/CSV export: no more error ("Object of class DateTimeImmutable could not be converted to string") for the new date column; dates are exported as dd.mm.yyyy hh:mm
 * Excel/CSV export: cells contain plain text only (no HTML or progress bar markup, line breaks kept)
 
 ### Security
