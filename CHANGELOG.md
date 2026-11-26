@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.1.0]
+## [3.2.0]
 ### Changed
 * Result table: "Processing of Cross-Disciplinary Homework (Passed/Total)" is colored again with the rules of the former progress bars (green/orange/red/grey, based on the configured period), now as a colored badge around the value
 * Result table: "Processing of Recommended Mathematics Learning Modules" is now colored with the same rules as well (previously only the fallback without results was a progress bar)
@@ -10,12 +10,23 @@
 ### Fixed
 * Printing several certificates without a selection shows "No Users Selected" instead of "-no_records_selected-"
 * Exercise results are summed over all exercises of the group instead of using only the last one (table, certificate and the prefilled "homework" value when editing a certificate)
-* Excel/CSV export: header and values are built from the same column list, no more shifted titles
 * Self print (tracking tool) no longer fails with HTTP 500 when the user has no certificate user data; the name falls back to the entered or an empty name
 * No blank page between page 1 and page 2 of a certificate when page 1 is completely filled
 * Location/date and the signature block are no longer split across pages; if they do not fit on page 1 they move to the next page together
 ### Removed
 * Result table column "Bearbeitung der Aufgaben zu überfachlichen Themen (Anzahl)" (duplicated the passed count of the passed/total column)
+
+## [3.1.0]
+### Added
+* New columns "Generated at" (date and time the learning suggestions were generated), "Learning objective suggestions" and "Notification sent" in the results table
+* New row action "Generate learning recommendation" in the results table: starts the calculation of the learning suggestions (LearningObjectiveSuggestions plugin) for an active participant of the course's initial test and sends them to the user, if no suggestions exist yet
+
+### Fixed
+* Excel/CSV export: header and values are built from the same column list, so every value is under the right title (the header no longer contains an "invisible" column, missing values no longer shift the following columns)
+* Excel/CSV export: cells contain plain text only (no HTML or progress bar markup, line breaks kept)
+
+### Security
+* The regenerate action only accepts course/group members and requires a selected row
 
 ## [3.0.1]
 ### Removed

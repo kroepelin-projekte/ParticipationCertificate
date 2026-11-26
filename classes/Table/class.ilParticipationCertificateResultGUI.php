@@ -3,6 +3,9 @@
 use Twig\Error\SyntaxError;
 use Twig\Error\LoaderError;
 use JetBrains\PhpStorm\NoReturn;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Suggestion\LearningObjectiveSuggestion;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\LearningObjective\LearningObjectiveCourse;
+use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\User\User;
 
 /**
  * Class ilParticipationCertificateResultGUI
@@ -336,13 +339,36 @@ class ilParticipationCertificateResultGUI
     {
     }
 
-    // same column list as the table, so export header and values stay aligned
+    /**
+     * Header and rows are built from the same column keys as the table, so every value stays under its title
+     * (records may lack keys or contain keys without a column).
+     */
     private function initExportColumns(ilParticipationCertificateResultTableGUI $result_table): void
     {
         $this->columns = [];
         foreach ($result_table->getColumsForRepresentation() as $key => $column) {
             $this->columns[$key] = strip_tags($column->getTitle());
         }
+    }
+
+    /**
+     * Record value as plain export text: list joined, HTML removed, line breaks kept.
+     */
+    private function exportValue(mixed $value): string
+    {
+        if (is_array($value)) {
+            $value = implode(', ', $value);
+        }
+        $value = preg_replace('#<br\s*/?>#i', "\n", (string) $value);
+        // table records are HTML-escaped for the web table
+        $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $lines = array_filter(
+            // \x{00A0}: &nbsp; from the markup
+            array_map(static fn(string $line): string => trim(preg_replace('/[\s\x{00A0}]+/u', ' ', $line)), explode("\n", $value)),
+            static fn(string $line): bool => $line !== ''
+        );
+
+        return implode("\n", $lines);
     }
 
     protected function fillHeaderExcel(ilExcel $a_excel, int &$a_row, ilParticipationCertificateResultTableGUI $resultTable): void
@@ -360,15 +386,7 @@ class ilParticipationCertificateResultGUI
     {
         $col = 0;
         foreach (array_keys($this->columns) as $key) {
-            $value = $a_set[$key] ?? '';
-            if (is_array($value)) {
-                $value = implode(', ', $value);
-            }
-            if (is_string($value)) {
-                // table records are HTML-escaped for the web table
-                $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            }
-            $a_excel->setCell($a_row, $col++, $value);
+            $a_excel->setCell($a_row, $col++, $this->exportValue($a_set[$key] ?? ''));
         }
     }
 
@@ -385,13 +403,7 @@ class ilParticipationCertificateResultGUI
     protected function fillRowCSV(ilCSVWriter $a_csv, array $a_set): void
     {
         foreach (array_keys($this->columns) as $key) {
-            $value = $a_set[$key] ?? '';
-            if (is_array($value)) {
-                $value = implode(', ', $value);
-            }
-            $a_csv->addColumn($this->neutralizeCsvFormula(
-                html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')
-            ));
+            $a_csv->addColumn($this->neutralizeCsvFormula($this->exportValue($a_set[$key] ?? '')));
         }
         $a_csv->addRow();
     }
@@ -546,6 +558,10 @@ class ilParticipationCertificateResultGUI
 
                 case 'print_selected_without_ementorining':
                     $this->printSelectedWithouteMentoring();
+                    break;
+
+                case 'suggestions_regenerate':
+                    $this->suggestionsRegenerate();
                     break;
             }
         }
@@ -754,6 +770,103 @@ class ilParticipationCertificateResultGUI
         } else {
             $this->redirectNoPermission();
         }
+    }
+
+    private function suggestionsRegenerate(): void
+    {
+        global $DIC;
+
+        $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
+
+        if (empty($config_entries) || empty($config_entries[0])) {
+            $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_records_selected'));
+        }
+
+        $url_parameters = $this->excludeURLParameters($config_entries[0]);
+
+        $member_ids = $this->restrictToCourseMembers([(int) $url_parameters[0]]);
+        if ($member_ids === []) {
+            $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_permission'));
+        }
+        $user_id = $member_ids[0];
+
+        $obj_id = ilObject::_lookupObjectId($this->course_ref_id);
+        $settings = ilLOSettings::getInstanceByObjId($obj_id);
+        $initial_test_ref_id = $settings->getInitialTest();
+
+        if (empty($initial_test_ref_id)) {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('initial_test_missing') . ':' . $this->course_ref_id, true);
+            $this->ctrl->redirect($this, self::CMD_CONTENT);
+        }
+
+        $test = new ilObjTest($initial_test_ref_id, true);
+
+        $test_ref_ids = ilObject::_getAllReferences($test->getId());
+        $learning_objective_suggestion = new LearningObjectiveSuggestion();
+        $active_participants = [];
+        if ($test->participantDataExist()) {
+            $active_participants_list = $test->getActiveParticipantList();
+            $active_participants = $this->removeInactiveUsers($active_participants_list->getAllUserIds());
+        }
+
+        $learning_suggestion_exists = $learning_objective_suggestion->suggestionExists(
+            $user_id,
+            $obj_id
+        );
+
+        if (!empty($active_participants) && in_array($user_id, $active_participants)) {
+            if ($learning_suggestion_exists) {
+                $this->tpl->setOnScreenMessage('failure', $this->pl->txt('learning_suggestions_exist'), true);
+                $this->ctrl->redirect($this, self::CMD_CONTENT);
+            }
+        } else {
+            $this->tpl->setOnScreenMessage('failure', $this->pl->txt('no_active_participant'), true);
+            $this->ctrl->redirect($this, self::CMD_CONTENT);
+        }
+
+        $parent_found = false;
+        $parent = 0;
+        foreach ($test_ref_ids as $test_ref_id) {
+            $parent = $DIC->repositoryTree()->getParentId($test_ref_id);
+
+            if ($parent === $this->course_ref_id) {
+                $parent_found = true;
+                break;
+            }
+        }
+
+        $screen_message_type = 'failure';
+        $screen_message = $this->pl->txt('learning_suggestions_not_generated');
+        if ($parent_found && ilObject::_lookupType($parent, true) === 'crs') {
+            $course = new LearningObjectiveCourse(new ilObjCourse($parent, true));
+
+            if (!$course->getIsCalculationInactive()) {
+                $user = new User(new ilObjUser($user_id));
+                $learning_objective_suggestion_plugin = ilLearningObjectiveSuggestionsPlugin::getInstance();
+                if ($learning_objective_suggestion_plugin->startCalculation($course, $user)) {
+                    $screen_message_type = 'success';
+                    $screen_message = $this->pl->txt('learning_suggestions_generated');
+                    $learning_objective_suggestion_plugin->sendSuggestions($course, $user);
+                }
+            }
+        }
+
+        $this->tpl->setOnScreenMessage($screen_message_type, $screen_message, true);
+        $this->ctrl->redirect($this, self::CMD_CONTENT);
+    }
+
+    /**
+     * @param array $user_ids
+     * @return array
+     */
+    private function removeInactiveUsers(array $user_ids): array
+    {
+        foreach ($user_ids as $key => $user_id) {
+            if (!ilObjUser::_lookupActive($user_id)) {
+                unset($user_ids[$key]);
+            }
+        }
+        return array_values($user_ids);
     }
 
     /**

@@ -7,6 +7,8 @@ class getLearnSugg
 
     private int $sugg_for_user;
 
+    private ?string $created_at;
+
     /**
      * @return string
      */
@@ -56,5 +58,22 @@ class getLearnSugg
     public function setSuggForUser(int $sugg_for_user)
     {
         $this->sugg_for_user = $sugg_for_user;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSuggCreatedAt(): ?string
+    {
+        return $this->created_at;
+    }
+
+    /**
+     * @param string|null $created_at
+     * @return void
+     */
+    public function setSuggCreatedAt(?string $created_at)
+    {
+        $this->created_at = $created_at;
     }
 }

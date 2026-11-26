@@ -122,3 +122,12 @@ upload_invalid_file_type#:#Only PNG or JPEG images are allowed.
 upload_file_too_large#:#The file is too large. Maximum upload size: 2 MB.
 template_not_available#:#The selected template does not exist or is not active. Nothing was changed.
 keyword_required#:#Please enter at least one keyword (several keywords separated by commas).
+generated_at#:#Generated at
+suggestions_regenerate#:#Generate learning recommendation
+no_active_participant#:#No active participant
+initial_test_missing#:#No initial test is configured for this course
+learning_suggestions_generated#:#The learning recommendations have been generated.
+learning_suggestions_not_generated#:#The learning recommendations haven't been generated.
+suggestions#:#Suggestions
+notification_sent#:#Notification sent
+learning_suggestions_exist#:#Learning suggestions exist
