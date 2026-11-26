@@ -13,6 +13,10 @@
 ### Security
 * The regenerate action only accepts course/group members and requires a selected row
 
+## [3.0.1]
+### Removed
+* UDF field "UDF Editor Object for Name Entry" (`true_name_helper`), including its config entry
+
 ## [3.0.0]
 ### Updated
 * Plugin for release_11 updated

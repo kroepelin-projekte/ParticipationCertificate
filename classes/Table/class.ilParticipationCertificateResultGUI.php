@@ -214,22 +214,9 @@ class ilParticipationCertificateResultGUI
             $this->toolbar->addComponent($toolbar_button);
         }
 
-        $target_ref = 0;
         if ($this->cert_access->isSelfPrintEnabled() && !$this->cert_access->hasCurrentUserPrintAccess()) {
-            $global_config_sets = ilParticipationCertificateConfig::where(['config_type'=>3, 'global_config_id' => 0 ])->orderBy('order_by')->get();
-
-            foreach ($global_config_sets as $config) {
-				if ($config->getConfigKey() == 'true_name_helper') {
-					$target_ref=$config->getConfigValue();
-				}
-			}
             $this->tpl->setOnScreenMessage('failure',$this->pl->txt('noname_noprint'), true);
-
-            if (is_numeric($target_ref) && ($target_ref > 0)) {
-                $msgurl = ' <a href="ilias.php?baseClass=ilObjPluginDispatchGUI&cmd=forward&ref_id=' . $target_ref . '">' .  $this->pl->txt('helper_name') . '</a>';
-            } else {
-                $msgurl = ' <a href="ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile">' . $this->pl->txt('helper_name') . '</a>';
-            }
+            $msgurl = ' <a href="ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile">' . $this->pl->txt('helper_name') . '</a>';
 
             $msgadd = $this->pl->txt('helper_action_pre') . $msgurl . $this->pl->txt('helper_action_post');
             $this->tpl->setOnScreenMessage('info',$msgadd, true);
