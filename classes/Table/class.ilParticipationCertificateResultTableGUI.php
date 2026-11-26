@@ -13,7 +13,6 @@ use ILIAS\UI\Component\Table\DataRetrieval;
 use ILIAS\UI\Component\Table\DataRowBuilder;
 use SRAG\ILIAS\Plugins\LearningObjectiveSuggestions\Notification\Notification;
 
-
 /**
  * Class ilParticipationCertificateResultTableGUI
  */
@@ -516,9 +515,33 @@ class ilParticipationCertificateResultTableGUI
             /** @var Notification $notification */
             $notification = $this->getNotification($usr_id, $course_obj_id);
 
+            $notification_sent = $this->pl->txt('no');
             if ($notification != '' && !empty($notification->getSentAt())) {
-                $row['suggestions_generated_at'] = new \DateTimeImmutable($notification->getSentAt());
+                $notification_sent = $this->pl->txt('yes');
             }
+
+            /** @var getLearnSugg[] $suggestions */
+            $suggestions = getLearnSuggs::getData($usr_id, $course_obj_id);
+
+            $created_dates = array_filter(array_map(
+                static fn(getLearnSugg $suggestion): ?string => $suggestion->getSuggCreatedAt(),
+                $suggestions
+            ));
+
+            $created_at = '';
+            if (!empty($created_dates)) {
+                $created_at_datetime = new \DateTimeImmutable(min($created_dates));
+                $created_at = $created_at_datetime->format('d.m.Y H:i');
+            }
+            $row['generated_at'] = $created_at;
+
+            $suggestion_titles = [];
+            foreach ($suggestions as $suggestion) {
+                $suggestion_titles[] = htmlspecialchars($suggestion->getSuggObjTitle(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+            $row['suggestions'] = implode('<br>', $suggestion_titles);
+
+            $row['notification_sent'] = $notification_sent;
 
             $rows[] = $row;
         }
@@ -610,12 +633,16 @@ class ilParticipationCertificateResultTableGUI
                                                ->withIsOptional(true, $this->ementoring);
         }
 
-        $cols['suggestions_generated_at'] = $factory->table()->column()
-                                                  ->date(
-                                                      $this->pl->txt('suggestions_generated_at'),
-                                                      $this->df->dateFormat()->withTime24($this->df->dateFormat()->germanShort())
-                                                  )
-                                                  ->withIsSortable(false);
+        $cols['generated_at'] = $factory->table()->column()
+                                        ->text($this->pl->txt('generated_at'))
+                                        ->withIsSortable(false);
+
+        $cols['suggestions'] = $factory->table()->column()
+                                 ->text($this->pl->txt('suggestions'))
+                                 ->withIsSortable(false);
+        $cols['notification_sent'] = $factory->table()->column()
+                                       ->text($this->pl->txt('notification_sent'))
+                                       ->withIsSortable(false);
 
         return $cols;
     }

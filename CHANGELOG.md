@@ -2,7 +2,7 @@
 
 ## [3.1.0]
 ### Added
-* New column "Learning suggestions generated at" in the results table (date and time the learning suggestions were sent to the user)
+* New columns "Generated at" (date and time the learning suggestions were genersted), "Learning ojective suggestions" and "Notification sent" in the results table
 * New row action "Regenerate the learning recommendation" in the results table: starts the calculation of the learning suggestions (LearningObjectiveSuggestions plugin) for an active participant of the course's initial test and sends them to the user, if no suggestions exist yet
 
 ### Fixed
