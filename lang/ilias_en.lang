@@ -139,3 +139,35 @@ cert_total_questions#:#%s questions from the following topics:
 cert_suggested_modules_processed#:#%s of the recommended modules were completed
 placeholder_username#:#Salutation first name last name
 placeholder_date#:#Date
+cfg_page1_title#:#Page 1: Title
+cfg_page1_introduction1#:#Page 1: Introduction, Paragraph 1
+cfg_page1_introduction2#:#Page 1: Introduction, Paragraph 2
+cfg_page1_box1_title#:#Page 1, Box 1: Heading
+cfg_page1_box1_row1#:#Page 1, Box 1: Row 1 (Initial Test)
+cfg_page1_box1_row1_alternative#:#Page 1, Box 1: Row 1 (Final Test)
+cfg_page1_box1_row2#:#Page 1, Box 1: Row 2 (Recommended Modules)
+cfg_page1_box2_title#:#Page 1, Box 2: Heading (eMentoring)
+cfg_page1_box2_row1#:#Page 1, Box 2: Row 1 (Video Conferences)
+cfg_page1_box2_row2#:#Page 1, Box 2: Row 2 (Homework)
+cfg_page1_location_date#:#Page 1: Place and Date
+cfg_page1_issuer_name#:#Page 1: Issuer Name
+cfg_page1_issuer_title#:#Page 1: Issuer Position
+cfg_page1_disclaimer#:#Pages 1 and 2: Disclaimer
+cfg_page2_title#:#Page 2: Title
+cfg_page2_introduction1#:#Page 2: Introduction, Paragraph 1
+cfg_page2_introduction2#:#Page 2: Introduction, Paragraph 2
+cfg_page2_introduction3#:#Page 2: Introduction, Paragraph 3 (Bold)
+cfg_page2_box1_title#:#Page 2, Box 1: Heading
+cfg_page2_box1_row1#:#Page 2, Box 1: Row 1 (Initial Test)
+cfg_page2_box1_row1_total_questions#:#Page 2, Box 1: Number of Questions in the Initial Test
+cfg_page2_box1_row2#:#Page 2, Box 1: Row 2 (Recommended Modules)
+cfg_page2_box2_title#:#Page 2, Box 2: Heading (eMentoring)
+cfg_page2_box2_row1#:#Page 2, Box 2: Row 1 (Video Conferences)
+cfg_page2_box2_row2#:#Page 2, Box 2: Row 2 (Homework)
+cfg_sessions#:#Sessions Box: Heading
+cfg_individual_assessments#:#Label for Individual Assessments
+cfg_footer_config#:#Footer for Edited Results
+cfg_period_start#:#Period: Start
+cfg_period_end#:#Period: End
+cfg_self_print_start#:#Self Print: Start
+cfg_self_print_end#:#Self Print: End
