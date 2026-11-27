@@ -131,7 +131,7 @@ class ilParticipationCertificateGlobalConfigSet extends ActiveRecord {
     {
 		$gl_configs = new ilParticipationCertificateGlobalConfigSets();
 		$gl_config = $gl_configs->addNewConfig();
-		$gl_config->setTitle('untitled');
+		$gl_config->setTitle(ilParticipationCertificatePlugin::getInstance()->txt('untitled'));
 		$gl_config->store();
 
 		foreach($part_cert_configs as $config) {

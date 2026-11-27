@@ -15,6 +15,9 @@ use JetBrains\PhpStorm\NoReturn;
  */
 class ilParticipationCertificateTwigParser
 {
+    // the certificate is always issued in German, independent of the user language
+    private const string PDF_LANGUAGE = 'de';
+
     protected ilParticipationCertificatePlugin $pl;
 
     protected int|array $group_ref_id;
@@ -519,9 +522,13 @@ class ilParticipationCertificateTwigParser
         // placeholders are replaced; escaping happens once in certificate.html.
         // self print does not exclude users without data row, so it may be missing
         $usr_data = $user_data[$user_id] ?? null;
-        $salutation = $usr_data?->getPartCertSalutation();
+        $salutation = ilPartCertUsersData::returnSalutation(
+            $usr_data?->getPartCertGender(),
+            $this->pl,
+            self::PDF_LANGUAGE
+        );
         $placeholder_values = [
-            'username' => ($salutation ? $salutation . ' ' : '') .
+            'username' => ($salutation !== '' ? $salutation . ' ' : '') .
                 ($firstname ?? $usr_data?->getPartCertFirstname()) . ' ' .
                 ($lastname ?? $usr_data?->getPartCertLastname()),
             'date' => $date->get(IL_CAL_FKT_DATE, 'd.m.Y')
@@ -626,6 +633,14 @@ class ilParticipationCertificateTwigParser
 
         $data = [
             'text_values' => $processed_text_values,
+            // sprintf formats, filled in certificate.html via |format
+            'txt' => [
+                'yes' => $this->pdfTxt('yes'),
+                'no' => $this->pdfTxt('no'),
+                'homework_submitted' => $this->pdfTxt('cert_homework_submitted'),
+                'total_questions' => $this->pdfTxt('cert_total_questions'),
+                'suggested_modules_processed' => $this->pdfTxt('cert_suggested_modules_processed'),
+            ],
             'show_ementoring' => $ementoring,
             'show_footer' => $this->footer,
             'arr_lo_master_crs' => $uselo_master_course,
@@ -638,7 +653,7 @@ class ilParticipationCertificateTwigParser
             'page1_issuer_signature' => $page1_issuer_signature,
             'standard_value' => $cert_config_value,
             'sessions' => [
-                'label' => $this->pl->txt('sessions'),
+                'label' => $this->pdfTxt('sessions'),
                 'value' => ($count_attended_sessions + $count_completed_individual_assessments) . '/' . ($count_sessions + $count_individual_assessments)
             ],
             'homework_included' => $homework_included,
@@ -648,12 +663,17 @@ class ilParticipationCertificateTwigParser
             'final_test' => $final_test,
             'final_test_reached_percent' => $final_test_reached_points_percent . '%',
             'not_suggested_courses' => [
-                'label' => $this->pl->txt('not_suggested_learning_modules'),
+                'label' => $this->pdfTxt('not_suggested_learning_modules'),
                 'value' => $not_suggested_courses
             ]
         ];
 
         return $data;
+    }
+
+    private function pdfTxt(string $a_var): string
+    {
+        return $this->pl->txtInLanguage($a_var, self::PDF_LANGUAGE);
     }
 
     /**

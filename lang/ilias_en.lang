@@ -131,3 +131,11 @@ learning_suggestions_not_generated#:#The learning recommendations haven't been g
 suggestions#:#Suggestions
 notification_sent#:#Notification sent
 learning_suggestions_exist#:#Learning suggestions exist
+hidden_column#:#Hidden column
+file_deleted#:#File deleted
+untitled#:#Untitled
+cert_homework_submitted#:#Submitted %s%% of the homework
+cert_total_questions#:#%s questions from the following topics:
+cert_suggested_modules_processed#:#%s of the recommended modules were completed
+placeholder_username#:#Salutation first name last name
+placeholder_date#:#Date

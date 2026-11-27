@@ -171,14 +171,14 @@ class ilParticipationCertificateResultGUI
             if ($this->ementoring) {
                 $this->ctrl->setParameter($this, 'ementor', true);
                 $toolbar_button = $ui->button()->standard(
-                    $this->pl->txt('header_btn_print_is_ementoring'),
+                    $this->pl->txt('header_btn_print_is_eMentoring'),
                     $this->ctrl->getLinkTarget($this, $this::CMD_PRINT_PDF)
                 );
                 $this->toolbar->addComponent($toolbar_button);
 
                 $this->ctrl->setParameter($this, 'ementor', false);
                 $toolbar_button = $ui->button()->standard(
-                    $this->pl->txt('header_btn_print_no_ementoring'),
+                    $this->pl->txt('header_btn_print_no_eMentoring'),
                     $this->ctrl->getLinkTarget($this, $this::CMD_PRINT_PDF)
                 );
                 $this->toolbar->addComponent($toolbar_button);
@@ -263,8 +263,7 @@ class ilParticipationCertificateResultGUI
         $data = $result_table->getRecords();
 
         $excel = new ilExcel();
-        $excel->addSheet('TEST'
-            ?: $this->lng->txt('export'));
+        $excel->addSheet($this->pl->txt('tbl_overview_results'));
         $row = 1;
 
         ob_start();
@@ -779,7 +778,7 @@ class ilParticipationCertificateResultGUI
         $config_entries = ilParticipationCertificateHelper::fetchUrlParameter('config_entry', 'string[]');
 
         if (empty($config_entries) || empty($config_entries[0])) {
-            $this->redirectWithError(self::CMD_CONTENT, $this->lng->txt('no_records_selected'));
+            $this->redirectWithError(self::CMD_CONTENT, $this->pl->txt('no_records_selected'));
         }
 
         $url_parameters = $this->excludeURLParameters($config_entries[0]);

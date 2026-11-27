@@ -34,9 +34,9 @@
           </td>
           <td class="td2">
               {% if crsitest_itest_submitted %}
-              Ja
+              {{txt.yes}}
               {% else %}
-              Nein
+              {{txt.no}}
               {% endif %}
           </td>
       </tr>
@@ -81,9 +81,9 @@
      </td>
      <td class="td2">
        {% if iass_state >= standard_value %}
-       Ja
+       {{txt.yes}}
        {% else %}
-       Nein
+       {{txt.no}}
        {% endif %}
      </td>
    </tr>
@@ -91,7 +91,7 @@
   {% if homework_included and text_values.page1_box2_row2|trim %}
    <tr>
      <td class="td1">{{text_values.page1_box2_row2}}</td>
-     <td class="td2">Abgabe von {{excercise_percentage}}% der Hausaufgaben</td>
+     <td class="td2">{{txt.homework_submitted|format(excercise_percentage)}}</td>
    </tr>
   {% endif %}
   </table>
@@ -167,7 +167,7 @@
   {% if not final_test and text_values.page2_box1_row1|trim %}
   <tr>
       <td class="td1">{{text_values.page2_box1_row1}}</td>
-      <td class="td2">{{text_values.page2_box1_row1_total_questions}} Fragen aus den Themengebieten:
+      <td class="td2">{{txt.total_questions|format(text_values.page2_box1_row1_total_questions)}}
           <ul>
               {% for key, lo in arr_lo_master_crs %}
               <li>{{lo.getLoMasterObjectiveTitle}}</li>
@@ -179,7 +179,7 @@
   {% if suggested_courses and text_values.page2_box1_row2|trim %}
   <tr>
     <td class="td1">{{text_values.page2_box1_row2}}</td>
-    <td class="td2">{{learn_sugg_reached_percentage}} der empfohlenen Module wurden bearbeitet </td>
+    <td class="td2">{{txt.suggested_modules_processed|format(learn_sugg_reached_percentage)}} </td>
   </tr>
   {% endif %}
   {% if additional_offer %}
@@ -209,7 +209,7 @@
   {% if homework_included and text_values.page2_box2_row2|trim %}
   <tr>
     <td class="td1">{{text_values.page2_box2_row2}}</td>
-    <td class="td2">Abgabe von {{excercise_percentage}}% der Hausaufgaben</td>
+    <td class="td2">{{txt.homework_submitted|format(excercise_percentage)}}</td>
   </tr>
   {% endif %}
   </table>
