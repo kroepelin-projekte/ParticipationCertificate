@@ -54,7 +54,7 @@ enable_self_print#:#Enable Self-Printing
 color#:#Color Recommended LZ
 keyword#:#Keyword
 logo#:#Logo
-page1_issuer_signature#:#page1_issuer_signature
+page1_issuer_signature#:#Issuer Signature
 udf_percent_value#:#Threshold for Video Conferences (Percentage)
 placeholders#:#The following placeholders are available:
 yes#:#Yes
