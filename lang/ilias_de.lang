@@ -131,3 +131,11 @@ learning_suggestions_not_generated#:#Die Lernempfehlungen wurden nicht generiert
 suggestions#:#Lernzielempfehlungen
 notification_sent#:#Benachrichtigt
 learning_suggestions_exist#:#Lernempfehlungen existieren
+hidden_column#:#Ausgeblendete Spalte
+file_deleted#:#Datei gelöscht
+untitled#:#Unbenannt
+cert_homework_submitted#:#Abgabe von %s%% der Hausaufgaben
+cert_total_questions#:#%s Fragen aus den Themengebieten:
+cert_suggested_modules_processed#:#%s der empfohlenen Module wurden bearbeitet
+placeholder_username#:#Anrede Vorname Nachname
+placeholder_date#:#Datum

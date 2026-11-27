@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+* Wrong language keys for "Results for", the eMentoring print buttons and "No users selected"
+* Hard-coded texts replaced by language variables: hidden column title, Excel sheet name, file removal messages, title of new templates, placeholder descriptions in the certificate text forms
+* The section title of the "Period & Calculation Type" form now matches its tab title
+* Certificate PDF: "Yes"/"No" and the result sentences come from the language files; the PDF texts (incl. labels and salutation) are always German, independent of the user language
+
+### Notes
+* After updating, refresh the plugin languages (Administration → Plugins → Refresh Languages), since the version is unchanged
+
 ## [3.1.0]
 ### Added
 * New columns "Generated at" (date and time the learning suggestions were generated), "Learning objective suggestions" and "Notification sent" in the results table

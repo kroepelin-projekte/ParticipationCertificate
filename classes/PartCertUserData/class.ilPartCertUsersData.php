@@ -86,19 +86,22 @@ class ilPartCertUsersData {
     /**
      * @param string|null                      $gender usr_data.gender
      * @param ilParticipationCertificatePlugin $pl
+     * @param string|null                      $lang_key fixed language instead of the user language
      * @return string
      */
     public static function returnSalutation(
         ?string $gender,
-        ilParticipationCertificatePlugin $pl
+        ilParticipationCertificatePlugin $pl,
+        ?string $lang_key = null
     ): string {
+        $txt = static fn(string $var): string => $lang_key === null ? $pl->txt($var) : $pl->txtInLanguage($var, $lang_key);
 
         switch ($gender) {
             case 'm':
-                return $pl->txt('Mr');
+                return $txt('Mr');
                 break;
             case 'f':
-                return $pl->txt('Ms');
+                return $txt('Ms');
                 break;
             default:
                 return '';
