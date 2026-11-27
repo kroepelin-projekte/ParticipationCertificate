@@ -420,12 +420,12 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
                     $config_value = $this->replacePlaceholdersFromOldVersion($config_value);
                     if ($disabled) {
                         $input_fields[$config->getConfigKey()] = $ui->input()->field()->textarea(
-                            $config->getConfigKey()
+                            $config->getLabel($this->pl)
                         )->withValue($config_value ?? '')
                          ->withDisabled(true);
                     } else {
                         $input_fields[$config->getConfigKey()] = $ui->input()->field()->textarea(
-                            $config->getConfigKey()
+                            $config->getLabel($this->pl)
                         )->withValue($config_value ?? '');
                     }
                     break;

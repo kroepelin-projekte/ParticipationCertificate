@@ -80,6 +80,15 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
     }
 
     /**
+     * Like txt(), but returns $default instead of "-<prefix>_<var>-" if there is no entry.
+     */
+    public function txtOrDefault(string $a_var, string $default): string
+    {
+        $txt = $this->txt($a_var);
+        return $txt === '-' . $this->getLanguageHandler()->getPrefix() . '_' . $a_var . '-' ? $default : $txt;
+    }
+
+    /**
      * Plugin text in a fixed language (incl. local changes); falls back to txt()
      * if the language is not installed or lacks the entry.
      */

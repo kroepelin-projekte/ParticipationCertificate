@@ -5,6 +5,7 @@
 * Wrong language keys for "Results for", the eMentoring print buttons and "No users selected"
 * Hard-coded texts replaced by language variables: hidden column title, Excel sheet name, file removal messages, title of new templates, placeholder descriptions in the certificate text forms
 * The section title of the "Period & Calculation Type" form now matches its tab title
+* Certificate configuration forms: fields are labelled with readable texts instead of the raw config keys (unknown keys still show the key)
 * Language texts: label of the issuer signature field (was the key itself), German "Schlüsselwort" and "Keine Benutzer ausgewählt"
 * Certificate PDF: "Yes"/"No" and the result sentences come from the language files; the PDF texts (incl. labels and salutation) are always German, independent of the user language
 

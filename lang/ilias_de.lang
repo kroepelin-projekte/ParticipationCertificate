@@ -139,3 +139,35 @@ cert_total_questions#:#%s Fragen aus den Themengebieten:
 cert_suggested_modules_processed#:#%s der empfohlenen Module wurden bearbeitet
 placeholder_username#:#Anrede Vorname Nachname
 placeholder_date#:#Datum
+cfg_page1_title#:#Seite 1: Titel
+cfg_page1_introduction1#:#Seite 1: Einleitung, Absatz 1
+cfg_page1_introduction2#:#Seite 1: Einleitung, Absatz 2
+cfg_page1_box1_title#:#Seite 1, Box 1: Überschrift
+cfg_page1_box1_row1#:#Seite 1, Box 1: Zeile 1 (Einstiegstest)
+cfg_page1_box1_row1_alternative#:#Seite 1, Box 1: Zeile 1 (Abschlusstest)
+cfg_page1_box1_row2#:#Seite 1, Box 1: Zeile 2 (empfohlene Module)
+cfg_page1_box2_title#:#Seite 1, Box 2: Überschrift (eMentoring)
+cfg_page1_box2_row1#:#Seite 1, Box 2: Zeile 1 (Videokonferenzen)
+cfg_page1_box2_row2#:#Seite 1, Box 2: Zeile 2 (Hausaufgaben)
+cfg_page1_location_date#:#Seite 1: Ort und Datum
+cfg_page1_issuer_name#:#Seite 1: Name Aussteller
+cfg_page1_issuer_title#:#Seite 1: Funktion Aussteller
+cfg_page1_disclaimer#:#Seite 1 und 2: Hinweistext
+cfg_page2_title#:#Seite 2: Titel
+cfg_page2_introduction1#:#Seite 2: Einleitung, Absatz 1
+cfg_page2_introduction2#:#Seite 2: Einleitung, Absatz 2
+cfg_page2_introduction3#:#Seite 2: Einleitung, Absatz 3 (fett)
+cfg_page2_box1_title#:#Seite 2, Box 1: Überschrift
+cfg_page2_box1_row1#:#Seite 2, Box 1: Zeile 1 (Einstiegstest)
+cfg_page2_box1_row1_total_questions#:#Seite 2, Box 1: Anzahl Fragen im Einstiegstest
+cfg_page2_box1_row2#:#Seite 2, Box 1: Zeile 2 (empfohlene Module)
+cfg_page2_box2_title#:#Seite 2, Box 2: Überschrift (eMentoring)
+cfg_page2_box2_row1#:#Seite 2, Box 2: Zeile 1 (Videokonferenzen)
+cfg_page2_box2_row2#:#Seite 2, Box 2: Zeile 2 (Hausaufgaben)
+cfg_sessions#:#Überschrift Box Sitzungen
+cfg_individual_assessments#:#Bezeichnung individuelle Bewertungen
+cfg_footer_config#:#Fußzeile bei bearbeiteten Resultaten
+cfg_period_start#:#Zeitraum: Beginn
+cfg_period_end#:#Zeitraum: Ende
+cfg_self_print_start#:#Selbstausdruck: Beginn
+cfg_self_print_end#:#Selbstausdruck: Ende
