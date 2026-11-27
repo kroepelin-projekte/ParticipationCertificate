@@ -153,7 +153,7 @@ class ilParticipationCertificateMultipleResultGUI
             }
 
             $html .= '<div class="dhbw_part_cert_res">';
-            $html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for ') . ' ' . htmlspecialchars((string) $name_user, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</h2>';
+            $html .= '<h2 class="dhbw-part-cert-heading">' . $this->pl->txt('result_for') . ' ' . htmlspecialchars((string) $name_user, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</h2>';
             $html .= $renderer->render($table->withRequest($DIC->http()->request()));
             $html .= '</div>';
         }

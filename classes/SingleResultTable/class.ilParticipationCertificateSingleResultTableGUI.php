@@ -360,7 +360,7 @@ class ilParticipationCertificateSingleResultTableGUI
 
         $cols = [];
         $cols['hidden'] = $factory->table()->column()
-                                     ->text('asgasgasfg')
+                                     ->text($this->pl->txt('hidden_column'))
                                      ->withIsOptional(false)
                                      ->withIsSortable(false);
 

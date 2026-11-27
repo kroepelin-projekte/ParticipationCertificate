@@ -25,6 +25,9 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
 
     protected ilDBInterface $db;
 
+    /** @var array<string, ilLanguage|null> */
+    private array $languages = [];
+
     public function __construct(
         ilDBInterface $db,
         ilComponentRepositoryWrite $component_repository,
@@ -74,6 +77,31 @@ class ilParticipationCertificatePlugin extends ilUserInterfaceHookPlugin
                 //ignore
             }
         }
+    }
+
+    /**
+     * Plugin text in a fixed language (incl. local changes); falls back to txt()
+     * if the language is not installed or lacks the entry.
+     */
+    public function txtInLanguage(string $a_var, string $lang_key): string
+    {
+        if (!array_key_exists($lang_key, $this->languages)) {
+            $lng = new ilLanguage($lang_key);
+            // ilLanguage silently switches to the default language if $lang_key is not installed
+            if ($lng->getLangKey() === $lang_key) {
+                $lng->loadLanguageModule($this->getLanguageHandler()->getPrefix());
+            } else {
+                $lng = null;
+            }
+            $this->languages[$lang_key] = $lng;
+        }
+
+        $lng = $this->languages[$lang_key];
+        $topic = $this->getLanguageHandler()->getPrefix() . '_' . $a_var;
+        if ($lng === null || !$lng->exists($topic)) {
+            return $this->txt($a_var);
+        }
+        return $lng->txt($topic);
     }
 
     /**

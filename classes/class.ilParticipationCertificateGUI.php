@@ -435,10 +435,9 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
         $section = $ui->input()->field()->section(
             $input_fields,
             $this->pl->txt('config_plugin'),
-            $this->pl->txt("placeholders") . ' <br>
-		[[username]]: Anrede Vorname Nachname <br>
-		[[date]]: Datum
-		'
+            $this->pl->txt('placeholders') . '<br>'
+                . '[[username]]: ' . $this->pl->txt('placeholder_username') . '<br>'
+                . '[[date]]: ' . $this->pl->txt('placeholder_date')
         );
 
         $form_action = $DIC->ctrl()->getFormActionByClass(
@@ -707,7 +706,7 @@ class ilParticipationCertificateGUI implements ilCtrlSecurityInterface
 
         $section = $ui->input()->field()->section(
             $input_fields,
-            'Resultate für'
+            $this->pl->txt('config_result_table')
         );
         $form_action = $this->ctrl->getFormActionByClass(
             self::class,

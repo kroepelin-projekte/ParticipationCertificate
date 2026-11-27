@@ -189,7 +189,7 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
         $id = $this->findOwnResource($identifier);
 
         if ($id === null) {
-            return $this->failedResult($identifier, 'File not found');
+            return $this->failedResult($identifier, $this->lng->txt('file_not_found'));
         }
 
         if ($this->isReferencedByConfig($identifier)) {
@@ -203,7 +203,7 @@ class ilParticipationCertificateFileUploadHandlerGUI extends AbstractCtrlAwareUp
             $this->getFileIdentifierParameterName(),
             HandlerResult::STATUS_OK,
             $identifier,
-            'File deleted'
+            $this->pl->txt('file_deleted')
         );
     }
 
