@@ -29,7 +29,7 @@ list_overview#:#Alle Resultate anzeigen
 btn_reset#:#Textwerte für das Formular fixiert übernehmen
 btn_modify#:#Textwerte für das Formular bearbeitbar übernehmen
 result_for#:#Alle Resultate für
-no_records_selected#:#Keine User ausgewählt
+no_records_selected#:#Keine Benutzer ausgewählt
 upload_header #:# Laden Sie Ihren PDF Header hoch
 save#:#Speichern
 udf_lastname#:#Benutzerdefiniertes Feld Nachname
@@ -52,9 +52,9 @@ period#:#Zeitraum
 period_self_print#:#Zeitraum Selbstausdruck konfigurieren
 enable_self_print#:#Selbstausdruck aktivieren
 color#:#Farbe empfohlene LZ
-keyword#:#Keyword
+keyword#:#Schlüsselwort
 logo#:#Logo
-page1_issuer_signature#:#page1_issuer_signature
+page1_issuer_signature#:#Unterschrift Aussteller
 udf_percent_value#:#Schwellenwert Videokonferenzen (Prozent)
 placeholders#:#Folgende Platzhalter sind verfügbar:
 yes#:#Ja
