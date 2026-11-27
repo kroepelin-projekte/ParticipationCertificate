@@ -19,6 +19,14 @@ class ilParticipationCertificateConfig extends ActiveRecord
 
     public const int CONFIG_VALUE_TYPE_OTHER = 2;
 
+    /** Config keys whose form label reuses an existing language key; others use cfg_<key>. */
+    private const array LABEL_LANG_KEYS = [
+        'percent_value' => 'udf_percent_value',
+        'enable_ementoring' => 'enable_ementoring',
+        'enable_self_print' => 'enable_self_print',
+        'calculation_type_processing_state_suggested_objectives' => 'calculation_type_processing_state_suggested_objectives',
+    ];
+
     /**
      * @var int
      *
@@ -271,6 +279,15 @@ class ilParticipationCertificateConfig extends ActiveRecord
     public function getConfigKey(): string
     {
         return $this->config_key;
+    }
+
+    /**
+     * Form label of this config entry; the raw key if there is no language entry.
+     */
+    public function getLabel(ilParticipationCertificatePlugin $pl): string
+    {
+        $key = $this->getConfigKey();
+        return $pl->txtOrDefault(self::LABEL_LANG_KEYS[$key] ?? 'cfg_' . $key, $key);
     }
 
     /**

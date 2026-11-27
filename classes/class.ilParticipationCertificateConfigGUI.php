@@ -795,7 +795,7 @@ class ilParticipationCertificateConfigGUI extends ilPluginConfigGUI implements i
                     }
 
                     $inputFields[$config->getConfigKey()] = $ui->input()->field()->textarea(
-                        $config->getConfigKey()
+                        $config->getLabel($this->pl)
                     )->withValue($configValue ?? '');
 
                     break;
